@@ -110,7 +110,6 @@ int yaffs1_scan(struct yaffs_dev *dev)
 				 */
 				deleted++;
 				dev->n_free_chunks++;
-				/*T((" %d %d deleted\n",blk,c)); */
 			} else if (!tags.chunk_used) {
 				/* An unassigned chunk in the block
 				 * This means that either the block is empty or
@@ -178,7 +177,6 @@ int yaffs1_scan(struct yaffs_dev *dev)
 					}
 
 				}
-				/* T((" %d %d data %d %d\n",blk,c,tags.obj_id,tags.chunk_id));   */
 			} else {
 				/* chunk_id == 0, so it is an ObjectHeader.
 				 * Thus, we read in the object header and make the object
