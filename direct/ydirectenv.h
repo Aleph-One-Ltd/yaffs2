@@ -53,10 +53,10 @@ void yaffs_qsort(void *aa, size_t n, size_t es,
 #define inline __inline__
 #endif
 
-#define kmalloc(x,flags) yaffs_malloc(x)
-#define kfree(x)   yaffs_free(x)
-#define vmalloc(x) yaffs_malloc(x)
-#define vfree(x) yaffs_free(x)
+#define kmalloc(x,flags) yaffsfs_malloc(x)
+#define kfree(x)   yaffsfs_free(x)
+#define vmalloc(x) yaffsfs_malloc(x)
+#define vfree(x) yaffsfs_free(x)
 
 #define cond_resched()  do {} while(0)
 

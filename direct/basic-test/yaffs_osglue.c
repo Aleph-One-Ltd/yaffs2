@@ -83,7 +83,7 @@ static int yaffs_kill_alloc = 0;
 static size_t total_malloced = 0;
 static size_t malloc_limit = 0 & 6000000;
 
-void *yaffs_malloc(size_t size)
+void *yaffsfs_malloc(size_t size)
 {
 	void * this;
 	if(yaffs_kill_alloc)
@@ -97,7 +97,7 @@ void *yaffs_malloc(size_t size)
 	return this;
 }
 
-void yaffs_free(void *ptr)
+void yaffsfs_free(void *ptr)
 {
 	free(ptr);
 }

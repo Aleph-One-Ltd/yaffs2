@@ -32,8 +32,8 @@ u32 yaffsfs_CurrentTime(void);
 
 void yaffsfs_SetError(int err);
 
-void *yaffs_malloc(size_t size); 
-void yaffs_free(void *ptr);
+void *yaffsfs_malloc(size_t size);
+void yaffsfs_free(void *ptr);
 
 void yaffsfs_OSInitialisation(void);
  
