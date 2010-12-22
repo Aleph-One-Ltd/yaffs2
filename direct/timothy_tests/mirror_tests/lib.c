@@ -22,6 +22,10 @@ void set_print_level(int new_level)
 {
 	PRINT_LEVEL=new_level;
 }
+int get_print_level(void)
+{
+	return PRINT_LEVEL;
+}
 
 void set_exit_on_error(int num)
 {
@@ -38,6 +42,33 @@ void display_error(void)
 	
 }
 
+void get_error_yaffs(void)
+{
+	int error_code=0;
+	char message[30];
+	message[0]='\0';
+
+	error_code=yaffs_get_error();
+	sprintf(message,"yaffs_error code %d\n",error_code);
+	print_message(1,message);
+	sprintf(message,"error is : %s\n",yaffs_error_to_str(error_code));
+	print_message(1,message);
+}
+
+void get_error_linux(void)
+{
+	int error_code=0;
+	char message[30];
+	message[0]='\0';
+
+	error_code=errno;
+	sprintf(message,"linux_error code %d\n",error_code);
+	print_message(1,message);
+	strcpy(message,"error code");
+	sprintf(message,"error is : %s\n",yaffs_error_to_str(error_code));
+	//perror(message);	
+	print_message(1,message);
+}
 void  generate_random_string(char *ptr,int length_of_str){
 	unsigned int x;
 	unsigned int length=((rand() %(length_of_str-3))+3);	/*creates a int with the number of charecters been between 1 and 51*/ 		
