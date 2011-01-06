@@ -12,7 +12,7 @@
  */
 
 #include "lib.h"
-static unsigned int *p_counter;
+static volatile unsigned int *p_counter;
 static unsigned int numberOfThreads=5;
 
 unsigned int get_num_of_threads(void)
@@ -37,6 +37,6 @@ void set_counter(int x, unsigned int value)
 
 void init_counter(unsigned int size_of_counter)
 {
-	p_counter=malloc(size_of_counter*sizeof(int));
+	p_counter=malloc(size_of_counter*sizeof(unsigned int));
 }
 
