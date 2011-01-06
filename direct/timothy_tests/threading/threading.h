@@ -15,7 +15,7 @@
 
 #ifndef __threading_h__ 
 #define __threading_h__
-
+#include <time.h>
 #include <pthread.h>
 #include <stdio.h>
 #include "thread_function.h"

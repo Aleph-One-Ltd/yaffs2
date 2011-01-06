@@ -151,14 +151,14 @@ void get_error(void)
 void init_quick_tests(int argc, char *argv[])
 {
 	int trace=0;
-int new_option;
+	int new_option;
 	int x=0;	
 	do{
 		new_option=getopt_long(argc,argv,short_options,long_options,NULL);		
-		if (0==strcmp(argv[x],"-h")){
+		if (new_option=='h'){
 			printf("help\n");
 			printf("-h will print the commands available\n");
-			printf("-c will continue after a test failes else the program will exit\n");
+			printf("-c will continue after a test fails else the program will exit\n");
 			printf("-v will print all messages\n");
 			printf("-q quiet mode only the number of tests passed and failed will be printed\n");
 			printf("-t [number] set yaffs_trace to number\n");

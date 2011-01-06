@@ -21,7 +21,7 @@ const struct option long_options[]={
 	{"threads",	1,NULL,'t'}
 };
 
-const char short_options[]="hqn:t:cv";
+const char short_options[]="ht:";
 
 
 
@@ -31,16 +31,15 @@ void main_init(int argc, char *argv[])
 	int new_option;
 	int x=0;
 	int new_num_of_threads=5;	
+	x=(unsigned)time(NULL);
+	printf("seeding srand with: %d\n",x);
+	srand(x);
 	do{
 		new_option=getopt_long(argc,argv,short_options,long_options,NULL);		
-		if (0==strcmp(argv[x],"-h")){
+		if (new_option=='h'){
 			printf("help\n");
 			printf("-h will print the commands available\n");
-			printf("-c will continue after a test failes else the program will exit\n");
-			printf("-v will print all messages\n");
-			printf("-q quiet mode only the number of tests passed and failed will be printed\n");
-			printf("-t [number] set yaffs_trace to number\n");
-			printf("-n [number] sets the number of random loops to run after the the test has run\n");
+			printf("-t [number] sets the number of threads\n");
 			exit(0);
 		} else if (new_option=='t') {
 			new_num_of_threads=atoi(optarg);
