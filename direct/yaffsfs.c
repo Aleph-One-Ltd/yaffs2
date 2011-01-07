@@ -650,13 +650,11 @@ static struct yaffs_obj *yaffsfs_DoFindDirectory(struct yaffs_obj *startDir,
 			/* got to the end of the string */
 			return dir;
 		else{
-			if(strcmp(str,_Y(".")) == 0)
-			{
+			if(strcmp(str,_Y(".")) == 0){
 				/* Do nothing */
-			}
-			else if(strcmp(str,_Y("..")) == 0)
+			} else if(strcmp(str,_Y("..")) == 0) {
 				dir = dir->parent;
-			else{
+			} else{
 				dir = yaffs_find_by_name(dir,str);
 
 				dir = yaffsfs_FollowLink(dir,symDepth,loop);
