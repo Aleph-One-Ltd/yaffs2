@@ -59,9 +59,6 @@
 
 #include <linux/statfs.h>
 
-#define UnlockPage(p) unlock_page(p)
-#define Page_Uptodate(page)	test_bit(PG_uptodate, &(page)->flags)
-
 #define yaffs_devname(sb, buf)	bdevname(sb->s_bdev, buf)
 
 #define YPROC_ROOT  NULL
@@ -1177,7 +1174,7 @@ static int yaffs_readpage_nolock(struct file *f, struct page *pg)
 static int yaffs_readpage_unlock(struct file *f, struct page *pg)
 {
 	int ret = yaffs_readpage_nolock(f, pg);
-	UnlockPage(pg);
+	unlock_page(pg);
 	return ret;
 }
 
@@ -1334,7 +1331,7 @@ static int yaffs_write_begin(struct file *filp, struct address_space *mapping,
 	}
 	yaffs_trace(YAFFS_TRACE_OS,
 		"start yaffs_write_begin index %d(%x) uptodate %d",
-		(int)index, (int)index, Page_Uptodate(pg) ? 1 : 0);
+		(int)index, (int)index, PageUptodate(pg) ? 1 : 0);
 
 	/* Get fs space */
 	space_held = yaffs_hold_space(filp);
@@ -1346,7 +1343,7 @@ static int yaffs_write_begin(struct file *filp, struct address_space *mapping,
 
 	/* Update page if required */
 
-	if (!Page_Uptodate(pg))
+	if (!PageUptodate(pg))
 		ret = yaffs_readpage_nolock(filp, pg);
 
 	if (ret)
