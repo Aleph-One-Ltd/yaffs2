@@ -46,19 +46,14 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
 
 #		 yaffs_checkptrwtest.o\
 
-TESTFILES = 	mirror_tests.o lib.o\
-		linux_test_open.o yaffs_test_open.o\
-		linux_test_truncate.o yaffs_test_truncate.o \
-		linux_test_unlink.o yaffs_test_unlink.o \
-		linux_test_write.o yaffs_test_write.o
-
+TESTFILES = 	threading.o thread_function.o \
+		test_a.o test_b.o lib.o
 
 		  
 
 YAFFSTESTOBJS  = $(COMMONTESTOBJS) $(TESTFILES)
 
-
-ALLOBJS = $(sort $(YAFFSTESTOBJS)) $(PYTHONOBJS)
+ALLOBJS = $(sort $(YAFFSTESTOBJS))
 
 YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
           yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h \
@@ -90,7 +85,7 @@ DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
 SYMLINKS = $(YAFFSSYMLINKS) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS) $(PYTONOSYMLINKS)
 #all: directtest2k boottest
 
-all: mirror_tests
+all: threading
 
 $(ALLOBJS): %.o: %.c
 	gcc -c $(CFLAGS) -o $@ $<
@@ -108,10 +103,13 @@ $(DIRECTEXTRASYMLINKS):
 	ln -s ../../basic-test/$@ $@
 
 
-mirror_tests: $(SYMLINKS) $(ALLOBJS)
-	gcc $(CFLLAG) -o $@ $(ALLOBJS)
+threading: $(SYMLINKS) $(ALLOBJS)
+	gcc $(CFLLAG) -o $@ $(ALLOBJS) -lpthread
+
+
+
 
 
 
 clean:
-	rm -f mirror_tests  $(ALLOBJS) core $(SYMLINKS) 
+	rm -f  threading $(ALLOBJS) core $(SYMLINKS) 
