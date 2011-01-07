@@ -866,7 +866,7 @@ static void yaffs_evict_inode(struct inode *inode)
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_evict_inode: ino %d, count %d %s",
 		(int)inode->i_ino, atomic_read(&inode->i_count),
-		obj ? "object exists" : "null object"));
+		obj ? "object exists" : "null object");
 
 	if (!inode->i_nlink && !is_bad_inode(inode))
 		deleteme = 1;
