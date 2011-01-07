@@ -207,7 +207,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	deleted = !pt1.deleted;
 	pt1.deleted = 1;
 #else
-	deleted = (yaffs_count_bits(((u8 *) & pt1)[8]) < 7);
+	deleted = (hweight8(((u8 *) & pt1)[8]) < 7);
 #endif
 
 	/* Check the packed tags mini-ECC and correct if necessary/possible.
