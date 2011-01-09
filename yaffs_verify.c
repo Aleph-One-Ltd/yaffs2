@@ -163,8 +163,8 @@ void yaffs_verify_blocks(struct yaffs_dev *dev)
 }
 
 /*
- * Verify the object header. oh must be valid, but obj and tags may be NULL in which
- * case those tests will not be performed.
+ * Verify the object header. oh must be valid, but obj and tags may be NULL in
+ * which case those tests will not be performed.
  */
 void yaffs_verify_oh(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh,
 		     struct yaffs_ext_tags *tags, int parent_check)
@@ -414,11 +414,8 @@ void yaffs_verify_objects(struct yaffs_dev *dev)
 
 	for (i = 0; i < YAFFS_NOBJECT_BUCKETS; i++) {
 		list_for_each(lh, &dev->obj_bucket[i].list) {
-			if (lh) {
-				obj =
-				    list_entry(lh, struct yaffs_obj, hash_link);
-				yaffs_verify_obj(obj);
-			}
+			obj = list_entry(lh, struct yaffs_obj, hash_link);	
+			yaffs_verify_obj(obj);
 		}
 	}
 }
@@ -453,12 +450,10 @@ void yaffs_verify_obj_in_dir(struct yaffs_obj *obj)
 	/* Iterate through the objects in each hash entry */
 
 	list_for_each(lh, &obj->parent->variant.dir_variant.children) {
-		if (lh) {
-			list_obj = list_entry(lh, struct yaffs_obj, siblings);
-			yaffs_verify_obj(list_obj);
-			if (obj == list_obj)
-				count++;
-		}
+		list_obj = list_entry(lh, struct yaffs_obj, siblings);
+		yaffs_verify_obj(list_obj);
+		if (obj == list_obj)
+			count++;
 	}
 
 	if (count != 1) {
@@ -492,16 +487,14 @@ void yaffs_verify_dir(struct yaffs_obj *directory)
 	/* Iterate through the objects in each hash entry */
 
 	list_for_each(lh, &directory->variant.dir_variant.children) {
-		if (lh) {
-			list_obj = list_entry(lh, struct yaffs_obj, siblings);
-			if (list_obj->parent != directory) {
-				yaffs_trace(YAFFS_TRACE_ALWAYS,
-					"Object in directory list has wrong parent %p",
-					list_obj->parent);
-				YBUG();
-			}
-			yaffs_verify_obj_in_dir(list_obj);
+		list_obj = list_entry(lh, struct yaffs_obj, siblings);
+		if (list_obj->parent != directory) {
+			yaffs_trace(YAFFS_TRACE_ALWAYS,
+				"Object in directory list has wrong parent %p",
+				list_obj->parent);
+			YBUG();
 		}
+		yaffs_verify_obj_in_dir(list_obj);
 	}
 }
 

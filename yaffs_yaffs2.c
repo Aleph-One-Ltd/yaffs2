@@ -568,28 +568,23 @@ static int yaffs2_wr_checkpt_objs(struct yaffs_dev *dev)
 
 	for (i = 0; ok && i < YAFFS_NOBJECT_BUCKETS; i++) {
 		list_for_each(lh, &dev->obj_bucket[i].list) {
-			if (lh) {
-				obj =
-				    list_entry(lh, struct yaffs_obj, hash_link);
-				if (!obj->defered_free) {
-					yaffs2_obj_checkpt_obj(&cp, obj);
-					cp.struct_type = sizeof(cp);
+			obj = list_entry(lh, struct yaffs_obj, hash_link);
+                        if (!obj->defered_free) {
+				yaffs2_obj_checkpt_obj(&cp, obj);
+				cp.struct_type = sizeof(cp);
 
-					yaffs_trace(YAFFS_TRACE_CHECKPOINT,
-						"Checkpoint write object %d parent %d type %d chunk %d obj addr %p",
-						cp.obj_id, cp.parent_id,
-						cp.variant_type, cp.hdr_chunk, obj);
+				yaffs_trace(YAFFS_TRACE_CHECKPOINT,
+					"Checkpoint write object %d parent %d type %d chunk %d obj addr %p",
+					cp.obj_id, cp.parent_id,
+					cp.variant_type, cp.hdr_chunk, obj);
 
-					ok = (yaffs2_checkpt_wr
-					      (dev, &cp,
+				ok = (yaffs2_checkpt_wr(dev, &cp,
 					       sizeof(cp)) == sizeof(cp));
 
-					if (ok
-					    && obj->variant_type ==
-					    YAFFS_OBJECT_TYPE_FILE)
-						ok = yaffs2_wr_checkpt_tnodes
-						    (obj);
-				}
+				if (ok &&
+				        obj->variant_type ==
+				                YAFFS_OBJECT_TYPE_FILE)
+                                        ok = yaffs2_wr_checkpt_tnodes(obj);
 			}
 		}
 	}
