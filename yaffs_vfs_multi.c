@@ -692,11 +692,9 @@ static void yaffs_remove_obj_callback(struct yaffs_obj *obj)
 	 * the search context to the next object to prevent a hanging pointer.
 	 */
 	list_for_each(i, search_contexts) {
-		if (i) {
-			sc = list_entry(i, struct yaffs_search_context, others);
-			if (sc->next_return == obj)
-				yaffs_search_advance(sc);
-		}
+		sc = list_entry(i, struct yaffs_search_context, others);
+		if (sc->next_return == obj)
+			yaffs_search_advance(sc);
 	}
 
 }
@@ -866,7 +864,7 @@ static void yaffs_evict_inode(struct inode *inode)
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_evict_inode: ino %d, count %d %s",
 		(int)inode->i_ino, atomic_read(&inode->i_count),
-		obj ? "object exists" : "null object"));
+		obj ? "object exists" : "null object");
 
 	if (!inode->i_nlink && !is_bad_inode(inode))
 		deleteme = 1;
@@ -1421,6 +1419,12 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 
 	obj = yaffs_dentry_to_obj(f->f_dentry);
 
+	if (!obj) {
+		yaffs_trace(YAFFS_TRACE_OS,
+			"yaffs_file_write: hey obj is null!");
+                return -EINVAL;
+        }
+
 	dev = obj->my_dev;
 
 	yaffs_gross_lock(dev);
@@ -1432,13 +1436,9 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 	else
 		ipos = *pos;
 
-	if (!obj)
-		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_file_write: hey obj is null!");
-	else
-		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_file_write about to write writing %u(%x) bytes to object %d at %d(%x)",
-			(unsigned)n, (unsigned)n, obj->obj_id, ipos, ipos);
+	yaffs_trace(YAFFS_TRACE_OS,
+		"yaffs_file_write about to write writing %u(%x) bytes to object %d at %d(%x)",
+		(unsigned)n, (unsigned)n, obj->obj_id, ipos, ipos);
 
 	n_written = yaffs_wr_file(obj, buf, ipos, n, 0);
 
@@ -2623,6 +2623,11 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	struct yaffs_linux_context *context_iterator;
 	struct list_head *l;
 
+	if (!sb) {
+		printk(KERN_INFO "yaffs: sb is NULL\n");
+		return NULL;
+        }
+
 	sb->s_magic = YAFFS_MAGIC;
 	sb->s_op = &yaffs_super_ops;
 	sb->s_flags |= MS_NOATIME;
@@ -2633,9 +2638,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	sb->s_export_op = &yaffs_export_ops;
 #endif
 
-	if (!sb)
-		printk(KERN_INFO "yaffs: sb is NULL\n");
-	else if (!sb->s_dev)
+	if (!sb->s_dev)
 		printk(KERN_INFO "yaffs: sb->s_dev is NULL\n");
 	else if (!yaffs_devname(sb, devname_buf))
 		printk(KERN_INFO "yaffs: devname is NULL\n");

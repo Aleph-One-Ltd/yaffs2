@@ -151,7 +151,7 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 	int ret_val;
 	struct yaffs_spare local_spare;
 
-	if (!spare && data) {
+	if (!spare) {
 		/* If we don't have a real spare, then we use a local one. */
 		/* Need this for the calculation of the ecc */
 		spare = &local_spare;
@@ -290,7 +290,7 @@ int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 	struct yaffs_tags tags;
 
 	yaffs_spare_init(&spare);
-
+        
 	if (ext_tags->is_deleted)
 		spare.page_status = 0;
 	else {

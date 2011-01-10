@@ -1532,7 +1532,7 @@ static struct yaffs_cache *yaffs_grab_chunk_cache(struct yaffs_dev *dev)
 
 			/* With locking we can't assume we can use entry zero */
 
-			the_obj = NULL;
+			the_obj = dev->cache[0].object;
 			usage = -1;
 			cache = NULL;
 			pushout = -1;
@@ -1952,16 +1952,12 @@ struct yaffs_obj *yaffs_find_by_number(struct yaffs_dev *dev, u32 number)
 
 	list_for_each(i, &dev->obj_bucket[bucket].list) {
 		/* Look if it is in the list */
-		if (i) {
-			in = list_entry(i, struct yaffs_obj, hash_link);
-			if (in->obj_id == number) {
-
-				/* Don't tell the VFS about this one if it is defered free */
-				if (in->defered_free)
-					return NULL;
-
-				return in;
-			}
+		in = list_entry(i, struct yaffs_obj, hash_link);
+		if (in->obj_id == number) {
+			/* Don't tell the VFS about this one if it is defered free */
+			if (in->defered_free)
+				return NULL;
+			return in;
 		}
 	}
 
@@ -4082,11 +4078,13 @@ static int yaffs_unlink_worker(struct yaffs_obj *obj)
 
 	int del_now = 0;
 
+	if(!obj)
+	        return YAFFS_FAIL;
+
 	if (!obj->my_inode)
 		del_now = 1;
 
-	if (obj)
-		yaffs_update_parent(obj->parent);
+	yaffs_update_parent(obj->parent);
 
 	if (obj->variant_type == YAFFS_OBJECT_TYPE_HARDLINK) {
 		return yaffs_del_link(obj);
@@ -4496,29 +4494,26 @@ struct yaffs_obj *yaffs_find_by_name(struct yaffs_obj *directory,
 	sum = yaffs_calc_name_sum(name);
 
 	list_for_each(i, &directory->variant.dir_variant.children) {
-		if (i) {
-			l = list_entry(i, struct yaffs_obj, siblings);
+		l = list_entry(i, struct yaffs_obj, siblings);
 
-			if (l->parent != directory)
-				YBUG();
+		if (l->parent != directory)
+			YBUG();
 
-			yaffs_check_obj_details_loaded(l);
+		yaffs_check_obj_details_loaded(l);
 
-			/* Special case for lost-n-found */
-			if (l->obj_id == YAFFS_OBJECTID_LOSTNFOUND) {
-				if (!strcmp(name, YAFFS_LOSTNFOUND_NAME))
-					return l;
-			} else if (l->sum == sum
-				   || l->hdr_chunk <= 0) {
-				/* LostnFound chunk called Objxxx
-				 * Do a real check
-				 */
-				yaffs_get_obj_name(l, buffer,
-						   YAFFS_MAX_NAME_LENGTH + 1);
-				if (strncmp
-				    (name, buffer, YAFFS_MAX_NAME_LENGTH) == 0)
-					return l;
-			}
+		/* Special case for lost-n-found */
+		if (l->obj_id == YAFFS_OBJECTID_LOSTNFOUND) {
+			if (!strcmp(name, YAFFS_LOSTNFOUND_NAME))
+				return l;
+		} else if (l->sum == sum
+			   || l->hdr_chunk <= 0) {
+			/* LostnFound chunk called Objxxx
+			 * Do a real check
+			 */
+			yaffs_get_obj_name(l, buffer,
+				YAFFS_MAX_NAME_LENGTH + 1);
+			if (strncmp(name, buffer, YAFFS_MAX_NAME_LENGTH) == 0)
+				return l;
 		}
 	}
 

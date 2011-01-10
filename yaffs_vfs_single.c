@@ -59,9 +59,6 @@
 
 #include <linux/statfs.h>
 
-#define UnlockPage(p) unlock_page(p)
-#define Page_Uptodate(page)	test_bit(PG_uptodate, &(page)->flags)
-
 #define yaffs_devname(sb, buf)	bdevname(sb->s_bdev, buf)
 
 #define YPROC_ROOT  NULL
@@ -786,11 +783,9 @@ static void yaffs_remove_obj_callback(struct yaffs_obj *obj)
 	 * the search context to the next object to prevent a hanging pointer.
 	 */
 	list_for_each(i, search_contexts) {
-		if (i) {
-			sc = list_entry(i, struct yaffs_search_context, others);
-			if (sc->next_return == obj)
-				yaffs_search_advance(sc);
-		}
+		sc = list_entry(i, struct yaffs_search_context, others);
+		if (sc->next_return == obj)
+			yaffs_search_advance(sc);
 	}
 
 }
@@ -1177,7 +1172,7 @@ static int yaffs_readpage_nolock(struct file *f, struct page *pg)
 static int yaffs_readpage_unlock(struct file *f, struct page *pg)
 {
 	int ret = yaffs_readpage_nolock(f, pg);
-	UnlockPage(pg);
+	unlock_page(pg);
 	return ret;
 }
 
@@ -1334,7 +1329,7 @@ static int yaffs_write_begin(struct file *filp, struct address_space *mapping,
 	}
 	yaffs_trace(YAFFS_TRACE_OS,
 		"start yaffs_write_begin index %d(%x) uptodate %d",
-		(int)index, (int)index, Page_Uptodate(pg) ? 1 : 0);
+		(int)index, (int)index, PageUptodate(pg) ? 1 : 0);
 
 	/* Get fs space */
 	space_held = yaffs_hold_space(filp);
@@ -1346,7 +1341,7 @@ static int yaffs_write_begin(struct file *filp, struct address_space *mapping,
 
 	/* Update page if required */
 
-	if (!Page_Uptodate(pg))
+	if (!PageUptodate(pg))
 		ret = yaffs_readpage_nolock(filp, pg);
 
 	if (ret)
@@ -1379,6 +1374,13 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 
 	obj = yaffs_dentry_to_obj(f->f_dentry);
 
+	if (!obj) {
+	        /* This should not happen */
+		yaffs_trace(YAFFS_TRACE_OS,
+			"yaffs_file_write: hey obj is null!");
+                return -ENINVAL;
+        }
+
 	dev = obj->my_dev;
 
 	yaffs_gross_lock(dev);
@@ -1390,13 +1392,9 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 	else
 		ipos = *pos;
 
-	if (!obj)
-		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_file_write: hey obj is null!");
-	else
-		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_file_write about to write writing %u(%x) bytes to object %d at %d(%x)",
-			(unsigned)n, (unsigned)n, obj->obj_id, ipos, ipos);
+	yaffs_trace(YAFFS_TRACE_OS,
+		"yaffs_file_write about to write writing %u(%x) bytes to object %d at %d(%x)",
+		(unsigned)n, (unsigned)n, obj->obj_id, ipos, ipos);
 
 	n_written = yaffs_wr_file(obj, buf, ipos, n, 0);
 
@@ -2030,6 +2028,11 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	struct yaffs_linux_context *context_iterator;
 	struct list_head *l;
 
+	if (!sb) {
+		printk(KERN_INFO "yaffs: sb is NULL\n");
+		return NULL;
+        }
+
 	sb->s_magic = YAFFS_MAGIC;
 	sb->s_op = &yaffs_super_ops;
 	sb->s_flags |= MS_NOATIME;
@@ -2038,9 +2041,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	sb->s_export_op = &yaffs_export_ops;
 
-	if (!sb)
-		printk(KERN_INFO "yaffs: sb is NULL\n");
-	else if (!sb->s_dev)
+	if (!sb->s_dev)
 		printk(KERN_INFO "yaffs: sb->s_dev is NULL\n");
 	else if (!yaffs_devname(sb, devname_buf))
 		printk(KERN_INFO "yaffs: devname is NULL\n");
