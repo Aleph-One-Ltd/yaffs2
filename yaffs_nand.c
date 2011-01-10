@@ -72,7 +72,7 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 	} else {
 		yaffs_trace(YAFFS_TRACE_ERROR, "Writing with no tags");
 		YBUG();
-		return FALSE;
+		return YAFFS_FAIL;
 	}
 
 	if (dev->param.write_chunk_tags_fn)
