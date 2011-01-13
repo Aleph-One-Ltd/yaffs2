@@ -52,7 +52,6 @@ void yaffs_clear_chunk_bit(struct yaffs_dev *dev, int blk, int chunk)
 	u8 *blk_bits = yaffs_block_bits(dev, blk);
 
 	yaffs_verify_chunk_bit_id(dev, blk, chunk);
-
 	blk_bits[chunk / 8] &= ~(1 << (chunk & 7));
 }
 
@@ -61,15 +60,14 @@ void yaffs_set_chunk_bit(struct yaffs_dev *dev, int blk, int chunk)
 	u8 *blk_bits = yaffs_block_bits(dev, blk);
 
 	yaffs_verify_chunk_bit_id(dev, blk, chunk);
-
 	blk_bits[chunk / 8] |= (1 << (chunk & 7));
 }
 
 int yaffs_check_chunk_bit(struct yaffs_dev *dev, int blk, int chunk)
 {
 	u8 *blk_bits = yaffs_block_bits(dev, blk);
-	yaffs_verify_chunk_bit_id(dev, blk, chunk);
 
+	yaffs_verify_chunk_bit_id(dev, blk, chunk);
 	return (blk_bits[chunk / 8] & (1 << (chunk & 7))) ? 1 : 0;
 }
 
@@ -77,6 +75,7 @@ int yaffs_still_some_chunks(struct yaffs_dev *dev, int blk)
 {
 	u8 *blk_bits = yaffs_block_bits(dev, blk);
 	int i;
+
 	for (i = 0; i < dev->chunk_bit_stride; i++) {
 		if (*blk_bits)
 			return 1;

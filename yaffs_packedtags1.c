@@ -25,15 +25,15 @@ void yaffs_pack_tags1(struct yaffs_packed_tags1 *pt,
 	pt->deleted = (t->is_deleted) ? 0 : 1;
 	pt->unused_stuff = 0;
 	pt->should_be_ff = 0xFFFFFFFF;
-
 }
 
 void yaffs_unpack_tags1(struct yaffs_ext_tags *t,
 			const struct yaffs_packed_tags1 *pt)
 {
-	static const u8 all_ff[] =
-	    { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0xff
+	static const u8 all_ff[12] = {
+		0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff,
+		0xff, 0xff, 0xff, 0xff
 	};
 
 	if (memcmp(all_ff, pt, sizeof(struct yaffs_packed_tags1))) {

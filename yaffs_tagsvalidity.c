@@ -23,5 +23,4 @@ void yaffs_init_tags(struct yaffs_ext_tags *tags)
 int yaffs_validate_tags(struct yaffs_ext_tags *tags)
 {
 	return (tags->validity0 == 0xAAAAAAAA && tags->validity1 == 0x55555555);
-
 }

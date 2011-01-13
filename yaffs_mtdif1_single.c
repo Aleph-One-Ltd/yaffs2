@@ -30,7 +30,6 @@
 #include "yaffs_packedtags1.h"
 #include "yaffs_tagscompat.h"	/* for yaffs_calc_tags_ecc */
 #include "yaffs_linux.h"
-
 #include "linux/kernel.h"
 #include "linux/version.h"
 #include "linux/types.h"
@@ -64,7 +63,7 @@
  * Returns YAFFS_OK or YAFFS_FAIL.
  */
 int nandmtd1_write_chunk_tags(struct yaffs_dev *dev,
-			      int nand_chunk, const u8 * data,
+			      int nand_chunk, const u8 *data,
 			      const struct yaffs_ext_tags *etags)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
@@ -94,11 +93,11 @@ int nandmtd1_write_chunk_tags(struct yaffs_dev *dev,
 		pt1.deleted = 0;
 	}
 #else
-	((u8 *) & pt1)[8] = 0xff;
+	((u8 *) &pt1)[8] = 0xff;
 	if (etags->is_deleted) {
 		memset(&pt1, 0xff, 8);
 		/* zero page_status byte to indicate deleted */
-		((u8 *) & pt1)[8] = 0;
+		((u8 *) &pt1)[8] = 0;
 	}
 #endif
 
@@ -107,7 +106,7 @@ int nandmtd1_write_chunk_tags(struct yaffs_dev *dev,
 	ops.len = (data) ? chunk_bytes : 0;
 	ops.ooblen = YTAG1_SIZE;
 	ops.datbuf = (u8 *) data;
-	ops.oobbuf = (u8 *) & pt1;
+	ops.oobbuf = (u8 *) &pt1;
 
 	retval = mtd->write_oob(mtd, addr, &ops);
 	if (retval) {
@@ -143,7 +142,7 @@ static int rettags(struct yaffs_ext_tags *etags, int ecc_result, int retval)
  * Returns YAFFS_OK or YAFFS_FAIL.
  */
 int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
-			     int nand_chunk, u8 * data,
+			     int nand_chunk, u8 *data,
 			     struct yaffs_ext_tags *etags)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
@@ -160,7 +159,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	ops.len = (data) ? chunk_bytes : 0;
 	ops.ooblen = YTAG1_SIZE;
 	ops.datbuf = data;
-	ops.oobbuf = (u8 *) & pt1;
+	ops.oobbuf = (u8 *) &pt1;
 
 	/* Read page and oob using MTD.
 	 * Check status and determine ECC result.
@@ -195,7 +194,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 
 	/* Check for a blank/erased chunk.
 	 */
-	if (yaffs_check_ff((u8 *) & pt1, 8)) {
+	if (yaffs_check_ff((u8 *) &pt1, 8)) {
 		/* when blank, upper layers want ecc_result to be <= NO_ERROR */
 		return rettags(etags, YAFFS_ECC_RESULT_NO_ERROR, YAFFS_OK);
 	}
@@ -207,7 +206,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	deleted = !pt1.deleted;
 	pt1.deleted = 1;
 #else
-	deleted = (hweight8(((u8 *) & pt1)[8]) < 7);
+	deleted = (hweight8(((u8 *) &pt1)[8]) < 7);
 #endif
 
 	/* Check the packed tags mini-ECC and correct if necessary/possible.

@@ -36,7 +36,7 @@ static int yaffs_skip_nand_verification(struct yaffs_dev *dev)
 	return !(yaffs_trace_mask & (YAFFS_TRACE_VERIFY_NAND));
 }
 
-static const char *block_state_name[] = {
+static const char * const block_state_name[] = {
 	"Unknown",
 	"Needs scanning",
 	"Scanning",
@@ -91,7 +91,6 @@ void yaffs_verify_blk(struct yaffs_dev *dev, struct yaffs_block_info *bi, int n)
 		yaffs_trace(YAFFS_TRACE_VERIFY,
 			"Block %d has inconsistent values pages_in_use %d counted chunk bits %d",
 			n, bi->pages_in_use, in_use);
-
 }
 
 void yaffs_verify_collected_blk(struct yaffs_dev *dev,
@@ -215,7 +214,7 @@ void yaffs_verify_oh(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh,
 			"Obj %d header name is NULL",
 			obj->obj_id);
 
-	if (tags->obj_id > 1 && ((u8) (oh->name[0])) == 0xff)	/* Trashed name */
+	if (tags->obj_id > 1 && ((u8) (oh->name[0])) == 0xff)	/* Junk name */
 		yaffs_trace(YAFFS_TRACE_VERIFY,
 			"Obj %d header name is 0xFF",
 			obj->obj_id);
@@ -271,10 +270,10 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 				yaffs_rd_chunk_tags_nand(dev, the_chunk, NULL,
 							 &tags);
 				if (tags.obj_id != obj_id || tags.chunk_id != i)
-				yaffs_trace(YAFFS_TRACE_VERIFY,
-					"Object %d chunk_id %d NAND mismatch chunk %d tags (%d:%d)",
-					 obj_id, i, the_chunk,
-					 tags.obj_id, tags.chunk_id);
+					yaffs_trace(YAFFS_TRACE_VERIFY,
+						"Object %d chunk_id %d NAND mismatch chunk %d tags (%d:%d)",
+						obj_id, i, the_chunk,
+						tags.obj_id, tags.chunk_id);
 			}
 		}
 	}
@@ -305,10 +304,8 @@ void yaffs_verify_special(struct yaffs_obj *obj)
 void yaffs_verify_obj(struct yaffs_obj *obj)
 {
 	struct yaffs_dev *dev;
-
 	u32 chunk_min;
 	u32 chunk_max;
-
 	u32 chunk_id_ok;
 	u32 chunk_in_range;
 	u32 chunk_wrongly_deleted;
@@ -414,7 +411,7 @@ void yaffs_verify_objects(struct yaffs_dev *dev)
 
 	for (i = 0; i < YAFFS_NOBJECT_BUCKETS; i++) {
 		list_for_each(lh, &dev->obj_bucket[i].list) {
-			obj = list_entry(lh, struct yaffs_obj, hash_link);	
+			obj = list_entry(lh, struct yaffs_obj, hash_link);
 			yaffs_verify_obj(obj);
 		}
 	}
@@ -424,7 +421,6 @@ void yaffs_verify_obj_in_dir(struct yaffs_obj *obj)
 {
 	struct list_head *lh;
 	struct yaffs_obj *list_obj;
-
 	int count = 0;
 
 	if (!obj) {
@@ -437,7 +433,7 @@ void yaffs_verify_obj_in_dir(struct yaffs_obj *obj)
 		return;
 
 	if (!obj->parent) {
-		yaffs_trace(YAFFS_TRACE_ALWAYS, "Object does not have parent" );
+		yaffs_trace(YAFFS_TRACE_ALWAYS, "Object does not have parent");
 		YBUG();
 		return;
 	}
@@ -514,7 +510,7 @@ void yaffs_verify_free_chunks(struct yaffs_dev *dev)
 
 	if (difference) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
-		 	"Freechunks verification failure %d %d %d",
+			"Freechunks verification failure %d %d %d",
 			dev->n_free_chunks, counted, difference);
 		yaffs_free_verification_failures++;
 	}

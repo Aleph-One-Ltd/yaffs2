@@ -18,16 +18,15 @@
 #include "yaffs_getblockinfo.h"
 
 int yaffs_rd_chunk_tags_nand(struct yaffs_dev *dev, int nand_chunk,
-			     u8 * buffer, struct yaffs_ext_tags *tags)
+			     u8 *buffer, struct yaffs_ext_tags *tags)
 {
 	int result;
 	struct yaffs_ext_tags local_tags;
-
 	int realigned_chunk = nand_chunk - dev->chunk_offset;
 
 	dev->n_page_reads++;
 
-	/* If there are no tags provided, use local tags to get prioritised gc working */
+	/* If there are no tags provided use local tags. */
 	if (!tags)
 		tags = &local_tags;
 
@@ -46,24 +45,22 @@ int yaffs_rd_chunk_tags_nand(struct yaffs_dev *dev, int nand_chunk,
 					  dev->param.chunks_per_block);
 		yaffs_handle_chunk_error(dev, bi);
 	}
-
 	return result;
 }
 
 int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
-			     int nand_chunk,
-			     const u8 * buffer, struct yaffs_ext_tags *tags)
+				int nand_chunk,
+				const u8 *buffer, struct yaffs_ext_tags *tags)
 {
-
 	dev->n_page_writes++;
-
 	nand_chunk -= dev->chunk_offset;
 
 	if (tags) {
 		tags->seq_number = dev->seq_number;
 		tags->chunk_used = 1;
 		if (!yaffs_validate_tags(tags)) {
-			yaffs_trace(YAFFS_TRACE_ERROR, "Writing uninitialised tags");
+			yaffs_trace(YAFFS_TRACE_ERROR,
+				"Writing uninitialised tags");
 			YBUG();
 		}
 		yaffs_trace(YAFFS_TRACE_WRITE,
@@ -77,7 +74,7 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 
 	if (dev->param.write_chunk_tags_fn)
 		return dev->param.write_chunk_tags_fn(dev, nand_chunk, buffer,
-						      tags);
+							tags);
 	else
 		return yaffs_tags_compat_wr(dev, nand_chunk, buffer, tags);
 }
@@ -85,7 +82,6 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 int yaffs_mark_bad(struct yaffs_dev *dev, int block_no)
 {
 	block_no -= dev->block_offset;
-
 	if (dev->param.bad_block_fn)
 		return dev->param.bad_block_fn(dev, block_no);
 	else
@@ -95,10 +91,9 @@ int yaffs_mark_bad(struct yaffs_dev *dev, int block_no)
 int yaffs_query_init_block_state(struct yaffs_dev *dev,
 				 int block_no,
 				 enum yaffs_block_state *state,
-				 u32 * seq_number)
+				 u32 *seq_number)
 {
 	block_no -= dev->block_offset;
-
 	if (dev->param.query_block_fn)
 		return dev->param.query_block_fn(dev, block_no, state,
 						 seq_number);
@@ -112,11 +107,8 @@ int yaffs_erase_block(struct yaffs_dev *dev, int flash_block)
 	int result;
 
 	flash_block -= dev->block_offset;
-
 	dev->n_erasures++;
-
 	result = dev->param.erase_fn(dev, flash_block);
-
 	return result;
 }
 

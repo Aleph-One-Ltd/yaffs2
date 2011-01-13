@@ -15,33 +15,27 @@
 
 #include "yportenv.h"
 #include "yaffs_trace.h"
-
 #include "yaffs_mtdif2.h"
-
+#include "yaffs_packedtags2.h"
+#include "yaffs_linux.h"
 #include "linux/mtd/mtd.h"
 #include "linux/types.h"
 #include "linux/time.h"
 
-#include "yaffs_packedtags2.h"
-
-#include "yaffs_linux.h"
 
 /* NB For use with inband tags....
- * We assume that the data buffer is of size total_bytes_per_chunk so that we can also
- * use it to load the tags.
+ * We assume that the data buffer is of size total_bytes_per_chunk so that
+ * we can also use it to load the tags.
  */
 int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
-			      const u8 * data,
+			      const u8 *data,
 			      const struct yaffs_ext_tags *tags)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
 	struct mtd_oob_ops ops;
 	int retval = 0;
-
 	loff_t addr;
-
 	struct yaffs_packed_tags2 pt;
-
 	int packed_tags_size =
 	    dev->param.no_tags_ecc ? sizeof(pt.t) : sizeof(pt);
 	void *packed_tags_ptr =
@@ -61,14 +55,15 @@ int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 		BUG();
 	else if (dev->param.inband_tags) {
 		struct yaffs_packed_tags2_tags_only *pt2tp;
+
 		pt2tp =
 		    (struct yaffs_packed_tags2_tags_only *)(data +
-							    dev->
-							    data_bytes_per_chunk);
+							dev->
+							data_bytes_per_chunk);
 		yaffs_pack_tags2_tags_only(pt2tp, tags);
 	} else {
 		yaffs_pack_tags2(&pt, tags, !dev->param.no_tags_ecc);
-        }
+	}
 
 	ops.mode = MTD_OOB_AUTO;
 	ops.ooblen = (dev->param.inband_tags) ? 0 : packed_tags_size;
@@ -85,19 +80,15 @@ int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 }
 
 int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
-			     u8 * data, struct yaffs_ext_tags *tags)
+			     u8 *data, struct yaffs_ext_tags *tags)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
 	struct mtd_oob_ops ops;
-
 	size_t dummy;
 	int retval = 0;
 	int local_data = 0;
-
 	loff_t addr = ((loff_t) nand_chunk) * dev->param.total_bytes_per_chunk;
-
 	struct yaffs_packed_tags2 pt;
-
 	int packed_tags_size =
 	    dev->param.no_tags_ecc ? sizeof(pt.t) : sizeof(pt);
 	void *packed_tags_ptr =
@@ -113,7 +104,6 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 			local_data = 1;
 			data = yaffs_get_temp_buffer(dev, __LINE__);
 		}
-
 	}
 
 	if (dev->param.inband_tags || (data && !tags))
@@ -133,8 +123,8 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 		if (tags) {
 			struct yaffs_packed_tags2_tags_only *pt2tp;
 			pt2tp =
-			    (struct yaffs_packed_tags2_tags_only *)&data[dev->
-									 data_bytes_per_chunk];
+				(struct yaffs_packed_tags2_tags_only *)
+					&data[dev->data_bytes_per_chunk];
 			yaffs_unpack_tags2_tags_only(tags, pt2tp);
 		}
 	} else {
@@ -169,6 +159,7 @@ int nandmtd2_mark_block_bad(struct yaffs_dev *dev, int block_no)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
 	int retval;
+
 	yaffs_trace(YAFFS_TRACE_MTD,
 		"nandmtd2_mark_block_bad %d", block_no);
 
@@ -181,7 +172,6 @@ int nandmtd2_mark_block_bad(struct yaffs_dev *dev, int block_no)
 		return YAFFS_OK;
 	else
 		return YAFFS_FAIL;
-
 }
 
 int nandmtd2_query_block(struct yaffs_dev *dev, int block_no,

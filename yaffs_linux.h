@@ -25,11 +25,11 @@ struct yaffs_linux_context {
 	struct task_struct *bg_thread;	/* Background thread for this device */
 	int bg_running;
 	struct mutex gross_lock;	/* Gross locking mutex*/
-	u8 *spare_buffer;	/* For mtdif2 use. Don't know the size of the buffer
+	u8 *spare_buffer;	/* For mtdif2 use. Don't know the buffer size
 				 * at compile time so we have to allocate it.
 				 */
 	struct list_head search_contexts;
-	void (*put_super_fn) (struct super_block * sb);
+	void (*put_super_fn) (struct super_block *sb);
 
 	struct task_struct *readdir_process;
 	unsigned mount_id;

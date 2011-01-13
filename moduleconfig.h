@@ -30,7 +30,7 @@
 /* #define CONFIG_YAFFS_DOES_ECC */
 
 /* Default: Selected */
-/* Meaning: Yaffs does its own ECC on tags for packed tags rather than use mtd */
+/* Meaning: Yaffs does ECC on tags for packed tags rather than use mtd */
 #define CONFIG_YAFFS_DOES_TAGS_ECC
 
 /* Default: Not selected */

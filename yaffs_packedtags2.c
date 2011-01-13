@@ -38,8 +38,8 @@
 #define EXTRA_OBJECT_TYPE_SHIFT (28)
 #define EXTRA_OBJECT_TYPE_MASK  ((0x0F) << EXTRA_OBJECT_TYPE_SHIFT)
 
-static void yaffs_dump_packed_tags2_tags_only(const struct
-					      yaffs_packed_tags2_tags_only *ptt)
+static void yaffs_dump_packed_tags2_tags_only(
+				const struct yaffs_packed_tags2_tags_only *ptt)
 {
 	yaffs_trace(YAFFS_TRACE_MTD,
 		"packed tags obj %d chunk %d byte %d seq %d",
@@ -108,9 +108,7 @@ void yaffs_pack_tags2(struct yaffs_packed_tags2 *pt,
 void yaffs_unpack_tags2_tags_only(struct yaffs_ext_tags *t,
 				  struct yaffs_packed_tags2_tags_only *ptt)
 {
-
 	memset(t, 0, sizeof(struct yaffs_ext_tags));
-
 	yaffs_init_tags(t);
 
 	if (ptt->seq_number != 0xFFFFFFFF) {
@@ -124,7 +122,6 @@ void yaffs_unpack_tags2_tags_only(struct yaffs_ext_tags *t,
 		t->seq_number = ptt->seq_number;
 
 		/* Do extra header info stuff */
-
 		if (ptt->chunk_id & EXTRA_HEADER_INFO_FLAG) {
 			t->chunk_id = 0;
 			t->n_bytes = 0;
@@ -146,16 +143,13 @@ void yaffs_unpack_tags2_tags_only(struct yaffs_ext_tags *t,
 				t->extra_length = ptt->n_bytes;
 		}
 	}
-
 	yaffs_dump_packed_tags2_tags_only(ptt);
 	yaffs_dump_tags2(t);
-
 }
 
 void yaffs_unpack_tags2(struct yaffs_ext_tags *t, struct yaffs_packed_tags2 *pt,
 			int tags_ecc)
 {
-
 	enum yaffs_ecc_result ecc_result = YAFFS_ECC_RESULT_NO_ERROR;
 
 	if (pt->t.seq_number != 0xFFFFFFFF && tags_ecc) {
@@ -164,14 +158,12 @@ void yaffs_unpack_tags2(struct yaffs_ext_tags *t, struct yaffs_packed_tags2 *pt,
 		struct yaffs_ecc_other ecc;
 		int result;
 		yaffs_ecc_calc_other((unsigned char *)&pt->t,
-				     sizeof(struct
-					    yaffs_packed_tags2_tags_only),
-				     &ecc);
+				sizeof(struct yaffs_packed_tags2_tags_only),
+				&ecc);
 		result =
 		    yaffs_ecc_correct_other((unsigned char *)&pt->t,
-					    sizeof(struct
-						   yaffs_packed_tags2_tags_only),
-					    &pt->ecc, &ecc);
+				sizeof(struct yaffs_packed_tags2_tags_only),
+				&pt->ecc, &ecc);
 		switch (result) {
 		case 0:
 			ecc_result = YAFFS_ECC_RESULT_NO_ERROR;
@@ -186,7 +178,6 @@ void yaffs_unpack_tags2(struct yaffs_ext_tags *t, struct yaffs_packed_tags2 *pt,
 			ecc_result = YAFFS_ECC_RESULT_UNKNOWN;
 		}
 	}
-
 	yaffs_unpack_tags2_tags_only(t, &pt->t);
 
 	t->ecc_result = ecc_result;

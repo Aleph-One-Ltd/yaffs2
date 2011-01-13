@@ -17,6 +17,7 @@
 #include "yportenv.h"
 
 #ifdef CONFIG_YAFFS_KMALLOC_ALLOCATOR
+/* This is an alternative debug allocator. Don't use for production code. */
 
 void yaffs_deinit_raw_tnodes_and_objs(struct yaffs_dev *dev)
 {
@@ -30,7 +31,7 @@ void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev)
 
 struct yaffs_tnode *yaffs_alloc_raw_tnode(struct yaffs_dev *dev)
 {
-	return (struct yaffs_tnode *)kmalloc(dev->tnode_size, GFP_NOFS);
+	return kmalloc(dev->tnode_size, GFP_NOFS);
 }
 
 void yaffs_free_raw_tnode(struct yaffs_dev *dev, struct yaffs_tnode *tn)
@@ -52,7 +53,7 @@ void yaffs_deinit_raw_objs(struct yaffs_dev *dev)
 struct yaffs_obj *yaffs_alloc_raw_obj(struct yaffs_dev *dev)
 {
 	dev = dev;
-	return (struct yaffs_obj *)kmalloc(sizeof(struct yaffs_obj));
+	return kmalloc(sizeof(struct yaffs_obj));
 }
 
 void yaffs_free_raw_obj(struct yaffs_dev *dev, struct yaffs_obj *obj)
@@ -89,10 +90,8 @@ struct yaffs_allocator {
 
 static void yaffs_deinit_raw_tnodes(struct yaffs_dev *dev)
 {
-
 	struct yaffs_allocator *allocator =
 	    (struct yaffs_allocator *)dev->allocator;
-
 	struct yaffs_tnode_list *tmp;
 
 	if (!allocator) {
@@ -106,7 +105,6 @@ static void yaffs_deinit_raw_tnodes(struct yaffs_dev *dev)
 		kfree(allocator->alloc_tnode_list->tnodes);
 		kfree(allocator->alloc_tnode_list);
 		allocator->alloc_tnode_list = tmp;
-
 	}
 
 	allocator->free_tnodes = NULL;
@@ -148,7 +146,6 @@ static int yaffs_create_tnodes(struct yaffs_dev *dev, int n_tnodes)
 		return YAFFS_OK;
 
 	/* make these things */
-
 	new_tnodes = kmalloc(n_tnodes * dev->tnode_size, GFP_NOFS);
 	mem = (u8 *) new_tnodes;
 
@@ -176,7 +173,6 @@ static int yaffs_create_tnodes(struct yaffs_dev *dev, int n_tnodes)
 	 * NB If we can't add this to the management list it isn't fatal
 	 * but it just means we can't free this bunch of tnodes later.
 	 */
-
 	tnl = kmalloc(sizeof(struct yaffs_tnode_list), GFP_NOFS);
 	if (!tnl) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
@@ -188,7 +184,7 @@ static int yaffs_create_tnodes(struct yaffs_dev *dev, int n_tnodes)
 		allocator->alloc_tnode_list = tnl;
 	}
 
-	yaffs_trace(YAFFS_TRACE_ALLOCATE,"Tnodes added");
+	yaffs_trace(YAFFS_TRACE_ALLOCATE, "Tnodes added");
 
 	return YAFFS_OK;
 }
@@ -274,7 +270,6 @@ static void yaffs_deinit_raw_objs(struct yaffs_dev *dev)
 static int yaffs_create_free_objs(struct yaffs_dev *dev, int n_obj)
 {
 	struct yaffs_allocator *allocator = dev->allocator;
-
 	int i;
 	struct yaffs_obj *new_objs;
 	struct yaffs_obj_list *list;
@@ -292,14 +287,10 @@ static int yaffs_create_free_objs(struct yaffs_dev *dev, int n_obj)
 	list = kmalloc(sizeof(struct yaffs_obj_list), GFP_NOFS);
 
 	if (!new_objs || !list) {
-		if (new_objs) {
-			kfree(new_objs);
-			new_objs = NULL;
-		}
-		if (list) {
-			kfree(list);
-			list = NULL;
-		}
+		kfree(new_objs);
+		new_objs = NULL;
+		kfree(list);
+		list = NULL;
 		yaffs_trace(YAFFS_TRACE_ALLOCATE,
 			"Could not allocate more objects");
 		return YAFFS_FAIL;

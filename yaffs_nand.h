@@ -18,11 +18,11 @@
 #include "yaffs_guts.h"
 
 int yaffs_rd_chunk_tags_nand(struct yaffs_dev *dev, int nand_chunk,
-			     u8 * buffer, struct yaffs_ext_tags *tags);
+			     u8 *buffer, struct yaffs_ext_tags *tags);
 
 int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 			     int nand_chunk,
-			     const u8 * buffer, struct yaffs_ext_tags *tags);
+			     const u8 *buffer, struct yaffs_ext_tags *tags);
 
 int yaffs_mark_bad(struct yaffs_dev *dev, int block_no);
 
