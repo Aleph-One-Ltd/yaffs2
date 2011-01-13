@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 			printf("| %d ",get_counter(y));
 		}
 		printf("\n");
+		sleep(1);
 	}
 
 }
