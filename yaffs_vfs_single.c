@@ -1349,7 +1349,7 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 		/* This should not happen */
 		yaffs_trace(YAFFS_TRACE_OS,
 			"yaffs_file_write: hey obj is null!");
-		return -ENINVAL;
+		return -EINVAL;
 	}
 
 	dev = obj->my_dev;
@@ -2065,21 +2065,21 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	yaffs_trace(YAFFS_TRACE_OS, " writeoob %p", mtd->write_oob);
 	yaffs_trace(YAFFS_TRACE_OS, " block_isbad %p", mtd->block_isbad);
 	yaffs_trace(YAFFS_TRACE_OS, " block_markbad %p", mtd->block_markbad);
-	yaffs_trace(YAFFS_TRACE_OS, " write_size %d", mtd->write_size);
+	yaffs_trace(YAFFS_TRACE_OS, " writesize %d", mtd->writesize);
 	yaffs_trace(YAFFS_TRACE_OS, " oobsize %d", mtd->oobsize);
 	yaffs_trace(YAFFS_TRACE_OS, " erasesize %d", mtd->erasesize);
 	yaffs_trace(YAFFS_TRACE_OS, " size %lld", mtd->size);
 
 #ifdef CONFIG_YAFFS_AUTO_YAFFS2
 
-	if (yaffs_version == 1 && mtd->write_size >= 2048) {
+	if (yaffs_version == 1 && mtd->writesize >= 2048) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS, "auto selecting yaffs2");
 		yaffs_version = 2;
 	}
 
 	/* Added NCB 26/5/2006 for completeness */
 	if (yaffs_version == 2 && !options.inband_tags &&
-		mtd->write_size == 512) {
+		mtd->writesize == 512) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS, "auto selecting yaffs1");
 		yaffs_version = 1;
 	}
@@ -2097,7 +2097,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 			return NULL;
 		}
 
-		if ((mtd->write_size < YAFFS_MIN_YAFFS2_CHUNK_SIZE ||
+		if ((mtd->writesize < YAFFS_MIN_YAFFS2_CHUNK_SIZE ||
 		     mtd->oobsize < YAFFS_MIN_YAFFS2_SPARE_SIZE) &&
 		    !options.inband_tags) {
 			yaffs_trace(YAFFS_TRACE_ALWAYS,
@@ -2114,7 +2114,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 			return NULL;
 		}
 
-		if (mtd->write_size < YAFFS_BYTES_PER_CHUNK ||
+		if (mtd->writesize < YAFFS_BYTES_PER_CHUNK ||
 		    mtd->oobsize != YAFFS_BYTES_PER_SPARE) {
 			yaffs_trace(YAFFS_TRACE_ALWAYS,
 				"MTD device does not support have the right page sizes");
