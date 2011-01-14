@@ -1645,8 +1645,10 @@ static void yaffs_free_obj(struct yaffs_obj *obj)
 	yaffs_trace(YAFFS_TRACE_OS, "FreeObject %p inode %p",
 		obj, obj->my_inode);
 
-	if (!obj)
+	if (!obj) {
 		YBUG();
+		return;
+	}
 	if (obj->parent)
 		YBUG();
 	if (!list_empty(&obj->siblings))
@@ -4080,10 +4082,14 @@ int yaffs_rename_obj(struct yaffs_obj *old_dir, const YCHAR *old_name,
 	int result;
 	struct yaffs_dev *dev;
 
-	if (!old_dir || old_dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
+	if (!old_dir || old_dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
 		YBUG();
-	if (!new_dir || new_dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
+		return YAFFS_FAIL;
+	}
+	if (!new_dir || new_dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
 		YBUG();
+		return YAFFS_FAIL;
+	}
 
 	dev = old_dir->my_dev;
 
@@ -4219,17 +4225,13 @@ static void yaffs_strip_deleted_objs(struct yaffs_dev *dev)
 	/* Soft delete all the unlinked files */
 	list_for_each_safe(i, n,
 			   &dev->unlinked_dir->variant.dir_variant.children) {
-		if (i) {
-			l = list_entry(i, struct yaffs_obj, siblings);
-			yaffs_del_obj(l);
-		}
+		l = list_entry(i, struct yaffs_obj, siblings);
+		yaffs_del_obj(l);
 	}
 
 	list_for_each_safe(i, n, &dev->del_dir->variant.dir_variant.children) {
-		if (i) {
-			l = list_entry(i, struct yaffs_obj, siblings);
-			yaffs_del_obj(l);
-		}
+		l = list_entry(i, struct yaffs_obj, siblings);
+		yaffs_del_obj(l);
 	}
 }
 
@@ -4277,46 +4279,42 @@ static void yaffs_fix_hanging_objs(struct yaffs_dev *dev)
 
 	for (i = 0; i < YAFFS_NOBJECT_BUCKETS; i++) {
 		list_for_each_safe(lh, n, &dev->obj_bucket[i].list) {
-			if (lh) {
-				obj =
-				    list_entry(lh, struct yaffs_obj, hash_link);
-				parent = obj->parent;
+			obj = list_entry(lh, struct yaffs_obj, hash_link);
+			parent = obj->parent;
 
-				if (yaffs_has_null_parent(dev, obj)) {
-					/* These directories are not hanging */
-					hanging = 0;
-				} else if (!parent
-					   || parent->variant_type !=
-					   YAFFS_OBJECT_TYPE_DIRECTORY) {
+			if (yaffs_has_null_parent(dev, obj)) {
+				/* These directories are not hanging */
+				hanging = 0;
+			} else if (!parent ||
+				   parent->variant_type !=
+				   YAFFS_OBJECT_TYPE_DIRECTORY) {
+				hanging = 1;
+			} else if (yaffs_has_null_parent(dev, parent)) {
+				hanging = 0;
+			} else {
+				/*
+				 * Need to follow the parent chain to
+				 * see if it is hanging.
+				 */
+				hanging = 0;
+				depth_limit = 100;
+
+				while (parent != dev->root_dir &&
+				       parent->parent &&
+				       parent->parent->variant_type ==
+				       YAFFS_OBJECT_TYPE_DIRECTORY &&
+				       depth_limit > 0) {
+					parent = parent->parent;
+					depth_limit--;
+				}
+				if (parent != dev->root_dir)
 					hanging = 1;
-				} else if (yaffs_has_null_parent(dev, parent)) {
-					hanging = 0;
-				} else {
-					/*
-					 * Need to follow the parent chain to
-					 * see if it is hanging.
-					 */
-					hanging = 0;
-					depth_limit = 100;
-
-					while (parent != dev->root_dir &&
-					       parent->parent &&
-					       parent->parent->variant_type ==
-					       YAFFS_OBJECT_TYPE_DIRECTORY &&
-					       depth_limit > 0) {
-						parent = parent->parent;
-						depth_limit--;
-					}
-					if (parent != dev->root_dir)
-						hanging = 1;
-				}
-				if (hanging) {
-					yaffs_trace(YAFFS_TRACE_SCAN,
-						"Hanging object %d moved to lost and found",
-						obj->obj_id);
-					yaffs_add_obj_to_dir(dev->lost_n_found,
-							     obj);
-				}
+			}
+			if (hanging) {
+				yaffs_trace(YAFFS_TRACE_SCAN,
+					"Hanging object %d moved to lost and found",
+					obj->obj_id);
+				yaffs_add_obj_to_dir(dev->lost_n_found, obj);
 			}
 		}
 	}
@@ -4335,15 +4333,13 @@ static void yaffs_del_dir_contents(struct yaffs_obj *dir)
 		YBUG();
 
 	list_for_each_safe(lh, n, &dir->variant.dir_variant.children) {
-		if (lh) {
-			obj = list_entry(lh, struct yaffs_obj, siblings);
-			if (obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY)
-				yaffs_del_dir_contents(obj);
-			yaffs_trace(YAFFS_TRACE_SCAN,
-				"Deleting lost_found object %d",
-				obj->obj_id);
-			yaffs_unlink_obj(obj);
-		}
+		obj = list_entry(lh, struct yaffs_obj, siblings);
+		if (obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY)
+			yaffs_del_dir_contents(obj);
+		yaffs_trace(YAFFS_TRACE_SCAN,
+			"Deleting lost_found object %d",
+			obj->obj_id);
+		yaffs_unlink_obj(obj);
 	}
 }
 
@@ -4559,6 +4555,8 @@ unsigned yaffs_get_obj_type(struct yaffs_obj *obj)
 			return DT_BLK;
 		if (S_ISSOCK(obj->yst_mode))
 			return DT_SOCK;
+		return DT_REG;
+		break;
 	default:
 		return DT_REG;
 		break;
