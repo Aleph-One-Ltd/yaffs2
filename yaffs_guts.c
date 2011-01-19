@@ -1640,15 +1640,15 @@ static void yaffs_unhash_obj(struct yaffs_obj *obj)
 /*  FreeObject frees up a Object and puts it back on the free list */
 static void yaffs_free_obj(struct yaffs_obj *obj)
 {
-	struct yaffs_dev *dev = obj->my_dev;
-
-	yaffs_trace(YAFFS_TRACE_OS, "FreeObject %p inode %p",
-		obj, obj->my_inode);
+	struct yaffs_dev *dev;
 
 	if (!obj) {
 		YBUG();
 		return;
 	}
+	dev = obj->my_dev;
+	yaffs_trace(YAFFS_TRACE_OS, "FreeObject %p inode %p",
+		obj, obj->my_inode);
 	if (obj->parent)
 		YBUG();
 	if (!list_empty(&obj->siblings))
