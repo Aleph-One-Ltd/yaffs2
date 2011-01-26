@@ -16,54 +16,6 @@
 #include "yaffs_trace.h"
 #include "yportenv.h"
 
-#ifdef CONFIG_YAFFS_KMALLOC_ALLOCATOR
-/* This is an alternative debug allocator. Don't use for production code. */
-
-void yaffs_deinit_raw_tnodes_and_objs(struct yaffs_dev *dev)
-{
-	dev = dev;
-}
-
-void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev)
-{
-	dev = dev;
-}
-
-struct yaffs_tnode *yaffs_alloc_raw_tnode(struct yaffs_dev *dev)
-{
-	return kmalloc(dev->tnode_size, GFP_NOFS);
-}
-
-void yaffs_free_raw_tnode(struct yaffs_dev *dev, struct yaffs_tnode *tn)
-{
-	dev = dev;
-	kfree(tn);
-}
-
-void yaffs_init_raw_objs(struct yaffs_dev *dev)
-{
-	dev = dev;
-}
-
-void yaffs_deinit_raw_objs(struct yaffs_dev *dev)
-{
-	dev = dev;
-}
-
-struct yaffs_obj *yaffs_alloc_raw_obj(struct yaffs_dev *dev)
-{
-	dev = dev;
-	return kmalloc(sizeof(struct yaffs_obj));
-}
-
-void yaffs_free_raw_obj(struct yaffs_dev *dev, struct yaffs_obj *obj)
-{
-
-	dev = dev;
-	kfree(obj);
-}
-
-#else
 
 struct yaffs_tnode_list {
 	struct yaffs_tnode_list *next;
@@ -384,4 +336,3 @@ void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev)
 	}
 }
 
-#endif
