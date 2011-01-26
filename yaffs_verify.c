@@ -425,7 +425,7 @@ void yaffs_verify_obj_in_dir(struct yaffs_obj *obj)
 
 	if (!obj) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS, "No object to verify");
-		YBUG();
+		BUG();
 		return;
 	}
 
@@ -434,13 +434,13 @@ void yaffs_verify_obj_in_dir(struct yaffs_obj *obj)
 
 	if (!obj->parent) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS, "Object does not have parent");
-		YBUG();
+		BUG();
 		return;
 	}
 
 	if (obj->parent->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS, "Parent is not directory");
-		YBUG();
+		BUG();
 	}
 
 	/* Iterate through the objects in each hash entry */
@@ -456,7 +456,7 @@ void yaffs_verify_obj_in_dir(struct yaffs_obj *obj)
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"Object in directory %d times",
 			count);
-		YBUG();
+		BUG();
 	}
 }
 
@@ -466,7 +466,7 @@ void yaffs_verify_dir(struct yaffs_obj *directory)
 	struct yaffs_obj *list_obj;
 
 	if (!directory) {
-		YBUG();
+		BUG();
 		return;
 	}
 
@@ -477,7 +477,7 @@ void yaffs_verify_dir(struct yaffs_obj *directory)
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"Directory has wrong type: %d",
 			directory->variant_type);
-		YBUG();
+		BUG();
 	}
 
 	/* Iterate through the objects in each hash entry */
@@ -488,7 +488,7 @@ void yaffs_verify_dir(struct yaffs_obj *directory)
 			yaffs_trace(YAFFS_TRACE_ALWAYS,
 				"Object in directory list has wrong parent %p",
 				list_obj->parent);
-			YBUG();
+			BUG();
 		}
 		yaffs_verify_obj_in_dir(list_obj);
 	}

@@ -161,12 +161,12 @@ int ynorif1_WriteChunkToNAND(struct yaffs_dev *dev,int nand_chunk,const u8 *data
          */
          
         if(sizeof(struct yaffs_spare) != 16)
-                YBUG();
+                BUG();
         
         if(data && spare)
         {
                 if(spare->page_status != 0xff)
-                        YBUG();
+                        BUG();
                 /* Write a pre-marker */
                 memset(&tmpSpare,0xff,sizeof(tmpSpare));
                 tmpSpare.page_status = YNOR_PREMARKER;
@@ -196,7 +196,7 @@ int ynorif1_WriteChunkToNAND(struct yaffs_dev *dev,int nand_chunk,const u8 *data
                 ynorif1_FlashWrite32(spareAddr,(u32 *)&tmpSpare,16/ 4);
         }
         else {
-                YBUG();
+                BUG();
         }
         
 

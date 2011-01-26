@@ -27,7 +27,7 @@ static inline struct yaffs_block_info *yaffs_get_block_info(struct yaffs_dev
 		yaffs_trace(YAFFS_TRACE_ERROR,
 			"**>> yaffs: get_block_info block %d is not valid",
 			blk);
-		YBUG();
+		BUG();
 	}
 	return &dev->block_info[blk - dev->internal_start_block];
 }

@@ -278,8 +278,8 @@ struct iattr {
 #define Y_DUMP_STACK() do { } while (0)
 #endif
 
-#ifndef YBUG
-#define YBUG() do {\
+#ifndef BUG
+#define BUG() do {\
 	yaffs_trace(YAFFS_TRACE_BUG,\
 		"==>> yaffs bug: " __FILE__ " %d",\
 		__LINE__);\

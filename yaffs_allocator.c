@@ -47,7 +47,7 @@ static void yaffs_deinit_raw_tnodes(struct yaffs_dev *dev)
 	struct yaffs_tnode_list *tmp;
 
 	if (!allocator) {
-		YBUG();
+		BUG();
 		return;
 	}
 
@@ -74,7 +74,7 @@ static void yaffs_init_raw_tnodes(struct yaffs_dev *dev)
 		allocator->n_free_tnodes = 0;
 		allocator->n_tnodes_created = 0;
 	} else {
-		YBUG();
+		BUG();
 	}
 }
 
@@ -90,7 +90,7 @@ static int yaffs_create_tnodes(struct yaffs_dev *dev, int n_tnodes)
 	struct yaffs_tnode_list *tnl;
 
 	if (!allocator) {
-		YBUG();
+		BUG();
 		return YAFFS_FAIL;
 	}
 
@@ -148,7 +148,7 @@ struct yaffs_tnode *yaffs_alloc_raw_tnode(struct yaffs_dev *dev)
 	struct yaffs_tnode *tn = NULL;
 
 	if (!allocator) {
-		YBUG();
+		BUG();
 		return NULL;
 	}
 
@@ -171,7 +171,7 @@ void yaffs_free_raw_tnode(struct yaffs_dev *dev, struct yaffs_tnode *tn)
 	struct yaffs_allocator *allocator = dev->allocator;
 
 	if (!allocator) {
-		YBUG();
+		BUG();
 		return;
 	}
 
@@ -192,7 +192,7 @@ static void yaffs_init_raw_objs(struct yaffs_dev *dev)
 		allocator->free_objs = NULL;
 		allocator->n_free_objects = 0;
 	} else {
-		YBUG();
+		BUG();
 	}
 }
 
@@ -202,7 +202,7 @@ static void yaffs_deinit_raw_objs(struct yaffs_dev *dev)
 	struct yaffs_obj_list *tmp;
 
 	if (!allocator) {
-		YBUG();
+		BUG();
 		return;
 	}
 
@@ -227,7 +227,7 @@ static int yaffs_create_free_objs(struct yaffs_dev *dev, int n_obj)
 	struct yaffs_obj_list *list;
 
 	if (!allocator) {
-		YBUG();
+		BUG();
 		return YAFFS_FAIL;
 	}
 
@@ -274,7 +274,7 @@ struct yaffs_obj *yaffs_alloc_raw_obj(struct yaffs_dev *dev)
 	struct yaffs_allocator *allocator = dev->allocator;
 
 	if (!allocator) {
-		YBUG();
+		BUG();
 		return obj;
 	}
 
@@ -298,7 +298,7 @@ void yaffs_free_raw_obj(struct yaffs_dev *dev, struct yaffs_obj *obj)
 	struct yaffs_allocator *allocator = dev->allocator;
 
 	if (!allocator)
-		YBUG();
+		BUG();
 	else {
 		/* Link into the free list. */
 		obj->siblings.next = (struct list_head *)(allocator->free_objs);
@@ -316,7 +316,7 @@ void yaffs_deinit_raw_tnodes_and_objs(struct yaffs_dev *dev)
 		kfree(dev->allocator);
 		dev->allocator = NULL;
 	} else {
-		YBUG();
+		BUG();
 	}
 }
 
@@ -332,7 +332,7 @@ void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev)
 			yaffs_init_raw_objs(dev);
 		}
 	} else {
-		YBUG();
+		BUG();
 	}
 }
 

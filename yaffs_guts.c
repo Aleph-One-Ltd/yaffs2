@@ -1089,7 +1089,7 @@ int yaffs_put_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 			yaffs_trace(YAFFS_TRACE_ERROR,
 				"yaffs tragedy:attempt to put data chunk into a non-file"
 				);
-			YBUG();
+			BUG();
 		}
 
 		yaffs_chunk_del(dev, nand_chunk, 1, __LINE__);
@@ -1290,19 +1290,19 @@ void yaffs_add_obj_to_dir(struct yaffs_obj *directory, struct yaffs_obj *obj)
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"tragedy: Trying to add an object to a null pointer directory"
 			);
-		YBUG();
+		BUG();
 		return;
 	}
 	if (directory->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"tragedy: Trying to add an object to a non-directory"
 			);
-		YBUG();
+		BUG();
 	}
 
 	if (obj->siblings.prev == NULL) {
 		/* Not initialised */
-		YBUG();
+		BUG();
 	}
 
 	yaffs_verify_dir(directory);
@@ -1339,7 +1339,7 @@ static int yaffs_change_obj_name(struct yaffs_obj *obj,
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"tragedy: yaffs_change_obj_name: new_dir is not a directory"
 			);
-		YBUG();
+		BUG();
 	}
 
 	/* TODO: Do we need this different handling for YAFFS2 and YAFFS1?? */
@@ -1643,16 +1643,16 @@ static void yaffs_free_obj(struct yaffs_obj *obj)
 	struct yaffs_dev *dev;
 
 	if (!obj) {
-		YBUG();
+		BUG();
 		return;
 	}
 	dev = obj->my_dev;
 	yaffs_trace(YAFFS_TRACE_OS, "FreeObject %p inode %p",
 		obj, obj->my_inode);
 	if (obj->parent)
-		YBUG();
+		BUG();
 	if (!list_empty(&obj->siblings))
-		YBUG();
+		BUG();
 
 	if (obj->my_inode) {
 		/* We're still hooked up to a cached inode.
@@ -3041,7 +3041,7 @@ static int yaffs_wr_data_obj(struct yaffs_obj *in, int inode_chunk,
 		yaffs_trace(YAFFS_TRACE_ERROR,
 		  "Writing %d bytes to chunk!!!!!!!!!",
 		   n_bytes);
-		YBUG();
+		BUG();
 	}
 
 	new_chunk_id =
@@ -3591,7 +3591,7 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 
 			if (n_writeback < 0 ||
 			    n_writeback > dev->data_bytes_per_chunk)
-				YBUG();
+				BUG();
 
 		} else {
 			n_copy = dev->data_bytes_per_chunk - start;
@@ -4083,11 +4083,11 @@ int yaffs_rename_obj(struct yaffs_obj *old_dir, const YCHAR *old_name,
 	struct yaffs_dev *dev;
 
 	if (!old_dir || old_dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
-		YBUG();
+		BUG();
 		return YAFFS_FAIL;
 	}
 	if (!new_dir || new_dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
-		YBUG();
+		BUG();
 		return YAFFS_FAIL;
 	}
 
@@ -4330,7 +4330,7 @@ static void yaffs_del_dir_contents(struct yaffs_obj *dir)
 	struct list_head *n;
 
 	if (dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
-		YBUG();
+		BUG();
 
 	list_for_each_safe(lh, n, &dir->variant.dir_variant.children) {
 		obj = list_entry(lh, struct yaffs_obj, siblings);
@@ -4364,14 +4364,14 @@ struct yaffs_obj *yaffs_find_by_name(struct yaffs_obj *directory,
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"tragedy: yaffs_find_by_name: null pointer directory"
 			);
-		YBUG();
+		BUG();
 		return NULL;
 	}
 	if (directory->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"tragedy: yaffs_find_by_name: non-directory"
 			);
-		YBUG();
+		BUG();
 	}
 
 	sum = yaffs_calc_name_sum(name);
@@ -4380,7 +4380,7 @@ struct yaffs_obj *yaffs_find_by_name(struct yaffs_obj *directory,
 		l = list_entry(i, struct yaffs_obj, siblings);
 
 		if (l->parent != directory)
-			YBUG();
+			BUG();
 
 		yaffs_check_obj_details_loaded(l);
 

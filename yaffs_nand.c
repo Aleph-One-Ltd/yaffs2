@@ -61,14 +61,14 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 		if (!yaffs_validate_tags(tags)) {
 			yaffs_trace(YAFFS_TRACE_ERROR,
 				"Writing uninitialised tags");
-			YBUG();
+			BUG();
 		}
 		yaffs_trace(YAFFS_TRACE_WRITE,
 			"Writing chunk %d tags %d %d",
 			nand_chunk, tags->obj_id, tags->chunk_id);
 	} else {
 		yaffs_trace(YAFFS_TRACE_ERROR, "Writing with no tags");
-		YBUG();
+		BUG();
 		return YAFFS_FAIL;
 	}
 

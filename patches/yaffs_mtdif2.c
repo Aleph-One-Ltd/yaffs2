@@ -48,7 +48,7 @@ void nandmtd2_pt2buf(struct yaffs_dev *dev, yaffs_PackedTags2 *pt, int is_raw)
 
 		if (n == 0) {
 			T(YAFFS_TRACE_ERROR, (TSTR("No OOB space for tags" TENDSTR)));
-			YBUG();
+			BUG();
 		}
 
 		for (i = 0; i < sizeof(yaffs_PackedTags2); i++) {
@@ -58,7 +58,7 @@ void nandmtd2_pt2buf(struct yaffs_dev *dev, yaffs_PackedTags2 *pt, int is_raw)
 				n = mtd->oobinfo.oobfree[j][1];
 				if (n == 0) {
 					T(YAFFS_TRACE_ERROR, (TSTR("No OOB space for tags" TENDSTR)));
-					YBUG();
+					BUG();
 				}
 			}
 			dev->spareBuffer[k] = ptab[i];
@@ -86,7 +86,7 @@ void nandmtd2_buf2pt(struct yaffs_dev *dev, yaffs_PackedTags2 *pt, int is_raw)
 
 		if (n == 0) {
 			T(YAFFS_TRACE_ERROR, (TSTR("No space in OOB for tags" TENDSTR)));
-			YBUG();
+			BUG();
 		}
 
 		for (i = 0; i < sizeof(yaffs_PackedTags2); i++) {
@@ -96,7 +96,7 @@ void nandmtd2_buf2pt(struct yaffs_dev *dev, yaffs_PackedTags2 *pt, int is_raw)
 				n = mtd->oobinfo.oobfree[j][1];
 				if (n == 0) {
 					T(YAFFS_TRACE_ERROR, (TSTR("No space in OOB for tags" TENDSTR)));
-					YBUG();
+					BUG();
 				}
 			}
 			ptab[i] = dev->spareBuffer[k];
@@ -140,7 +140,7 @@ int nandmtd2_WriteChunkWithTagsToNAND(struct yaffs_dev * dev, int nand_chunk,
 		T(YAFFS_TRACE_ALWAYS,
 		  (TSTR
 		  ("Write chunk with null tags or data!" TENDSTR)));
-		YBUG();
+		BUG();
  	}
 
 	if (retval == 0)
