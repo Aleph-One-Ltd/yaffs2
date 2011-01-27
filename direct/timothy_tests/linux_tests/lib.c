@@ -14,6 +14,17 @@
 #include "lib.h"
 static char message[200];
 static int  PRINT_LEVEL = 3;
+static int exit_on_error_val =1;
+
+int get_exit_on_error(void)
+{
+	return exit_on_error_val;
+}
+
+void set_exit_on_error(int val)
+{
+	exit_on_error_val=val;
+}
 
 node * linked_list_add_node(int pos,node *head_node)
 {

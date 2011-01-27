@@ -24,7 +24,8 @@
 #include <sys/mount.h>
 #include "lib.h"
 #include <fcntl.h>
-
+#include <time.h>
+#include <getopt.h>
 
 typedef struct dir_struct_temp{ 
 	node *path_list;

@@ -18,12 +18,76 @@ int simulate_power_failure = 1;
 
 char message[400];	//this is used for storing print messages.
 
-int main()
+
+
+const struct option long_options[]={
+	{"help",	0,NULL,'h'},
+
+
+	{"print_level",	1,NULL,'p'},
+	{"quiet",	0,NULL,'q'},
+
+	{"seed",	1,NULL,'s'},
+
+	{"verbose",	0,NULL,'v'}
+};
+
+const char short_options[]="hp:qs:v";
+
+
+void init(int argc, char *argv[])
+{
+	char dir[200];
+	dir[0]='\0';
+	int x=-1;
+	char message[100];
+	int new_option;
+
+	x=(unsigned)time(NULL);
+	sprintf(message,"seeding srand with: %d\n",x);
+	print_message(2,message);
+	srand(x);
+	yaffs_set_trace(0);
+
+
+	do {
+		new_option=getopt_long(argc,argv,short_options,long_options,NULL);		
+		if (new_option=='h'){
+			printf("mirror_tests help\n");
+			printf("arguments:\n");
+			printf("\t-p [NUMBER] //sets the print level for mirror_tests.\n");
+			printf("\t-v //verbose mode everything is printed\n");
+			printf("\t-q //quiet mode nothing is printed.\n");
+			printf("\t-s [number] //seeds rand with the number\n");
+
+			exit(0);
+	
+		} else if (new_option=='p'){
+			set_print_level(atoi(optarg));
+		} else if (new_option=='v'){
+			set_print_level(5);
+		} else if (new_option=='q'){
+			set_print_level(-1);
+		} else if (new_option=='s'){
+			srand(atoi(argv[x+1]));
+
+		} else if (new_option==-1){
+
+		} else if (new_option=='?') {
+			printf("bad argument\n");
+			exit(0);
+		}
+	}while(new_option!=-1);
+}
+
+int main(int argc, char *argv[])
 {
 	dir_struct *scanned_dir=NULL;
 	int output=0;
 	int break_bool=0;
 	int x=5;
+
+	init(argc,argv); 
 	while( 1){
 		while (break_bool!=1){
 			//printf("x %d\n",x);
@@ -80,7 +144,7 @@ dir_struct * scan_dir(void)
 	struct dirent *dir_data;	
 	dir_struct *dir=NULL;
 	dir=malloc(sizeof(dir_struct));
-	memset(dir, NULL, sizeof(dir_struct));
+	memset(dir, 0, sizeof(dir_struct));
 	DIR *open_dir=NULL;
 
 
@@ -95,22 +159,24 @@ dir_struct * scan_dir(void)
 		dir_data=readdir(open_dir);
 	}
 	closedir(open_dir);
-	node_print_pointers(dir->path_list);
+	//node_print_pointers(dir->path_list);
 	return dir;
 }
 
 int check_dir(dir_struct *old_dir)
 {
+	print_message(3,"scanning new dir\n");
 	dir_struct *new_dir=scan_dir();
 	node *new_list=new_dir->path_list;
 	node *old_list=old_dir->path_list;
-	int exit_loop=0;
+	int exit_loop=0,error=0;
 	print_message(3,"checking dir\n");
 	for (;old_list!= NULL;old_list=old_list->next){
-		
-		for (;(new_list=NULL) && (exit_loop !=1);new_list=new_list->next){
-			sprintf(message,"comparing %s  and %s\n",old_list->string,new_list->string);
-			print_message(3,message);
+		//sprintf(message,"new_list=!NULL= %d, exit_loop !=1 = %d\n",(new_list!=NULL),(exit_loop !=1));
+		//print_message(3,message);
+		for (;(new_list!=NULL) && (exit_loop !=1);new_list=new_list->next){
+			//sprintf(message,"comparing %s  and %s\n",old_list->string,new_list->string);
+			//print_message(3,message);
 			if (strcmp( new_list->string ,old_list->string)==0){
 				//files match -now compare the modes and contents of the files.
 				//and set the paths to NULL.
@@ -125,6 +191,7 @@ int check_dir(dir_struct *old_dir)
 			//failed to find a matching file
 			sprintf(message,"a file has disappeared: %s\n",old_list->string); 
 			print_message(3,message);
+			error=1;
 			
 		}
 		new_list=new_dir->path_list;
@@ -139,17 +206,30 @@ int check_dir(dir_struct *old_dir)
 	old_dir->path_list=NULL;
 	free(old_dir);
 	free(new_dir);
+	if (error ==1){
+		print_message(3,"checking dir failed\n");
+		if (get_exit_on_error()==1){
+			print_message(3,"exiting_program\n");
+			exit(0);
+		}
+	}
+
+	else if (error !=1){
+		print_message(3,"checking dir passed\n");
+	}
+	return error;
 }
 
 int remount_test(void)
 {
 	int output;
 	print_message(3,"\nunmounting\n");
-	output=umount2("/mnt/y",MNT_FORCE);
+	output=umount2("/mnt/y",1);
 	check_function(output);
 	print_message(3,"mounting\n");
 	mount("/dev/mtdblock0","/mnt/y","yaffs2",0,NULL);
 	check_function(output);
+	return output;
 }
 
 int mkdir_test(void)

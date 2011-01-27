@@ -31,6 +31,8 @@ typedef struct node_temp{
 	struct node_temp *next; 
 }node;
 
+int get_exit_on_error(void);
+void set_exit_on_error(int val);
 int delete_linked_list(node *head_node);
 node * linked_list_add_node(int pos,node *head_node);
 unsigned int random_int(void);
