@@ -18,7 +18,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include "yaffsfs.h"
+#include <stdlib.h>
 
 #define NAME_RANGE 10
 #define ROOT_PATH "/mnt/y/"
@@ -35,7 +35,7 @@ int get_exit_on_error(void);
 void set_exit_on_error(int val);
 int delete_linked_list(node *head_node);
 node * linked_list_add_node(int pos,node *head_node);
-unsigned int random_int(void);
+int random_int(void);
 char * generate_random_string(unsigned int length);
 void get_error_linux(void);
 void check_function(int output);

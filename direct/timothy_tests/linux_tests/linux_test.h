@@ -16,8 +16,8 @@
 #ifndef __linux_test_h__
 #define __linux_test_h__
 #include <stdio.h>
+#include <stdlib.h>
 #include <dirent.h>
-#include "yaffsfs.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

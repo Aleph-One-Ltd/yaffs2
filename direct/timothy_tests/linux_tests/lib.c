@@ -15,6 +15,8 @@
 static char message[200];
 static int  PRINT_LEVEL = 3;
 static int exit_on_error_val =1;
+char string[FILE_NAME_LENGTH+1];
+
 
 int get_exit_on_error(void)
 {
@@ -31,7 +33,7 @@ node * linked_list_add_node(int pos,node *head_node)
 	node *new_node=NULL;
 	if (pos==HEAD){
 		new_node=malloc(sizeof(node));
-		memset(new_node, NULL, sizeof(node));
+		memset(new_node, 0, sizeof(node));
 		new_node->string=NULL;
 		new_node->next=head_node;
 		return new_node;
@@ -64,7 +66,7 @@ int delete_linked_list(node *head_node)
 
 char * generate_random_string(unsigned int length)
 {
-	char string[length+1];
+
 	unsigned int x;
 	for (x=0;x<(length-1);x++)
 	{
@@ -73,6 +75,7 @@ char * generate_random_string(unsigned int length)
 	string[x]='\0';
 	return string;
 }
+
 void set_print_level(int new_level)
 {
 	PRINT_LEVEL=new_level;
@@ -84,12 +87,12 @@ int get_print_level(void)
 void print_message(char print_level,char *message)
 {
 	if (print_level <= PRINT_LEVEL){
-		printf(message);
+		printf("%s",message);
 	}
 }
-unsigned int random_int(void)
+int random_int(void)
 {
-	return (random()%4294967295);
+	return (random()%1000000); 
 }
 
 void check_function(int output)

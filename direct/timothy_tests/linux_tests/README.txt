@@ -11,12 +11,20 @@ $ insmod yaffs2multi.ko
 $ mkdir /mnt/y
 $ mount -t yaffs2 /dev/mtdblock0 /mnt/y
 
+
+
 How to change the permissions on the nandsim partition
+
 $ sudo chmod a+wr /mnt/y/
 #check the permission change
 $ touch /mnt/y/test_file
 
 How to clean the folder
+
 $ rm -rf /mnt/y
 
-The test must me run in sudo to work
+
+The test must be run in sudo to work
+
+$ make
+$ sudo ./linux_test

@@ -47,7 +47,7 @@ void init(int argc, char *argv[])
 	sprintf(message,"seeding srand with: %d\n",x);
 	print_message(2,message);
 	srand(x);
-	yaffs_set_trace(0);
+
 
 
 	do {
@@ -155,7 +155,7 @@ dir_struct * scan_dir(void)
 		dir->path_list->string=malloc(strlen(dir_data->d_name)+1);
 		strcpy(dir->path_list->string,dir_data->d_name);
 		sprintf(message,"opened file: %s\n",dir->path_list->string);
-		print_message(3,message);
+		print_message(5,message);
 		dir_data=readdir(open_dir);
 	}
 	closedir(open_dir);
