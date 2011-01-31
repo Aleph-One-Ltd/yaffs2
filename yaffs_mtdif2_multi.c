@@ -244,7 +244,7 @@ int nandmtd2_query_block(struct yaffs_dev *dev, int block_no,
 
 		if (t.chunk_used) {
 			*seq_number = t.seq_number;
-			*state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+			*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 		} else {
 			*seq_number = 0;
 			*state = YAFFS_BLOCK_STATE_EMPTY;

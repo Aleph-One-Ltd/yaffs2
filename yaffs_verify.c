@@ -38,7 +38,7 @@ static int yaffs_skip_nand_verification(struct yaffs_dev *dev)
 
 static const char * const block_state_name[] = {
 	"Unknown",
-	"Needs scanning",
+	"Needs scan",
 	"Scanning",
 	"Empty",
 	"Allocating",
@@ -66,7 +66,7 @@ void yaffs_verify_blk(struct yaffs_dev *dev, struct yaffs_block_info *bi, int n)
 	switch (bi->block_state) {
 	case YAFFS_BLOCK_STATE_UNKNOWN:
 	case YAFFS_BLOCK_STATE_SCANNING:
-	case YAFFS_BLOCK_STATE_NEEDS_SCANNING:
+	case YAFFS_BLOCK_STATE_NEEDS_SCAN:
 		yaffs_trace(YAFFS_TRACE_VERIFY,
 			"Block %d has bad run-state %s",
 			n, block_state_name[bi->block_state]);
@@ -76,11 +76,11 @@ void yaffs_verify_blk(struct yaffs_dev *dev, struct yaffs_block_info *bi, int n)
 
 	actually_used = bi->pages_in_use - bi->soft_del_pages;
 
-	if (bi->pages_in_use < 0
-	    || bi->pages_in_use > dev->param.chunks_per_block
-	    || bi->soft_del_pages < 0
-	    || bi->soft_del_pages > dev->param.chunks_per_block
-	    || actually_used < 0 || actually_used > dev->param.chunks_per_block)
+	if (bi->pages_in_use < 0 ||
+	    bi->pages_in_use > dev->param.chunks_per_block ||
+	    bi->soft_del_pages < 0 ||
+	    bi->soft_del_pages > dev->param.chunks_per_block ||
+	    actually_used < 0 || actually_used > dev->param.chunks_per_block)
 		yaffs_trace(YAFFS_TRACE_VERIFY,
 			"Block %d has illegal values pages_in_used %d soft_del_pages %d",
 			n, bi->pages_in_use, bi->soft_del_pages);
@@ -225,6 +225,7 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 	int required_depth;
 	int actual_depth;
 	u32 last_chunk;
+	u32 the_chunk;
 	u32 x;
 	u32 i;
 	struct yaffs_dev *dev;
@@ -264,17 +265,18 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 	for (i = 1; i <= last_chunk; i++) {
 		tn = yaffs_find_tnode_0(dev, &obj->variant.file_variant, i);
 
-		if (tn) {
-			u32 the_chunk = yaffs_get_group_base(dev, tn, i);
-			if (the_chunk > 0) {
-				yaffs_rd_chunk_tags_nand(dev, the_chunk, NULL,
-							 &tags);
-				if (tags.obj_id != obj_id || tags.chunk_id != i)
-					yaffs_trace(YAFFS_TRACE_VERIFY,
-						"Object %d chunk_id %d NAND mismatch chunk %d tags (%d:%d)",
-						obj_id, i, the_chunk,
-						tags.obj_id, tags.chunk_id);
-			}
+		if (!tn)
+			continue;
+
+		the_chunk = yaffs_get_group_base(dev, tn, i);
+		if (the_chunk > 0) {
+			yaffs_rd_chunk_tags_nand(dev, the_chunk, NULL,
+						 &tags);
+			if (tags.obj_id != obj_id || tags.chunk_id != i)
+				yaffs_trace(YAFFS_TRACE_VERIFY,
+					"Object %d chunk_id %d NAND mismatch chunk %d tags (%d:%d)",
+					obj_id, i, the_chunk,
+					tags.obj_id, tags.chunk_id);
 		}
 	}
 }
@@ -366,8 +368,8 @@ void yaffs_verify_obj(struct yaffs_obj *obj)
 	}
 
 	/* Verify parent is a directory */
-	if (obj->parent
-	    && obj->parent->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
+	if (obj->parent &&
+	    obj->parent->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY) {
 		yaffs_trace(YAFFS_TRACE_VERIFY,
 			"Obj %d's parent is not a directory (type %d)",
 			obj->obj_id, obj->parent->variant_type);
@@ -521,4 +523,3 @@ int yaffs_verify_file_sane(struct yaffs_obj *in)
 	in = in;
 	return YAFFS_OK;
 }
-

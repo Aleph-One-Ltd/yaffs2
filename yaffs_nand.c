@@ -75,8 +75,8 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 	if (dev->param.write_chunk_tags_fn)
 		return dev->param.write_chunk_tags_fn(dev, nand_chunk, buffer,
 							tags);
-	else
-		return yaffs_tags_compat_wr(dev, nand_chunk, buffer, tags);
+
+	return yaffs_tags_compat_wr(dev, nand_chunk, buffer, tags);
 }
 
 int yaffs_mark_bad(struct yaffs_dev *dev, int block_no)
@@ -84,8 +84,8 @@ int yaffs_mark_bad(struct yaffs_dev *dev, int block_no)
 	block_no -= dev->block_offset;
 	if (dev->param.bad_block_fn)
 		return dev->param.bad_block_fn(dev, block_no);
-	else
-		return yaffs_tags_compat_mark_bad(dev, block_no);
+
+	return yaffs_tags_compat_mark_bad(dev, block_no);
 }
 
 int yaffs_query_init_block_state(struct yaffs_dev *dev,
@@ -97,9 +97,8 @@ int yaffs_query_init_block_state(struct yaffs_dev *dev,
 	if (dev->param.query_block_fn)
 		return dev->param.query_block_fn(dev, block_no, state,
 						 seq_number);
-	else
-		return yaffs_tags_compat_query_block(dev, block_no,
-						     state, seq_number);
+
+	return yaffs_tags_compat_query_block(dev, block_no, state, seq_number);
 }
 
 int yaffs_erase_block(struct yaffs_dev *dev, int flash_block)

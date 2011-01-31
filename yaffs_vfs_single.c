@@ -201,15 +201,15 @@ static int yaffs_mknod(struct inode *dir, struct dentry *dentry, int mode,
 	if ((dir->i_mode & S_ISGID) && S_ISDIR(mode))
 		mode |= S_ISGID;
 
-	if (parent) {
-		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_mknod: parent object %d type %d",
-			parent->obj_id, parent->variant_type);
-	} else {
+	if (!parent) {
 		yaffs_trace(YAFFS_TRACE_OS,
 			"yaffs_mknod: could not get parent object");
 		return -EPERM;
 	}
+
+	yaffs_trace(YAFFS_TRACE_OS,
+			"yaffs_mknod: parent object %d type %d",
+			parent->obj_id, parent->variant_type);
 
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_mknod: making oject for %s, mode %x dev %x",
@@ -246,21 +246,20 @@ static int yaffs_mknod(struct inode *dir, struct dentry *dentry, int mode,
 	/* Can not call yaffs_get_inode() with gross lock held */
 	yaffs_gross_unlock(dev);
 
-	if (obj) {
-		inode = yaffs_get_inode(dir->i_sb, mode, rdev, obj);
-		d_instantiate(dentry, inode);
-		update_dir_time(dir);
-		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_mknod created object %d count = %d",
-			obj->obj_id, atomic_read(&inode->i_count));
-		error = 0;
-		yaffs_fill_inode_from_obj(dir, parent);
-	} else {
+	if (!obj) {
 		yaffs_trace(YAFFS_TRACE_OS, "yaffs_mknod failed making object");
-		error = -ENOMEM;
+		return -ENOMEM;
 	}
 
-	return error;
+	inode = yaffs_get_inode(dir->i_sb, mode, rdev, obj);
+	d_instantiate(dentry, inode);
+	update_dir_time(dir);
+	yaffs_trace(YAFFS_TRACE_OS,
+		"yaffs_mknod created object %d count = %d",
+		obj->obj_id, atomic_read(&inode->i_count));
+	yaffs_fill_inode_from_obj(dir, parent);
+
+	return 0;
 }
 
 static int yaffs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
@@ -319,6 +318,7 @@ static int yaffs_symlink(struct inode *dir, struct dentry *dentry,
 {
 	struct yaffs_obj *obj;
 	struct yaffs_dev *dev;
+	struct inode *inode;
 	uid_t uid = current->cred->fsuid;
 	gid_t gid =
 	    (dir->i_mode & S_ISGID) ? dir->i_gid : current->cred->fsgid;
@@ -331,19 +331,17 @@ static int yaffs_symlink(struct inode *dir, struct dentry *dentry,
 				   S_IFLNK | S_IRWXUGO, uid, gid, symname);
 	yaffs_gross_unlock(dev);
 
-	if (obj) {
-		struct inode *inode;
-
-		inode = yaffs_get_inode(dir->i_sb, obj->yst_mode, 0, obj);
-		d_instantiate(dentry, inode);
-		update_dir_time(dir);
-		yaffs_trace(YAFFS_TRACE_OS, "symlink created OK");
-		return 0;
-	} else {
+	if (!obj) {
 		yaffs_trace(YAFFS_TRACE_OS, "symlink not created");
+		return -ENOMEM;
 	}
 
-	return -ENOMEM;
+	inode = yaffs_get_inode(dir->i_sb, obj->yst_mode, 0, obj);
+	d_instantiate(dentry, inode);
+	update_dir_time(dir);
+	yaffs_trace(YAFFS_TRACE_OS, "symlink created OK");
+
+	return 0;
 }
 
 static struct dentry *yaffs_lookup(struct inode *dir, struct dentry *dentry,
@@ -494,6 +492,7 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 	struct inode *inode = dentry->d_inode;
 	int error = 0;
 	struct yaffs_dev *dev;
+	int result;
 
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_setattr of object %d",
@@ -503,17 +502,15 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 	if (attr->ia_valid & ATTR_SIZE && (attr->ia_size >> 31))
 		error = -EINVAL;
 
-	if (error == 0)
+	if (!error)
 		error = inode_change_ok(inode, attr);
-	if (error == 0) {
-		int result;
-		if (!error) {
-			setattr_copy(inode, attr);
-			yaffs_trace(YAFFS_TRACE_OS, "inode_setattr called");
-			if (attr->ia_valid & ATTR_SIZE) {
-				truncate_setsize(inode, attr->ia_size);
-				inode->i_blocks = (inode->i_size + 511) >> 9;
-			}
+
+	if (!error) {
+		setattr_copy(inode, attr);
+		yaffs_trace(YAFFS_TRACE_OS, "inode_setattr called");
+		if (attr->ia_valid & ATTR_SIZE) {
+			truncate_setsize(inode, attr->ia_size);
+			inode->i_blocks = (inode->i_size + 511) >> 9;
 		}
 		dev = yaffs_inode_to_obj(inode)->my_dev;
 		if (attr->ia_valid & ATTR_SIZE) {
@@ -521,11 +518,10 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 					   (int)(attr->ia_size),
 					   (int)(attr->ia_size));
 		}
+
 		yaffs_gross_lock(dev);
 		result = yaffs_set_attribs(yaffs_inode_to_obj(inode), attr);
-		if (result == YAFFS_OK)
-			error = 0;
-		else
+		if (result != YAFFS_OK)
 			error = -EPERM;
 		yaffs_gross_unlock(dev);
 	}
@@ -540,23 +536,17 @@ static int yaffs_setxattr(struct dentry *dentry, const char *name,
 		   const void *value, size_t size, int flags)
 {
 	struct inode *inode = dentry->d_inode;
-	int error = 0;
+	int error;
 	struct yaffs_dev *dev;
 	struct yaffs_obj *obj = yaffs_inode_to_obj(inode);
 
 	yaffs_trace(YAFFS_TRACE_OS, "yaffs_setxattr of object %d", obj->obj_id);
 
-	if (error == 0) {
-		int result;
-		dev = obj->my_dev;
-		yaffs_gross_lock(dev);
-		result = yaffs_set_xattrib(obj, name, value, size, flags);
-		if (result == YAFFS_OK)
-			error = 0;
-		else if (result < 0)
-			error = result;
-		yaffs_gross_unlock(dev);
-	}
+	dev = obj->my_dev;
+	yaffs_gross_lock(dev);
+	error = yaffs_set_xattrib(obj, name, value, size, flags);
+	yaffs_gross_unlock(dev);
+
 	yaffs_trace(YAFFS_TRACE_OS, "yaffs_setxattr done returning %d", error);
 
 	return error;
@@ -566,7 +556,7 @@ static ssize_t yaffs_getxattr(struct dentry *dentry, const char *name,
 				void *buff, size_t size)
 {
 	struct inode *inode = dentry->d_inode;
-	int error = 0;
+	int error;
 	struct yaffs_dev *dev;
 	struct yaffs_obj *obj = yaffs_inode_to_obj(inode);
 
@@ -574,12 +564,11 @@ static ssize_t yaffs_getxattr(struct dentry *dentry, const char *name,
 		"yaffs_getxattr \"%s\" from object %d",
 		name, obj->obj_id);
 
-	if (error == 0) {
-		dev = obj->my_dev;
-		yaffs_gross_lock(dev);
-		error = yaffs_get_xattrib(obj, name, buff, size);
-		yaffs_gross_unlock(dev);
-	}
+	dev = obj->my_dev;
+	yaffs_gross_lock(dev);
+	error = yaffs_get_xattrib(obj, name, buff, size);
+	yaffs_gross_unlock(dev);
+
 	yaffs_trace(YAFFS_TRACE_OS, "yaffs_getxattr done returning %d", error);
 
 	return error;
@@ -588,24 +577,18 @@ static ssize_t yaffs_getxattr(struct dentry *dentry, const char *name,
 static int yaffs_removexattr(struct dentry *dentry, const char *name)
 {
 	struct inode *inode = dentry->d_inode;
-	int error = 0;
+	int error;
 	struct yaffs_dev *dev;
 	struct yaffs_obj *obj = yaffs_inode_to_obj(inode);
 
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_removexattr of object %d", obj->obj_id);
 
-	if (error == 0) {
-		int result;
-		dev = obj->my_dev;
-		yaffs_gross_lock(dev);
-		result = yaffs_remove_xattrib(obj, name);
-		if (result == YAFFS_OK)
-			error = 0;
-		else if (result < 0)
-			error = result;
-		yaffs_gross_unlock(dev);
-	}
+	dev = obj->my_dev;
+	yaffs_gross_lock(dev);
+	error = yaffs_remove_xattrib(obj, name);
+	yaffs_gross_unlock(dev);
+
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_removexattr done returning %d", error);
 
@@ -615,19 +598,18 @@ static int yaffs_removexattr(struct dentry *dentry, const char *name)
 static ssize_t yaffs_listxattr(struct dentry *dentry, char *buff, size_t size)
 {
 	struct inode *inode = dentry->d_inode;
-	int error = 0;
+	int error;
 	struct yaffs_dev *dev;
 	struct yaffs_obj *obj = yaffs_inode_to_obj(inode);
 
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_listxattr of object %d", obj->obj_id);
 
-	if (error == 0) {
-		dev = obj->my_dev;
-		yaffs_gross_lock(dev);
-		error = yaffs_list_xattrib(obj, buff, size);
-		yaffs_gross_unlock(dev);
-	}
+	dev = obj->my_dev;
+	yaffs_gross_lock(dev);
+	error = yaffs_list_xattrib(obj, buff, size);
+	yaffs_gross_unlock(dev);
+
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_listxattr done returning %d", error);
 
@@ -692,18 +674,20 @@ static struct yaffs_search_context *yaffs_new_search(struct yaffs_obj *dir)
 	struct yaffs_search_context *sc =
 	    kmalloc(sizeof(struct yaffs_search_context), GFP_NOFS);
 
-	if (sc) {
-		sc->dir_obj = dir;
-		sc->dev = dev;
-		if (list_empty(&sc->dir_obj->variant.dir_variant.children))
-			sc->next_return = NULL;
-		else
-			sc->next_return =
-			    list_entry(dir->variant.dir_variant.children.next,
-				       struct yaffs_obj, siblings);
-		INIT_LIST_HEAD(&sc->others);
-		list_add(&sc->others, &(yaffs_dev_to_lc(dev)->search_contexts));
-	}
+	if (!sc)
+		return NULL;
+
+	sc->dir_obj = dir;
+	sc->dev = dev;
+	if (list_empty(&sc->dir_obj->variant.dir_variant.children))
+		sc->next_return = NULL;
+	else
+		sc->next_return =
+		    list_entry(dir->variant.dir_variant.children.next,
+			       struct yaffs_obj, siblings);
+	INIT_LIST_HEAD(&sc->others);
+	list_add(&sc->others, &(yaffs_dev_to_lc(dev)->search_contexts));
+
 	return sc;
 }
 
@@ -1444,8 +1428,8 @@ static int yaffs_statfs(struct dentry *dentry, struct kstatfs *buf)
 
 		bytes_in_dev =
 		    ((uint64_t)
-		     ((dev->param.end_block - dev->param.start_block +
-		       1))) * ((uint64_t) (dev->param.chunks_per_block *
+		     ((dev->param.end_block - dev->param.start_block + 1))) *
+		     ((uint64_t) (dev->param.chunks_per_block *
 					   dev->data_bytes_per_chunk));
 
 		do_div(bytes_in_dev, sb->s_blocksize);
@@ -1830,92 +1814,86 @@ static const struct inode_operations yaffs_symlink_inode_operations = {
 static void yaffs_fill_inode_from_obj(struct inode *inode,
 				      struct yaffs_obj *obj)
 {
-	if (inode && obj) {
-		/* Check mode against the variant type
-		 * and attempt to repair if broken. */
-		u32 mode = obj->yst_mode;
-		switch (obj->variant_type) {
-		case YAFFS_OBJECT_TYPE_FILE:
-			if (!S_ISREG(mode)) {
-				obj->yst_mode &= ~S_IFMT;
-				obj->yst_mode |= S_IFREG;
-			}
-
-			break;
-		case YAFFS_OBJECT_TYPE_SYMLINK:
-			if (!S_ISLNK(mode)) {
-				obj->yst_mode &= ~S_IFMT;
-				obj->yst_mode |= S_IFLNK;
-			}
-
-			break;
-		case YAFFS_OBJECT_TYPE_DIRECTORY:
-			if (!S_ISDIR(mode)) {
-				obj->yst_mode &= ~S_IFMT;
-				obj->yst_mode |= S_IFDIR;
-			}
-
-			break;
-		case YAFFS_OBJECT_TYPE_UNKNOWN:
-		case YAFFS_OBJECT_TYPE_HARDLINK:
-		case YAFFS_OBJECT_TYPE_SPECIAL:
-		default:
-			/* TODO? */
-			break;
-		}
-
-		inode->i_flags |= S_NOATIME;
-
-		inode->i_ino = obj->obj_id;
-		inode->i_mode = obj->yst_mode;
-		inode->i_uid = obj->yst_uid;
-		inode->i_gid = obj->yst_gid;
-
-		inode->i_rdev = old_decode_dev(obj->yst_rdev);
-
-		inode->i_atime.tv_sec = (time_t) (obj->yst_atime);
-		inode->i_atime.tv_nsec = 0;
-		inode->i_mtime.tv_sec = (time_t) obj->yst_mtime;
-		inode->i_mtime.tv_nsec = 0;
-		inode->i_ctime.tv_sec = (time_t) obj->yst_ctime;
-		inode->i_ctime.tv_nsec = 0;
-		inode->i_size = yaffs_get_obj_length(obj);
-		inode->i_blocks = (inode->i_size + 511) >> 9;
-
-		inode->i_nlink = yaffs_get_obj_link_count(obj);
-
-		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_fill_inode mode %x uid %d gid %d size %d count %d",
-			inode->i_mode, inode->i_uid, inode->i_gid,
-			(int)inode->i_size, atomic_read(&inode->i_count));
-
-		switch (obj->yst_mode & S_IFMT) {
-		default:	/* fifo, device or socket */
-			init_special_inode(inode, obj->yst_mode,
-					   old_decode_dev(obj->yst_rdev));
-			break;
-		case S_IFREG:	/* file */
-			inode->i_op = &yaffs_file_inode_operations;
-			inode->i_fop = &yaffs_file_operations;
-			inode->i_mapping->a_ops =
-			    &yaffs_file_address_operations;
-			break;
-		case S_IFDIR:	/* directory */
-			inode->i_op = &yaffs_dir_inode_operations;
-			inode->i_fop = &yaffs_dir_operations;
-			break;
-		case S_IFLNK:	/* symlink */
-			inode->i_op = &yaffs_symlink_inode_operations;
-			break;
-		}
-
-		yaffs_inode_to_obj_lv(inode) = obj;
-		obj->my_inode = inode;
-
-	} else {
+	if (!inode || !obj)  {
 		yaffs_trace(YAFFS_TRACE_OS,
 			"yaffs_fill_inode invalid parameters");
+		return;
 	}
+
+	/* Check mode against the variant type
+	 * and attempt to repair if broken. */
+	u32 mode = obj->yst_mode;
+
+	switch (obj->variant_type) {
+	case YAFFS_OBJECT_TYPE_FILE:
+		if (!S_ISREG(mode)) {
+			obj->yst_mode &= ~S_IFMT;
+			obj->yst_mode |= S_IFREG;
+		}
+		break;
+	case YAFFS_OBJECT_TYPE_SYMLINK:
+		if (!S_ISLNK(mode)) {
+			obj->yst_mode &= ~S_IFMT;
+			obj->yst_mode |= S_IFLNK;
+		}
+		break;
+	case YAFFS_OBJECT_TYPE_DIRECTORY:
+		if (!S_ISDIR(mode)) {
+			obj->yst_mode &= ~S_IFMT;
+			obj->yst_mode |= S_IFDIR;
+		}
+		break;
+	case YAFFS_OBJECT_TYPE_UNKNOWN:
+	case YAFFS_OBJECT_TYPE_HARDLINK:
+	case YAFFS_OBJECT_TYPE_SPECIAL:
+	default:
+		/* TODO? */
+		break;
+	}
+
+	inode->i_flags |= S_NOATIME;
+	inode->i_ino = obj->obj_id;
+	inode->i_mode = obj->yst_mode;
+	inode->i_uid = obj->yst_uid;
+	inode->i_gid = obj->yst_gid;
+
+	inode->i_rdev = old_decode_dev(obj->yst_rdev);
+
+	inode->i_atime.tv_sec = (time_t) (obj->yst_atime);
+	inode->i_atime.tv_nsec = 0;
+	inode->i_mtime.tv_sec = (time_t) obj->yst_mtime;
+	inode->i_mtime.tv_nsec = 0;
+	inode->i_ctime.tv_sec = (time_t) obj->yst_ctime;
+	inode->i_ctime.tv_nsec = 0;
+	inode->i_size = yaffs_get_obj_length(obj);
+	inode->i_blocks = (inode->i_size + 511) >> 9;
+	inode->i_nlink = yaffs_get_obj_link_count(obj);
+	yaffs_trace(YAFFS_TRACE_OS,
+		"yaffs_fill_inode mode %x uid %d gid %d size %d count %d",
+		inode->i_mode, inode->i_uid, inode->i_gid,
+		(int)inode->i_size, atomic_read(&inode->i_count));
+
+	switch (obj->yst_mode & S_IFMT) {
+	default:	/* fifo, device or socket */
+		init_special_inode(inode, obj->yst_mode,
+				   old_decode_dev(obj->yst_rdev));
+		break;
+	case S_IFREG:	/* file */
+		inode->i_op = &yaffs_file_inode_operations;
+		inode->i_fop = &yaffs_file_operations;
+		inode->i_mapping->a_ops = &yaffs_file_address_operations;
+		break;
+	case S_IFDIR:	/* directory */
+		inode->i_op = &yaffs_dir_inode_operations;
+		inode->i_fop = &yaffs_dir_operations;
+		break;
+	case S_IFLNK:	/* symlink */
+		inode->i_op = &yaffs_symlink_inode_operations;
+		break;
+	}
+
+	yaffs_inode_to_obj_lv(inode) = obj;
+	obj->my_inode = inode;
 }
 
 static void yaffs_put_super(struct super_block *sb)
@@ -2020,10 +1998,9 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	memset(&options, 0, sizeof(options));
 
-	if (yaffs_parse_options(&options, data_str)) {
+	if (yaffs_parse_options(&options, data_str))
 		/* Option parsing failed */
 		return NULL;
-	}
 
 	sb->s_blocksize = PAGE_CACHE_SIZE;
 	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
@@ -2261,8 +2238,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	mutex_lock(&yaffs_context_lock);
 	/* Get a mount id */
-	found = 0;
-	for (mount_id = 0; !found; mount_id++) {
+	for (mount_id = 0, found = 0; !found; mount_id++) {
 		found = 1;
 		list_for_each(l, &yaffs_context_list) {
 			context_iterator =

@@ -314,7 +314,7 @@ static int nandmtd1_test_prerequists(struct mtd_info *mtd)
  *
  * Examine the tags of the first chunk of the block and return the state:
  *  - YAFFS_BLOCK_STATE_DEAD, the block is marked bad
- *  - YAFFS_BLOCK_STATE_NEEDS_SCANNING, the block is in use
+ *  - YAFFS_BLOCK_STATE_NEEDS_SCAN, the block is in use
  *  - YAFFS_BLOCK_STATE_EMPTY, the block is clean
  *
  * Always returns YAFFS_OK.
@@ -345,9 +345,9 @@ int nandmtd1_query_block(struct yaffs_dev *dev, int block_no,
 		state = YAFFS_BLOCK_STATE_DEAD;
 	} else if (etags.ecc_result != YAFFS_ECC_RESULT_NO_ERROR) {
 		/* bad tags, need to look more closely */
-		state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+		state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 	} else if (etags.chunk_used) {
-		state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+		state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 		seqnum = etags.seq_number;
 	} else {
 		state = YAFFS_BLOCK_STATE_EMPTY;

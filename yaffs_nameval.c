@@ -37,8 +37,7 @@ static int nval_find(const char *xb, int xb_size, const YCHAR *name,
 
 	memcpy(&size, xb, sizeof(int));
 	while (size > 0 && (size < xb_size) && (pos + size < xb_size)) {
-		if (strncmp
-		    ((YCHAR *) (xb + pos + sizeof(int)), name, size) == 0) {
+		if (!strncmp((YCHAR *) (xb + pos + sizeof(int)), name, size)) {
 			if (exist_size)
 				*exist_size = size;
 			return pos;
@@ -152,12 +151,11 @@ int nval_get(const char *xb, int xb_size, const YCHAR * name, char *buf,
 			memcpy(buf, xb + pos, size);
 			return size;
 		}
-
 	}
 	if (pos >= 0)
 		return -ERANGE;
-	else
-		return -ENODATA;
+
+	return -ENODATA;
 }
 
 int nval_list(const char *xb, int xb_size, char *buf, int bsize)

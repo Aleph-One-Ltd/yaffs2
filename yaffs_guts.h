@@ -225,7 +225,7 @@ enum yaffs_block_state {
 	YAFFS_BLOCK_STATE_SCANNING,
 	/* Being scanned */
 
-	YAFFS_BLOCK_STATE_NEEDS_SCANNING,
+	YAFFS_BLOCK_STATE_NEEDS_SCAN,
 	/* The block might have something on it (ie it is allocating or full,
 	 * perhaps empty) but it needs to be scanned to determine its true
 	 * state.
@@ -906,7 +906,7 @@ void yaffs_set_obj_name_from_oh(struct yaffs_obj *obj,
 				const struct yaffs_obj_hdr *oh);
 void yaffs_add_obj_to_dir(struct yaffs_obj *directory, struct yaffs_obj *obj);
 YCHAR *yaffs_clone_str(const YCHAR *str);
-void yaffs_link_fixup(struct yaffs_dev *dev, struct yaffs_obj *hard_list);
+void yaffs_link_fixup(struct yaffs_dev *dev, struct list_head *hard_list);
 void yaffs_block_became_dirty(struct yaffs_dev *dev, int block_no);
 int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name,
 		    int force, int is_shrink, int shadows,

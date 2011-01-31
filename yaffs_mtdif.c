@@ -26,8 +26,8 @@ int nandmtd_erase_block(struct yaffs_dev *dev, int block_no)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
 	u32 addr =
-	    ((loff_t) block_no) * dev->param.total_bytes_per_chunk
-	    * dev->param.chunks_per_block;
+	    ((loff_t) block_no) * dev->param.total_bytes_per_chunk *
+	    dev->param.chunks_per_block;
 	struct erase_info ei;
 	int retval = 0;
 
@@ -43,8 +43,8 @@ int nandmtd_erase_block(struct yaffs_dev *dev, int block_no)
 
 	if (retval == 0)
 		return YAFFS_OK;
-	else
-		return YAFFS_FAIL;
+
+	return YAFFS_FAIL;
 }
 
 int nandmtd_initialise(struct yaffs_dev *dev)
