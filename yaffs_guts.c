@@ -1344,13 +1344,7 @@ static int yaffs_change_obj_name(struct yaffs_obj *obj,
 		BUG();
 	}
 
-	/* TODO: Do we need this different handling for YAFFS2 and YAFFS1?? */
-	if (obj->my_dev->param.is_yaffs2)
-		unlink_op = (new_dir == obj->my_dev->unlinked_dir);
-	else
-		unlink_op = (new_dir == obj->my_dev->unlinked_dir
-			     && obj->variant_type == YAFFS_OBJECT_TYPE_FILE);
-
+	unlink_op = (new_dir == obj->my_dev->unlinked_dir);
 	del_op = (new_dir == obj->my_dev->del_dir);
 
 	existing_target = yaffs_find_by_name(new_dir, new_name);
