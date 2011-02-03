@@ -50,7 +50,7 @@ static int nval_find(const char *xb, int xb_size, const YCHAR *name,
 	}
 	if (exist_size)
 		*exist_size = 0;
-	return -1;
+	return -ENODATA;
 }
 
 static int nval_used(const char *xb, int xb_size)
@@ -74,16 +74,15 @@ int nval_del(char *xb, int xb_size, const YCHAR *name)
 	int pos = nval_find(xb, xb_size, name, NULL);
 	int size;
 
-	if (pos >= 0 && pos < xb_size) {
-		/* Find size, shift rest over this record,
-		 * then zero out the rest of buffer */
-		memcpy(&size, xb + pos, sizeof(int));
-		memcpy(xb + pos, xb + pos + size, xb_size - (pos + size));
-		memset(xb + (xb_size - size), 0, size);
-		return 0;
-	} else {
+	if (pos < 0 || pos >= xb_size)
 		return -ENODATA;
-	}
+
+	/* Find size, shift rest over this record,
+	 * then zero out the rest of buffer */
+	memcpy(&size, xb + pos, sizeof(int));
+	memcpy(xb + pos, xb + pos + size, xb_size - (pos + size));
+	memset(xb + (xb_size - size), 0, size);
+	return 0;
 }
 
 int nval_set(char *xb, int xb_size, const YCHAR *name, const char *buf,
