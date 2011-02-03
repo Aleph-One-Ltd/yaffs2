@@ -323,7 +323,7 @@ int yaffs_check_ff(u8 *buffer, int n_bytes)
 {
 	/* Horrible, slow implementation */
 	while (n_bytes--) {
-		if (*buffer != 0xFF)
+		if (*buffer != 0xff)
 			return 0;
 		buffer++;
 	}
@@ -3316,9 +3316,9 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 
 		yaffs_verify_oh(in, oh, &old_tags, 0);
 		memcpy(old_name, oh->name, sizeof(oh->name));
-		memset(buffer, 0xFF, sizeof(struct yaffs_obj_hdr));
+		memset(buffer, 0xff, sizeof(struct yaffs_obj_hdr));
 	} else {
-		memset(buffer, 0xFF, dev->data_bytes_per_chunk);
+		memset(buffer, 0xff, dev->data_bytes_per_chunk);
 	}
 
 	oh->type = in->variant_type;

@@ -216,7 +216,7 @@ void yaffs_verify_oh(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh,
 
 	if (tags->obj_id > 1 && ((u8) (oh->name[0])) == 0xff)	/* Junk name */
 		yaffs_trace(YAFFS_TRACE_VERIFY,
-			"Obj %d header name is 0xFF",
+			"Obj %d header name is 0xff",
 			obj->obj_id);
 }
 

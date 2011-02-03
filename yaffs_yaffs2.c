@@ -573,7 +573,7 @@ static int yaffs2_wr_checkpt_objs(struct yaffs_dev *dev)
 	}
 
 	/* Dump end of list */
-	memset(&cp, 0xFF, sizeof(struct yaffs_checkpt_obj));
+	memset(&cp, 0xff, sizeof(struct yaffs_checkpt_obj));
 	cp.struct_type = sizeof(cp);
 
 	if (ok)

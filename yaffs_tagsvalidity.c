@@ -13,7 +13,7 @@
 
 #include "yaffs_tagsvalidity.h"
 
-#define VALID0 0xAAAAAAAA
+#define VALID0 0xaaaaaaaa
 #define VALID1 0x55555555
 
 void yaffs_init_tags(struct yaffs_ext_tags *tags)

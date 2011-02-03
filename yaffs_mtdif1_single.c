@@ -231,7 +231,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	/* Unpack the tags to extended form and set ECC result.
 	 * [set should_be_ff just to keep yaffs_unpack_tags1 happy]
 	 */
-	pt1.should_be_ff = 0xFFFFFFFF;
+	pt1.should_be_ff = 0xffffffff;
 	yaffs_unpack_tags1(etags, &pt1);
 	etags->ecc_result = eccres;
 

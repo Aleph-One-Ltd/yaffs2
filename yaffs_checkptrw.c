@@ -194,7 +194,7 @@ int yaffs2_get_checkpt_sum(struct yaffs_dev *dev, u32 * sum)
 {
 	u32 composite_sum;
 
-	composite_sum = (dev->checkpt_sum << 8) | (dev->checkpt_xor & 0xFF);
+	composite_sum = (dev->checkpt_sum << 8) | (dev->checkpt_xor & 0xff);
 	*sum = composite_sum;
 	return 1;
 }

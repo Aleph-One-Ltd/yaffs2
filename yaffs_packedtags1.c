@@ -32,7 +32,7 @@ void yaffs_pack_tags1(struct yaffs_packed_tags1 *pt,
 	pt->ecc = 0;
 	pt->deleted = (t->is_deleted) ? 0 : 1;
 	pt->unused_stuff = 0;
-	pt->should_be_ff = 0xFFFFFFFF;
+	pt->should_be_ff = 0xffffffff;
 }
 
 void yaffs_unpack_tags1(struct yaffs_ext_tags *t,
@@ -41,7 +41,7 @@ void yaffs_unpack_tags1(struct yaffs_ext_tags *t,
 
 	if (memcmp(all_ff, pt, sizeof(struct yaffs_packed_tags1))) {
 		t->block_bad = 0;
-		if (pt->should_be_ff != 0xFFFFFFFF)
+		if (pt->should_be_ff != 0xffffffff)
 			t->block_bad = 1;
 		t->chunk_used = 1;
 		t->obj_id = pt->obj_id;

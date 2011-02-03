@@ -120,7 +120,7 @@ static void yaffs_get_tags_from_spare(struct yaffs_dev *dev,
 
 static void yaffs_spare_init(struct yaffs_spare *spare)
 {
-	memset(spare, 0xFF, sizeof(struct yaffs_spare));
+	memset(spare, 0xff, sizeof(struct yaffs_spare));
 }
 
 static int yaffs_wr_nand(struct yaffs_dev *dev,
@@ -292,7 +292,7 @@ int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 		tags.obj_id = ext_tags->obj_id;
 		tags.chunk_id = ext_tags->chunk_id;
 
-		tags.n_bytes_lsb = ext_tags->n_bytes & 0x3ff;
+		tags.n_bytes_lsb = ext_tags->n_bytes & (1024 - 1);
 
 		if (dev->data_bytes_per_chunk >= 1024)
 			tags.n_bytes_msb = (ext_tags->n_bytes >> 10) & 3;
@@ -321,7 +321,7 @@ int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 	int deleted;
 
 	if (!init) {
-		memset(&spare_ff, 0xFF, sizeof(spare_ff));
+		memset(&spare_ff, 0xff, sizeof(spare_ff));
 		init = 1;
 	}
 
@@ -385,7 +385,7 @@ int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 	enum yaffs_ecc_result dummy;
 
 	if (!init) {
-		memset(&spare_ff, 0xFF, sizeof(spare_ff));
+		memset(&spare_ff, 0xff, sizeof(spare_ff));
 		init = 1;
 	}
 
