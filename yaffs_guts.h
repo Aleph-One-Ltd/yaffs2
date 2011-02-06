@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -23,11 +23,11 @@
 
 /* Give us a  Y=0x59,
  * Give us an A=0x41,
- * Give us an FF=0xFF
+ * Give us an FF=0xff
  * Give us an S=0x53
  * And what have we got...
  */
-#define YAFFS_MAGIC			0x5941FF53
+#define YAFFS_MAGIC			0x5941ff53
 
 #define YAFFS_NTNODES_LEVEL0		16
 #define YAFFS_TNODES_LEVEL0_BITS	4
@@ -49,7 +49,7 @@
 #define YAFFS_MIN_YAFFS2_CHUNK_SIZE	1024
 #define YAFFS_MIN_YAFFS2_SPARE_SIZE	32
 
-#define YAFFS_MAX_CHUNK_ID		0x000FFFFF
+#define YAFFS_MAX_CHUNK_ID		0x000fffff
 
 #define YAFFS_ALLOCATION_NOBJECTS	100
 #define YAFFS_ALLOCATION_NTNODES	100
@@ -101,10 +101,10 @@
  * and is a larger number than the lifetime of a 2GB device.
  */
 #define YAFFS_LOWEST_SEQUENCE_NUMBER	0x00001000
-#define YAFFS_HIGHEST_SEQUENCE_NUMBER	0xEFFFFF00
+#define YAFFS_HIGHEST_SEQUENCE_NUMBER	0xefffff00
 
 /* Special sequence number for bad block that failed to be marked bad */
-#define YAFFS_SEQUENCE_BAD_BLOCK	0xFFFF0000
+#define YAFFS_SEQUENCE_BAD_BLOCK	0xffff0000
 
 /* ChunkCache is used for short read/write operations.*/
 struct yaffs_cache {
@@ -225,7 +225,7 @@ enum yaffs_block_state {
 	YAFFS_BLOCK_STATE_SCANNING,
 	/* Being scanned */
 
-	YAFFS_BLOCK_STATE_NEEDS_SCANNING,
+	YAFFS_BLOCK_STATE_NEEDS_SCAN,
 	/* The block might have something on it (ie it is allocating or full,
 	 * perhaps empty) but it needs to be scanned to determine its true
 	 * state.
@@ -906,7 +906,7 @@ void yaffs_set_obj_name_from_oh(struct yaffs_obj *obj,
 				const struct yaffs_obj_hdr *oh);
 void yaffs_add_obj_to_dir(struct yaffs_obj *directory, struct yaffs_obj *obj);
 YCHAR *yaffs_clone_str(const YCHAR *str);
-void yaffs_link_fixup(struct yaffs_dev *dev, struct yaffs_obj *hard_list);
+void yaffs_link_fixup(struct yaffs_dev *dev, struct list_head *hard_list);
 void yaffs_block_became_dirty(struct yaffs_dev *dev, int block_no);
 int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name,
 		    int force, int is_shrink, int shadows,

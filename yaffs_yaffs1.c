@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -28,7 +28,7 @@ int yaffs1_scan(struct yaffs_dev *dev)
 	int c;
 	int deleted;
 	enum yaffs_block_state state;
-	struct yaffs_obj *hard_list = NULL;
+	LIST_HEAD(hard_list);
 	struct yaffs_block_info *bi;
 	u32 seq_number;
 	struct yaffs_obj_hdr *oh;
@@ -89,8 +89,9 @@ int yaffs1_scan(struct yaffs_dev *dev)
 		deleted = 0;
 
 		/* For each chunk in each block that needs scanning.... */
-		for (c = 0; !alloc_failed && c < dev->param.chunks_per_block &&
-		     state == YAFFS_BLOCK_STATE_NEEDS_SCANNING; c++) {
+		for (c = 0;
+			!alloc_failed && c < dev->param.chunks_per_block &&
+			state == YAFFS_BLOCK_STATE_NEEDS_SCAN; c++) {
 			/* Read the tags and decide what to do */
 			chunk = blk * dev->param.chunks_per_block + c;
 
@@ -99,8 +100,8 @@ int yaffs1_scan(struct yaffs_dev *dev)
 
 			/* Let's have a good look at this chunk... */
 
-			if (tags.ecc_result == YAFFS_ECC_RESULT_UNFIXED
-			    || tags.is_deleted) {
+			if (tags.ecc_result == YAFFS_ECC_RESULT_UNFIXED ||
+			    tags.is_deleted) {
 				/* YAFFS1 only...
 				 * A deleted chunk
 				 */
@@ -160,9 +161,9 @@ int yaffs1_scan(struct yaffs_dev *dev)
 				    tags.n_bytes;
 				if (in &&
 				    in->variant_type ==
-				    YAFFS_OBJECT_TYPE_FILE &&
+				     YAFFS_OBJECT_TYPE_FILE &&
 				    in->variant.file_variant.scanned_size <
-				    endpos) {
+				      endpos) {
 					in->variant.file_variant.scanned_size =
 					    endpos;
 					if (!dev->param.use_header_file_size) {
@@ -332,10 +333,8 @@ int yaffs1_scan(struct yaffs_dev *dev)
 						in->variant.
 						    hardlink_variant.equiv_id =
 						    oh->equiv_id;
-						in->hard_links.next =
-						    (struct list_head *)
-						    hard_list;
-						hard_list = in;
+						list_add(&in->hard_links,
+								&hard_list);
 						break;
 					case YAFFS_OBJECT_TYPE_DIRECTORY:
 						/* Do nothing */
@@ -356,7 +355,7 @@ int yaffs1_scan(struct yaffs_dev *dev)
 			}
 		}
 
-		if (state == YAFFS_BLOCK_STATE_NEEDS_SCANNING) {
+		if (state == YAFFS_BLOCK_STATE_NEEDS_SCAN) {
 			/* If we got this far while scanning,
 			 * then the block is fully allocated. */
 			state = YAFFS_BLOCK_STATE_FULL;
@@ -374,9 +373,8 @@ int yaffs1_scan(struct yaffs_dev *dev)
 		/* Now let's see if it was dirty */
 		if (bi->pages_in_use == 0 &&
 		    !bi->has_shrink_hdr &&
-		    bi->block_state == YAFFS_BLOCK_STATE_FULL) {
+		    bi->block_state == YAFFS_BLOCK_STATE_FULL)
 			yaffs_block_became_dirty(dev, blk);
-		}
 	}
 
 	/* Ok, we've done all the scanning.
@@ -385,9 +383,12 @@ int yaffs1_scan(struct yaffs_dev *dev)
 	 * these hardlinks.
 	 */
 
-	yaffs_link_fixup(dev, hard_list);
+	yaffs_link_fixup(dev, &hard_list);
 
-	/* Fix up any shadowed objects */
+	/*
+	 * Fix up any shadowed objects.
+	 * There should not be more than one of these.
+	 */
 	{
 		struct yaffs_shadow_fixer *fixer;
 		struct yaffs_obj *obj;

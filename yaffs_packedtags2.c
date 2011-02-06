@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -32,11 +32,11 @@
 #define EXTRA_SHADOWS_FLAG	0x20000000
 #define EXTRA_SPARE_FLAGS	0x10000000
 
-#define ALL_EXTRA_FLAGS		0xF0000000
+#define ALL_EXTRA_FLAGS		0xf0000000
 
 /* Also, the top 4 bits of the object Id are set to the object type. */
 #define EXTRA_OBJECT_TYPE_SHIFT (28)
-#define EXTRA_OBJECT_TYPE_MASK  ((0x0F) << EXTRA_OBJECT_TYPE_SHIFT)
+#define EXTRA_OBJECT_TYPE_MASK  ((0x0f) << EXTRA_OBJECT_TYPE_SHIFT)
 
 static void yaffs_dump_packed_tags2_tags_only(
 				const struct yaffs_packed_tags2_tags_only *ptt)
@@ -100,9 +100,8 @@ void yaffs_pack_tags2(struct yaffs_packed_tags2 *pt,
 
 	if (tags_ecc)
 		yaffs_ecc_calc_other((unsigned char *)&pt->t,
-				     sizeof(struct
-					    yaffs_packed_tags2_tags_only),
-				     &pt->ecc);
+				    sizeof(struct yaffs_packed_tags2_tags_only),
+				    &pt->ecc);
 }
 
 void yaffs_unpack_tags2_tags_only(struct yaffs_ext_tags *t,
@@ -111,37 +110,34 @@ void yaffs_unpack_tags2_tags_only(struct yaffs_ext_tags *t,
 	memset(t, 0, sizeof(struct yaffs_ext_tags));
 	yaffs_init_tags(t);
 
-	if (ptt->seq_number != 0xFFFFFFFF) {
-		t->block_bad = 0;
-		t->chunk_used = 1;
-		t->obj_id = ptt->obj_id;
-		t->chunk_id = ptt->chunk_id;
-		t->n_bytes = ptt->n_bytes;
-		t->is_deleted = 0;
-		t->serial_number = 0;
-		t->seq_number = ptt->seq_number;
+	if (ptt->seq_number == 0xffffffff)
+		return;
 
-		/* Do extra header info stuff */
-		if (ptt->chunk_id & EXTRA_HEADER_INFO_FLAG) {
-			t->chunk_id = 0;
-			t->n_bytes = 0;
+	t->block_bad = 0;
+	t->chunk_used = 1;
+	t->obj_id = ptt->obj_id;
+	t->chunk_id = ptt->chunk_id;
+	t->n_bytes = ptt->n_bytes;
+	t->is_deleted = 0;
+	t->serial_number = 0;
+	t->seq_number = ptt->seq_number;
 
-			t->extra_available = 1;
-			t->extra_parent_id =
-			    ptt->chunk_id & (~(ALL_EXTRA_FLAGS));
-			t->extra_is_shrink =
-			    (ptt->chunk_id & EXTRA_SHRINK_FLAG) ? 1 : 0;
-			t->extra_shadows =
-			    (ptt->chunk_id & EXTRA_SHADOWS_FLAG) ? 1 : 0;
-			t->extra_obj_type =
-			    ptt->obj_id >> EXTRA_OBJECT_TYPE_SHIFT;
-			t->obj_id &= ~EXTRA_OBJECT_TYPE_MASK;
+	/* Do extra header info stuff */
+	if (ptt->chunk_id & EXTRA_HEADER_INFO_FLAG) {
+		t->chunk_id = 0;
+		t->n_bytes = 0;
 
-			if (t->extra_obj_type == YAFFS_OBJECT_TYPE_HARDLINK)
-				t->extra_equiv_id = ptt->n_bytes;
-			else
-				t->extra_length = ptt->n_bytes;
-		}
+		t->extra_available = 1;
+		t->extra_parent_id = ptt->chunk_id & (~(ALL_EXTRA_FLAGS));
+		t->extra_is_shrink = ptt->chunk_id & EXTRA_SHRINK_FLAG ? 1 : 0;
+		t->extra_shadows = ptt->chunk_id & EXTRA_SHADOWS_FLAG ? 1 : 0;
+		t->extra_obj_type = ptt->obj_id >> EXTRA_OBJECT_TYPE_SHIFT;
+		t->obj_id &= ~EXTRA_OBJECT_TYPE_MASK;
+
+		if (t->extra_obj_type == YAFFS_OBJECT_TYPE_HARDLINK)
+			t->extra_equiv_id = ptt->n_bytes;
+		else
+			t->extra_length = ptt->n_bytes;
 	}
 	yaffs_dump_packed_tags2_tags_only(ptt);
 	yaffs_dump_tags2(t);
@@ -152,7 +148,7 @@ void yaffs_unpack_tags2(struct yaffs_ext_tags *t, struct yaffs_packed_tags2 *pt,
 {
 	enum yaffs_ecc_result ecc_result = YAFFS_ECC_RESULT_NO_ERROR;
 
-	if (pt->t.seq_number != 0xFFFFFFFF && tags_ecc) {
+	if (pt->t.seq_number != 0xffffffff && tags_ecc) {
 		/* Chunk is in use and we need to do ECC */
 
 		struct yaffs_ecc_other ecc;

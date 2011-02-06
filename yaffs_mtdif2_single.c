@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -57,9 +57,8 @@ int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 		struct yaffs_packed_tags2_tags_only *pt2tp;
 
 		pt2tp =
-		    (struct yaffs_packed_tags2_tags_only *)(data +
-							dev->
-							data_bytes_per_chunk);
+		    (struct yaffs_packed_tags2_tags_only *)
+			(data + dev->data_bytes_per_chunk);
 		yaffs_pack_tags2_tags_only(pt2tp, tags);
 	} else {
 		yaffs_pack_tags2(&pt, tags, !dev->param.no_tags_ecc);
@@ -75,8 +74,8 @@ int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 
 	if (retval == 0)
 		return YAFFS_OK;
-	else
-		return YAFFS_FAIL;
+
+	return YAFFS_FAIL;
 }
 
 int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
@@ -98,18 +97,15 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 		"nandmtd2_read_chunk_tags chunk %d data %p tags %p",
 		nand_chunk, data, tags);
 
-	if (dev->param.inband_tags) {
-
-		if (!data) {
-			local_data = 1;
-			data = yaffs_get_temp_buffer(dev, __LINE__);
-		}
+	if (dev->param.inband_tags && !data) {
+		local_data = 1;
+		data = yaffs_get_temp_buffer(dev, __LINE__);
 	}
 
-	if (dev->param.inband_tags || (data && !tags))
+	if (dev->param.inband_tags || (data && !tags)) {
 		retval = mtd->read(mtd, addr, dev->param.total_bytes_per_chunk,
 				   &dummy, data);
-	else if (tags) {
+	} else if (tags) {
 		ops.mode = MTD_OOB_AUTO;
 		ops.ooblen = packed_tags_size;
 		ops.len = data ? dev->data_bytes_per_chunk : packed_tags_size;
@@ -119,40 +115,38 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 		retval = mtd->read_oob(mtd, addr, &ops);
 	}
 
-	if (dev->param.inband_tags) {
-		if (tags) {
-			struct yaffs_packed_tags2_tags_only *pt2tp;
-			pt2tp =
-				(struct yaffs_packed_tags2_tags_only *)
-					&data[dev->data_bytes_per_chunk];
-			yaffs_unpack_tags2_tags_only(tags, pt2tp);
-		}
-	} else {
-		if (tags) {
-			memcpy(packed_tags_ptr,
-			       yaffs_dev_to_lc(dev)->spare_buffer,
-			       packed_tags_size);
-			yaffs_unpack_tags2(tags, &pt, !dev->param.no_tags_ecc);
-		}
+	if (dev->param.inband_tags && tags) {
+		struct yaffs_packed_tags2_tags_only *pt2tp;
+
+		pt2tp =
+			(struct yaffs_packed_tags2_tags_only *)
+				&data[dev->data_bytes_per_chunk];
+		yaffs_unpack_tags2_tags_only(tags, pt2tp);
+	} else if (tags) {
+		memcpy(packed_tags_ptr,
+		       yaffs_dev_to_lc(dev)->spare_buffer,
+		       packed_tags_size);
+		yaffs_unpack_tags2(tags, &pt, !dev->param.no_tags_ecc);
 	}
 
 	if (local_data)
 		yaffs_release_temp_buffer(dev, data, __LINE__);
 
-	if (tags && retval == -EBADMSG
-	    && tags->ecc_result == YAFFS_ECC_RESULT_NO_ERROR) {
+	if (tags && retval == -EBADMSG &&
+	    tags->ecc_result == YAFFS_ECC_RESULT_NO_ERROR) {
 		tags->ecc_result = YAFFS_ECC_RESULT_UNFIXED;
 		dev->n_ecc_unfixed++;
 	}
-	if (tags && retval == -EUCLEAN
-	    && tags->ecc_result == YAFFS_ECC_RESULT_NO_ERROR) {
+	if (tags && retval == -EUCLEAN &&
+	    tags->ecc_result == YAFFS_ECC_RESULT_NO_ERROR) {
 		tags->ecc_result = YAFFS_ECC_RESULT_FIXED;
 		dev->n_ecc_fixed++;
 	}
+
 	if (retval == 0)
 		return YAFFS_OK;
-	else
-		return YAFFS_FAIL;
+
+	return YAFFS_FAIL;
 }
 
 int nandmtd2_mark_block_bad(struct yaffs_dev *dev, int block_no)
@@ -170,8 +164,8 @@ int nandmtd2_mark_block_bad(struct yaffs_dev *dev, int block_no)
 
 	if (retval == 0)
 		return YAFFS_OK;
-	else
-		return YAFFS_FAIL;
+
+	return YAFFS_FAIL;
 }
 
 int nandmtd2_query_block(struct yaffs_dev *dev, int block_no,
@@ -193,12 +187,13 @@ int nandmtd2_query_block(struct yaffs_dev *dev, int block_no,
 		*seq_number = 0;
 	} else {
 		struct yaffs_ext_tags t;
+
 		nandmtd2_read_chunk_tags(dev, block_no *
 					 dev->param.chunks_per_block, NULL, &t);
 
 		if (t.chunk_used) {
 			*seq_number = t.seq_number;
-			*state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+			*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 		} else {
 			*seq_number = 0;
 			*state = YAFFS_BLOCK_STATE_EMPTY;
@@ -209,7 +204,6 @@ int nandmtd2_query_block(struct yaffs_dev *dev, int block_no,
 
 	if (retval == 0)
 		return YAFFS_OK;
-	else
-		return YAFFS_FAIL;
-}
 
+	return YAFFS_FAIL;
+}

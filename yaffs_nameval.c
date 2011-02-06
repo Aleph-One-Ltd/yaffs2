@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -37,8 +37,7 @@ static int nval_find(const char *xb, int xb_size, const YCHAR *name,
 
 	memcpy(&size, xb, sizeof(int));
 	while (size > 0 && (size < xb_size) && (pos + size < xb_size)) {
-		if (strncmp
-		    ((YCHAR *) (xb + pos + sizeof(int)), name, size) == 0) {
+		if (!strncmp((YCHAR *) (xb + pos + sizeof(int)), name, size)) {
 			if (exist_size)
 				*exist_size = size;
 			return pos;
@@ -51,7 +50,7 @@ static int nval_find(const char *xb, int xb_size, const YCHAR *name,
 	}
 	if (exist_size)
 		*exist_size = 0;
-	return -1;
+	return -ENODATA;
 }
 
 static int nval_used(const char *xb, int xb_size)
@@ -75,16 +74,15 @@ int nval_del(char *xb, int xb_size, const YCHAR *name)
 	int pos = nval_find(xb, xb_size, name, NULL);
 	int size;
 
-	if (pos >= 0 && pos < xb_size) {
-		/* Find size, shift rest over this record,
-		 * then zero out the rest of buffer */
-		memcpy(&size, xb + pos, sizeof(int));
-		memcpy(xb + pos, xb + pos + size, xb_size - (pos + size));
-		memset(xb + (xb_size - size), 0, size);
-		return 0;
-	} else {
+	if (pos < 0 || pos >= xb_size)
 		return -ENODATA;
-	}
+
+	/* Find size, shift rest over this record,
+	 * then zero out the rest of buffer */
+	memcpy(&size, xb + pos, sizeof(int));
+	memcpy(xb + pos, xb + pos + size, xb_size - (pos + size));
+	memset(xb + (xb_size - size), 0, size);
+	return 0;
 }
 
 int nval_set(char *xb, int xb_size, const YCHAR *name, const char *buf,
@@ -152,12 +150,11 @@ int nval_get(const char *xb, int xb_size, const YCHAR * name, char *buf,
 			memcpy(buf, xb + pos, size);
 			return size;
 		}
-
 	}
 	if (pos >= 0)
 		return -ERANGE;
-	else
-		return -ENODATA;
+
+	return -ENODATA;
 }
 
 int nval_list(const char *xb, int xb_size, char *buf, int bsize)

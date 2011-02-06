@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -49,6 +49,7 @@
 #include <linux/sort.h>
 #include <linux/bitops.h>
 
+/*  These type wrappings are used to support Unicode names in WinCE. */
 #define YCHAR char
 #define YUCHAR unsigned char
 #define _Y(x)     x
@@ -72,22 +73,10 @@
 	({ int x = __builtin_choose_expr(assertion, 0, (void)0); (void) x; })
 
 
-#ifndef Y_DUMP_STACK
-#define Y_DUMP_STACK() dump_stack()
-#endif
-
 #define yaffs_trace(msk, fmt, ...) do { \
 	if (yaffs_trace_mask & (msk)) \
 		printk(KERN_DEBUG "yaffs: " fmt "\n", ##__VA_ARGS__); \
 } while (0)
 
-#ifndef YBUG
-#define YBUG() do {\
-	yaffs_trace(YAFFS_TRACE_BUG,\
-		"bug " __FILE__ " %d",\
-		__LINE__);\
-	Y_DUMP_STACK();\
-} while (0)
-#endif
 
 #endif

@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -120,7 +120,7 @@ static void yaffs_get_tags_from_spare(struct yaffs_dev *dev,
 
 static void yaffs_spare_init(struct yaffs_spare *spare)
 {
-	memset(spare, 0xFF, sizeof(struct yaffs_spare));
+	memset(spare, 0xff, sizeof(struct yaffs_spare));
 }
 
 static int yaffs_wr_nand(struct yaffs_dev *dev,
@@ -292,7 +292,7 @@ int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 		tags.obj_id = ext_tags->obj_id;
 		tags.chunk_id = ext_tags->chunk_id;
 
-		tags.n_bytes_lsb = ext_tags->n_bytes & 0x3ff;
+		tags.n_bytes_lsb = ext_tags->n_bytes & (1024 - 1);
 
 		if (dev->data_bytes_per_chunk >= 1024)
 			tags.n_bytes_msb = (ext_tags->n_bytes >> 10) & 3;
@@ -305,9 +305,7 @@ int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 			yaffs_calc_ecc(data, &spare);
 
 		yaffs_load_tags_to_spare(&spare, &tags);
-
 	}
-
 	return yaffs_wr_nand(dev, nand_chunk, data, &spare);
 }
 
@@ -320,48 +318,44 @@ int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 	enum yaffs_ecc_result ecc_result = YAFFS_ECC_RESULT_UNKNOWN;
 	static struct yaffs_spare spare_ff;
 	static int init;
+	int deleted;
 
 	if (!init) {
-		memset(&spare_ff, 0xFF, sizeof(spare_ff));
+		memset(&spare_ff, 0xff, sizeof(spare_ff));
 		init = 1;
 	}
 
-	if (yaffs_rd_chunk_nand(dev, nand_chunk,
-					data, &spare, &ecc_result, 1)) {
-		/* ext_tags may be NULL */
-		if (ext_tags) {
-
-			int deleted =
-			    (hweight8(spare.page_status) < 7) ? 1 : 0;
-
-			ext_tags->is_deleted = deleted;
-			ext_tags->ecc_result = ecc_result;
-			ext_tags->block_bad = 0;	/* We're reading it */
-			/* therefore it is not a bad block */
-			ext_tags->chunk_used =
-			    (memcmp(&spare_ff, &spare, sizeof(spare_ff)) !=
-			     0) ? 1 : 0;
-
-			if (ext_tags->chunk_used) {
-				yaffs_get_tags_from_spare(dev, &spare, &tags);
-
-				ext_tags->obj_id = tags.obj_id;
-				ext_tags->chunk_id = tags.chunk_id;
-				ext_tags->n_bytes = tags.n_bytes_lsb;
-
-				if (dev->data_bytes_per_chunk >= 1024)
-					ext_tags->n_bytes |=
-					    (((unsigned)tags.
-					      n_bytes_msb) << 10);
-
-				ext_tags->serial_number = tags.serial_number;
-			}
-		}
-
-		return YAFFS_OK;
-	} else {
+	if (!yaffs_rd_chunk_nand(dev, nand_chunk,
+					data, &spare, &ecc_result, 1))
 		return YAFFS_FAIL;
+
+	/* ext_tags may be NULL */
+	if (!ext_tags)
+		return YAFFS_OK;
+
+	deleted = (hweight8(spare.page_status) < 7) ? 1 : 0;
+
+	ext_tags->is_deleted = deleted;
+	ext_tags->ecc_result = ecc_result;
+	ext_tags->block_bad = 0;	/* We're reading it */
+	/* therefore it is not a bad block */
+	ext_tags->chunk_used =
+		memcmp(&spare_ff, &spare, sizeof(spare_ff)) ? 1 : 0;
+
+	if (ext_tags->chunk_used) {
+		yaffs_get_tags_from_spare(dev, &spare, &tags);
+		ext_tags->obj_id = tags.obj_id;
+		ext_tags->chunk_id = tags.chunk_id;
+		ext_tags->n_bytes = tags.n_bytes_lsb;
+
+		if (dev->data_bytes_per_chunk >= 1024)
+			ext_tags->n_bytes |=
+				(((unsigned)tags.n_bytes_msb) << 10);
+
+		ext_tags->serial_number = tags.serial_number;
 	}
+
+	return YAFFS_OK;
 }
 
 int yaffs_tags_compat_mark_bad(struct yaffs_dev *dev, int flash_block)
@@ -391,7 +385,7 @@ int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 	enum yaffs_ecc_result dummy;
 
 	if (!init) {
-		memset(&spare_ff, 0xFF, sizeof(spare_ff));
+		memset(&spare_ff, 0xff, sizeof(spare_ff));
 		init = 1;
 	}
 
@@ -407,7 +401,7 @@ int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 	else if (memcmp(&spare_ff, &spare0, sizeof(spare_ff)) == 0)
 		*state = YAFFS_BLOCK_STATE_EMPTY;
 	else
-		*state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+		*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 
 	return YAFFS_OK;
 }
