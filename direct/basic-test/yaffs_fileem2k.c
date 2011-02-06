@@ -599,7 +599,7 @@ int yflash2_QueryNANDBlock(struct yaffs_dev *dev, int block_no, enum yaffs_block
 	}
 	else if(tags.chunk_used)
 	{
-		*state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+		*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 		*seq_number = tags.seq_number;
 	}
 	return YAFFS_OK;

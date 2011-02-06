@@ -184,7 +184,7 @@ int ynandif_QueryNANDBlock(struct yaffs_dev *dev, int blockId,
 		}
 		else 
 		{
-			*state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+			*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 			*seq_number = tags.seq_number;
 		}
 	}
