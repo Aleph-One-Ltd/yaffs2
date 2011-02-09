@@ -193,7 +193,7 @@ static int yaffs_mknod(struct inode *dir, struct dentry *dentry, int mode,
 	struct yaffs_obj *obj = NULL;
 	struct yaffs_dev *dev;
 	struct yaffs_obj *parent = yaffs_inode_to_obj(dir);
-	int error = -ENOSPC;
+	int error;
 	uid_t uid = current->cred->fsuid;
 	gid_t gid =
 	    (dir->i_mode & S_ISGID) ? dir->i_gid : current->cred->fsgid;
@@ -219,6 +219,11 @@ static int yaffs_mknod(struct inode *dir, struct dentry *dentry, int mode,
 
 	yaffs_gross_lock(dev);
 
+	if (yaffs_get_n_free_chunks(dev) < 1) {
+		error = -ENOSPC;
+		goto err_out;
+	}
+
 	switch (mode & S_IFMT) {
 	default:
 		/* Special (socket, fifo, device...) */
@@ -243,13 +248,14 @@ static int yaffs_mknod(struct inode *dir, struct dentry *dentry, int mode,
 		break;
 	}
 
+	if (!obj) {
+		error = -ENOMEM;
+		goto err_out;
+	}
+
 	/* Can not call yaffs_get_inode() with gross lock held */
 	yaffs_gross_unlock(dev);
 
-	if (!obj) {
-		yaffs_trace(YAFFS_TRACE_OS, "yaffs_mknod failed making object");
-		return -ENOMEM;
-	}
 
 	inode = yaffs_get_inode(dir->i_sb, mode, rdev, obj);
 	d_instantiate(dentry, inode);
@@ -258,8 +264,13 @@ static int yaffs_mknod(struct inode *dir, struct dentry *dentry, int mode,
 		"yaffs_mknod created object %d count = %d",
 		obj->obj_id, atomic_read(&inode->i_count));
 	yaffs_fill_inode_from_obj(dir, parent);
-
 	return 0;
+
+err_out:
+	yaffs_gross_unlock(dev);
+	yaffs_trace(YAFFS_TRACE_OS, "yaffs_mknod error %d", error);
+	return error;
+
 }
 
 static int yaffs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
@@ -1814,6 +1825,8 @@ static const struct inode_operations yaffs_symlink_inode_operations = {
 static void yaffs_fill_inode_from_obj(struct inode *inode,
 				      struct yaffs_obj *obj)
 {
+	u32 mode;
+
 	if (!inode || !obj)  {
 		yaffs_trace(YAFFS_TRACE_OS,
 			"yaffs_fill_inode invalid parameters");
@@ -1822,7 +1835,7 @@ static void yaffs_fill_inode_from_obj(struct inode *inode,
 
 	/* Check mode against the variant type
 	 * and attempt to repair if broken. */
-	u32 mode = obj->yst_mode;
+	mode = obj->yst_mode;
 
 	switch (obj->variant_type) {
 	case YAFFS_OBJECT_TYPE_FILE:
