@@ -15,7 +15,6 @@
 #include "yaffs_trace.h"
 
 #include "yaffs_guts.h"
-#include "yaffs_tagsvalidity.h"
 #include "yaffs_getblockinfo.h"
 #include "yaffs_tagscompat.h"
 #include "yaffs_nand.h"
@@ -645,7 +644,7 @@ static void yaffs_retire_block(struct yaffs_dev *dev, int flash_block)
 			u8 *buffer = yaffs_get_temp_buffer(dev, __LINE__);
 
 			memset(buffer, 0xff, dev->data_bytes_per_chunk);
-			yaffs_init_tags(&tags);
+			memset(&tags, 0, sizeof(tags));
 			tags.seq_number = YAFFS_SEQUENCE_BAD_BLOCK;
 			if (dev->param.write_chunk_tags_fn(dev, chunk_id -
 							   dev->chunk_offset,
@@ -2415,7 +2414,7 @@ static inline int yaffs_gc_process_chunk(struct yaffs_dev *dev,
 	int matching_chunk;
 	int ret_val = YAFFS_OK;
 
-	yaffs_init_tags(&tags);
+	memset(&tags, 0, sizeof(tags));
 	yaffs_rd_chunk_tags_nand(dev, old_chunk,
 				 buffer, &tags);
 	object = yaffs_find_by_number(dev, tags.obj_id);
@@ -2971,7 +2970,7 @@ void yaffs_chunk_del(struct yaffs_dev *dev, int chunk_id, int mark_flash,
 	if (!dev->param.is_yaffs2 && mark_flash &&
 	    bi->block_state != YAFFS_BLOCK_STATE_COLLECTING) {
 
-		yaffs_init_tags(&tags);
+		memset(&tags, 0, sizeof(tags));
 		tags.is_deleted = 1;
 		yaffs_wr_chunk_tags_nand(dev, chunk_id, NULL, &tags);
 		yaffs_handle_chunk_update(dev, chunk_id, &tags);
@@ -3025,7 +3024,7 @@ static int yaffs_wr_data_obj(struct yaffs_obj *in, int inode_chunk,
 		return 0;
 
 	/* Set up new tags */
-	yaffs_init_tags(&new_tags);
+	memset(&new_tags, 0, sizeof(new_tags));
 
 	new_tags.chunk_id = inode_chunk;
 	new_tags.obj_id = in->obj_id;
@@ -3376,7 +3375,7 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 		yaffs_apply_xattrib_mod(in, (char *)buffer, xmod);
 
 	/* Tags */
-	yaffs_init_tags(&new_tags);
+	memset(&new_tags, 0, sizeof(new_tags));
 	in->serial++;
 	new_tags.chunk_id = 0;
 	new_tags.obj_id = in->obj_id;

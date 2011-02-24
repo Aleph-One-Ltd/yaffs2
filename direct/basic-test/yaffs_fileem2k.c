@@ -26,7 +26,6 @@ const char *yaffs_flashif2_c_version = "$Id: yaffs_fileem2k.c,v 1.24 2010-02-18 
 #include "yaffs_guts.h"
 #include "yaffs_fileem2k.h"
 #include "yaffs_packedtags2.h"
-#include "yaffs_tagsvalidity.h"
 
 
 #include <sys/types.h>
@@ -460,14 +459,10 @@ int yflash2_ReadChunkWithTagsFromNAND(struct yaffs_dev *dev,int nand_chunk, u8 *
 				nread= read(h,tags,sizeof(struct yaffs_ext_tags));
 				if(nread != sizeof(struct yaffs_ext_tags))
 					 retval =  YAFFS_FAIL;
-				if(yaffs_check_all_ff((u8 *)tags,sizeof(struct yaffs_ext_tags)))
-				{
-					yaffs_init_tags(tags);
-				}
+				if(yaffs_check_all_ff((u8 *)tags, sizeof(struct yaffs_ext_tags)))
+					memset(tags, 0, sizeof(struct yaffs_ext_tags));
 				else
-				{
 					tags->chunk_used = 1;
-				}
 			}
 			else
 			{

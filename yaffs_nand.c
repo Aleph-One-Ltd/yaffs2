@@ -13,7 +13,6 @@
 
 #include "yaffs_nand.h"
 #include "yaffs_tagscompat.h"
-#include "yaffs_tagsvalidity.h"
 
 #include "yaffs_getblockinfo.h"
 
@@ -58,11 +57,6 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 	if (tags) {
 		tags->seq_number = dev->seq_number;
 		tags->chunk_used = 1;
-		if (!yaffs_validate_tags(tags)) {
-			yaffs_trace(YAFFS_TRACE_ERROR,
-				"Writing uninitialised tags");
-			BUG();
-		}
 		yaffs_trace(YAFFS_TRACE_WRITE,
 			"Writing chunk %d tags %d %d",
 			nand_chunk, tags->obj_id, tags->chunk_id);

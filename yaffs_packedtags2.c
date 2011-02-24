@@ -14,7 +14,6 @@
 #include "yaffs_packedtags2.h"
 #include "yportenv.h"
 #include "yaffs_trace.h"
-#include "yaffs_tagsvalidity.h"
 
 /* This code packs a set of extended tags into a binary structure for
  * NAND storage
@@ -108,7 +107,6 @@ void yaffs_unpack_tags2_tags_only(struct yaffs_ext_tags *t,
 				  struct yaffs_packed_tags2_tags_only *ptt)
 {
 	memset(t, 0, sizeof(struct yaffs_ext_tags));
-	yaffs_init_tags(t);
 
 	if (ptt->seq_number == 0xffffffff)
 		return;

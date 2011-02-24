@@ -160,8 +160,6 @@ enum yaffs_obj_type {
 #define YAFFS_OBJECT_TYPE_MAX YAFFS_OBJECT_TYPE_SPECIAL
 
 struct yaffs_ext_tags {
-
-	unsigned validity0;
 	unsigned chunk_used;	/*  Status of the chunk: used or unused */
 	unsigned obj_id;	/* If 0 this is not used */
 	unsigned chunk_id;	/* If 0 this is a header, else a data chunk */
@@ -189,9 +187,6 @@ struct yaffs_ext_tags {
 
 	unsigned extra_length;	/* Length if it is a file */
 	unsigned extra_equiv_id;	/* Equivalent object for a hard link */
-
-	unsigned validity1;
-
 };
 
 /* Spare structure for YAFFS1 */
