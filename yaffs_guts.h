@@ -487,13 +487,12 @@ struct yaffs_checkpt_obj {
 
 /*--------------------- Temporary buffers ----------------
  *
- * These are chunk-sized working buffers. Each device has a few
+ * These are chunk-sized working buffers. Each device has a few.
  */
 
 struct yaffs_buffer {
 	u8 *buffer;
-	int line;	/* track from whence this buffer was allocated */
-	int max_line;
+	int in_use;
 };
 
 /*----------------- Device ---------------------------------*/
@@ -888,8 +887,8 @@ int yaffs_check_ff(u8 *buffer, int n_bytes);
 void yaffs_handle_chunk_error(struct yaffs_dev *dev,
 			      struct yaffs_block_info *bi);
 
-u8 *yaffs_get_temp_buffer(struct yaffs_dev *dev, int line_no);
-void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer, int line_no);
+u8 *yaffs_get_temp_buffer(struct yaffs_dev *dev);
+void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer);
 
 struct yaffs_obj *yaffs_find_or_create_by_number(struct yaffs_dev *dev,
 						 int number,

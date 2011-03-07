@@ -129,7 +129,7 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 
 		if (!data) {
 			local_data = 1;
-			data = yaffs_get_temp_buffer(dev, __LINE__);
+			data = yaffs_get_temp_buffer(dev);
 		}
 
 	}
@@ -182,7 +182,7 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 	}
 
 	if (local_data)
-		yaffs_release_temp_buffer(dev, data, __LINE__);
+		yaffs_release_temp_buffer(dev, data);
 
 	if (tags && retval == -EBADMSG
 	    && tags->ecc_result == YAFFS_ECC_RESULT_NO_ERROR) {

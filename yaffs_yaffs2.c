@@ -868,7 +868,7 @@ int yaffs2_handle_hole(struct yaffs_obj *obj, loff_t new_size)
 		small_hole = 0;
 
 	if (small_hole)
-		local_buffer = yaffs_get_temp_buffer(dev, __LINE__);
+		local_buffer = yaffs_get_temp_buffer(dev);
 
 	if (local_buffer) {
 		/* fill hole with zero bytes */
@@ -893,7 +893,7 @@ int yaffs2_handle_hole(struct yaffs_obj *obj, loff_t new_size)
 			}
 		}
 
-		yaffs_release_temp_buffer(dev, local_buffer, __LINE__);
+		yaffs_release_temp_buffer(dev, local_buffer);
 
 		/* If out of space then reverse any chunks we've added */
 		if (!small_increase_ok)
@@ -1371,7 +1371,7 @@ int yaffs2_scan_backwards(struct yaffs_dev *dev)
 
 	dev->blocks_in_checkpt = 0;
 
-	chunk_data = yaffs_get_temp_buffer(dev, __LINE__);
+	chunk_data = yaffs_get_temp_buffer(dev);
 
 	/* Scan all the blocks to determine their state */
 	bi = dev->block_info;
@@ -1498,7 +1498,7 @@ int yaffs2_scan_backwards(struct yaffs_dev *dev)
 	 */
 	yaffs_link_fixup(dev, &hard_list);
 
-	yaffs_release_temp_buffer(dev, chunk_data, __LINE__);
+	yaffs_release_temp_buffer(dev, chunk_data);
 
 	if (alloc_failed)
 		return YAFFS_FAIL;

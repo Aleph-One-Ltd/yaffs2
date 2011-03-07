@@ -406,7 +406,7 @@ int yflash2_ReadChunkWithTagsFromNAND(struct yaffs_dev *dev,int nand_chunk, u8 *
 		/* Got to suck the tags out of the data area */
 		if(!data) {
 			localData=1;
-			data = yaffs_get_temp_buffer(dev,__LINE__);
+			data = yaffs_get_temp_buffer(dev);
 		}
 
 		
@@ -427,7 +427,7 @@ int yflash2_ReadChunkWithTagsFromNAND(struct yaffs_dev *dev,int nand_chunk, u8 *
 			retval = YAFFS_FAIL;
 			
 		if(localData)
-			yaffs_release_temp_buffer(dev,data,__LINE__);
+			yaffs_release_temp_buffer(dev, data);
 
 
 

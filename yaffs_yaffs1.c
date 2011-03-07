@@ -42,7 +42,7 @@ int yaffs1_scan(struct yaffs_dev *dev)
 		"yaffs1_scan starts  intstartblk %d intendblk %d...",
 		dev->internal_start_block, dev->internal_end_block);
 
-	chunk_data = yaffs_get_temp_buffer(dev, __LINE__);
+	chunk_data = yaffs_get_temp_buffer(dev);
 
 	dev->seq_number = YAFFS_LOWEST_SEQUENCE_NUMBER;
 
@@ -413,7 +413,7 @@ int yaffs1_scan(struct yaffs_dev *dev)
 		}
 	}
 
-	yaffs_release_temp_buffer(dev, chunk_data, __LINE__);
+	yaffs_release_temp_buffer(dev, chunk_data);
 
 	if (alloc_failed)
 		return YAFFS_FAIL;

@@ -127,44 +127,30 @@ static int yaffs_init_tmp_buffers(struct yaffs_dev *dev)
 	memset(dev->temp_buffer, 0, sizeof(dev->temp_buffer));
 
 	for (i = 0; buf && i < YAFFS_N_TEMP_BUFFERS; i++) {
-		dev->temp_buffer[i].line = 0;	/* not in use */
-		dev->temp_buffer[i].buffer = buf =
-		    kmalloc(dev->param.total_bytes_per_chunk, GFP_NOFS);
+		dev->temp_buffer[i].in_use = 0;
+		buf = kmalloc(dev->param.total_bytes_per_chunk, GFP_NOFS);
+		dev->temp_buffer[i].buffer = buf;
 	}
 
 	return buf ? YAFFS_OK : YAFFS_FAIL;
 }
 
-u8 *yaffs_get_temp_buffer(struct yaffs_dev * dev, int line_no)
+u8 *yaffs_get_temp_buffer(struct yaffs_dev * dev)
 {
 	int i;
-	int j;
 
 	dev->temp_in_use++;
 	if (dev->temp_in_use > dev->max_temp)
 		dev->max_temp = dev->temp_in_use;
 
 	for (i = 0; i < YAFFS_N_TEMP_BUFFERS; i++) {
-		if (dev->temp_buffer[i].line == 0) {
-			dev->temp_buffer[i].line = line_no;
-			if ((i + 1) > dev->max_temp) {
-				dev->max_temp = i + 1;
-				for (j = 0; j <= i; j++)
-					dev->temp_buffer[j].max_line =
-					    dev->temp_buffer[j].line;
-			}
-
+		if (dev->temp_buffer[i].in_use == 0) {
+			dev->temp_buffer[i].in_use = 1;
 			return dev->temp_buffer[i].buffer;
 		}
 	}
 
-	yaffs_trace(YAFFS_TRACE_BUFFERS,
-		"Out of temp buffers at line %d, other held by lines:",
-		line_no);
-	for (i = 0; i < YAFFS_N_TEMP_BUFFERS; i++)
-		yaffs_trace(YAFFS_TRACE_BUFFERS,
-			" %d", dev->temp_buffer[i].line);
-
+	yaffs_trace(YAFFS_TRACE_BUFFERS, "Out of temp buffers");
 	/*
 	 * If we got here then we have to allocate an unmanaged one
 	 * This is not good.
@@ -175,7 +161,7 @@ u8 *yaffs_get_temp_buffer(struct yaffs_dev * dev, int line_no)
 
 }
 
-void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer, int line_no)
+void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer)
 {
 	int i;
 
@@ -183,16 +169,14 @@ void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer, int line_no)
 
 	for (i = 0; i < YAFFS_N_TEMP_BUFFERS; i++) {
 		if (dev->temp_buffer[i].buffer == buffer) {
-			dev->temp_buffer[i].line = 0;
+			dev->temp_buffer[i].in_use = 0;
 			return;
 		}
 	}
 
 	if (buffer) {
 		/* assume it is an unmanaged one. */
-		yaffs_trace(YAFFS_TRACE_BUFFERS,
-		  "Releasing unmanaged temp buffer in line %d",
-		   line_no);
+		yaffs_trace(YAFFS_TRACE_BUFFERS, "Releasing unmanaged temp buffer");
 		kfree(buffer);
 		dev->unmanaged_buffer_deallocs++;
 	}
@@ -332,7 +316,7 @@ int yaffs_check_ff(u8 *buffer, int n_bytes)
 static int yaffs_check_chunk_erased(struct yaffs_dev *dev, int nand_chunk)
 {
 	int retval = YAFFS_OK;
-	u8 *data = yaffs_get_temp_buffer(dev, __LINE__);
+	u8 *data = yaffs_get_temp_buffer(dev);
 	struct yaffs_ext_tags tags;
 	int result;
 
@@ -348,7 +332,7 @@ static int yaffs_check_chunk_erased(struct yaffs_dev *dev, int nand_chunk)
 		retval = YAFFS_FAIL;
 	}
 
-	yaffs_release_temp_buffer(dev, data, __LINE__);
+	yaffs_release_temp_buffer(dev, data);
 
 	return retval;
 
@@ -361,7 +345,7 @@ static int yaffs_verify_chunk_written(struct yaffs_dev *dev,
 {
 	int retval = YAFFS_OK;
 	struct yaffs_ext_tags temp_tags;
-	u8 *buffer = yaffs_get_temp_buffer(dev, __LINE__);
+	u8 *buffer = yaffs_get_temp_buffer(dev);
 	int result;
 
 	result = yaffs_rd_chunk_tags_nand(dev, nand_chunk, buffer, &temp_tags);
@@ -371,7 +355,7 @@ static int yaffs_verify_chunk_written(struct yaffs_dev *dev,
 	    temp_tags.n_bytes != tags->n_bytes)
 		retval = YAFFS_FAIL;
 
-	yaffs_release_temp_buffer(dev, buffer, __LINE__);
+	yaffs_release_temp_buffer(dev, buffer);
 
 	return retval;
 }
@@ -641,7 +625,7 @@ static void yaffs_retire_block(struct yaffs_dev *dev, int flash_block)
 			int chunk_id =
 			    flash_block * dev->param.chunks_per_block;
 
-			u8 *buffer = yaffs_get_temp_buffer(dev, __LINE__);
+			u8 *buffer = yaffs_get_temp_buffer(dev);
 
 			memset(buffer, 0xff, dev->data_bytes_per_chunk);
 			memset(&tags, 0, sizeof(tags));
@@ -654,7 +638,7 @@ static void yaffs_retire_block(struct yaffs_dev *dev, int flash_block)
 					"yaffs: Failed to write bad block marker to block %d",
 					flash_block);
 
-			yaffs_release_temp_buffer(dev, buffer, __LINE__);
+			yaffs_release_temp_buffer(dev, buffer);
 		}
 	}
 
@@ -2580,7 +2564,7 @@ static int yaffs_gc_block(struct yaffs_dev *dev, int block, int whole_block)
 		yaffs_block_became_dirty(dev, block);
 	} else {
 
-		u8 *buffer = yaffs_get_temp_buffer(dev, __LINE__);
+		u8 *buffer = yaffs_get_temp_buffer(dev);
 
 		yaffs_verify_blk(dev, bi, block);
 
@@ -2600,7 +2584,7 @@ static int yaffs_gc_block(struct yaffs_dev *dev, int block, int whole_block)
 							old_chunk, buffer);
 			}
 		}
-		yaffs_release_temp_buffer(dev, buffer, __LINE__);
+		yaffs_release_temp_buffer(dev, buffer);
 	}
 
 	yaffs_verify_collected_blk(dev, bi, block);
@@ -3126,7 +3110,7 @@ static int yaffs_do_xattrib_fetch(struct yaffs_obj *obj, const YCHAR *name,
 			return 0;
 	}
 
-	buffer = (char *)yaffs_get_temp_buffer(dev, __LINE__);
+	buffer = (char *)yaffs_get_temp_buffer(dev);
 	if (!buffer)
 		return -ENOMEM;
 
@@ -3148,7 +3132,7 @@ static int yaffs_do_xattrib_fetch(struct yaffs_obj *obj, const YCHAR *name,
 		else
 			retval = nval_list(x_buffer, x_size, value, size);
 	}
-	yaffs_release_temp_buffer(dev, (u8 *) buffer, __LINE__);
+	yaffs_release_temp_buffer(dev, (u8 *) buffer);
 	return retval;
 }
 
@@ -3188,7 +3172,7 @@ static void yaffs_check_obj_details_loaded(struct yaffs_obj *in)
 
 	dev = in->my_dev;
 	in->lazy_loaded = 0;
-	buf = yaffs_get_temp_buffer(dev, __LINE__);
+	buf = yaffs_get_temp_buffer(dev);
 
 	result = yaffs_rd_chunk_tags_nand(dev, in->hdr_chunk, buf, &tags);
 	oh = (struct yaffs_obj_hdr *)buf;
@@ -3203,7 +3187,7 @@ static void yaffs_check_obj_details_loaded(struct yaffs_obj *in)
 		if (!in->variant.symlink_variant.alias)
 			alloc_failed = 1;	/* Not returned */
 	}
-	yaffs_release_temp_buffer(dev, buf, __LINE__);
+	yaffs_release_temp_buffer(dev, buf);
 }
 
 static void yaffs_load_name_from_oh(struct yaffs_dev *dev, YCHAR *name,
@@ -3304,7 +3288,7 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 	yaffs_check_gc(dev, 0);
 	yaffs_check_obj_details_loaded(in);
 
-	buffer = yaffs_get_temp_buffer(in->my_dev, __LINE__);
+	buffer = yaffs_get_temp_buffer(in->my_dev);
 	oh = (struct yaffs_obj_hdr *)buffer;
 
 	prev_chunk_id = in->hdr_chunk;
@@ -3397,7 +3381,7 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 				  (prev_chunk_id > 0) ? 1 : 0);
 
 	if (buffer)
-		yaffs_release_temp_buffer(dev, buffer, __LINE__);
+		yaffs_release_temp_buffer(dev, buffer);
 
 	if (new_chunk_id < 0)
 		return new_chunk_id;
@@ -3493,13 +3477,12 @@ int yaffs_file_rd(struct yaffs_obj *in, u8 * buffer, loff_t offset, int n_bytes)
 				/* Read into the local buffer then copy.. */
 
 				u8 *local_buffer =
-				    yaffs_get_temp_buffer(dev, __LINE__);
+				    yaffs_get_temp_buffer(dev);
 				yaffs_rd_data_obj(in, chunk, local_buffer);
 
 				memcpy(buffer, &local_buffer[start], n_copy);
 
-				yaffs_release_temp_buffer(dev, local_buffer,
-							  __LINE__);
+				yaffs_release_temp_buffer(dev, local_buffer);
 			}
 		} else {
 			/* A full chunk. Read directly into the buffer. */
@@ -3641,8 +3624,7 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 				 * local buffer then copy over and write back.
 				 */
 
-				u8 *local_buffer =
-				    yaffs_get_temp_buffer(dev, __LINE__);
+				u8 *local_buffer = yaffs_get_temp_buffer(dev);
 
 				yaffs_rd_data_obj(in, chunk, local_buffer);
 				memcpy(&local_buffer[start], buffer, n_copy);
@@ -3652,8 +3634,7 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 						      local_buffer,
 						      n_writeback, 0);
 
-				yaffs_release_temp_buffer(dev, local_buffer,
-							  __LINE__);
+				yaffs_release_temp_buffer(dev, local_buffer);
 			}
 		} else {
 			/* A full chunk. Write directly from the buffer. */
@@ -3746,7 +3727,7 @@ void yaffs_resize_file_down(struct yaffs_obj *obj, loff_t new_size)
 
 	if (new_partial != 0) {
 		int last_chunk = 1 + new_full;
-		u8 *local_buffer = yaffs_get_temp_buffer(dev, __LINE__);
+		u8 *local_buffer = yaffs_get_temp_buffer(dev);
 
 		/* Rewrite the last chunk with its new size and zero pad */
 		yaffs_rd_data_obj(obj, last_chunk, local_buffer);
@@ -3756,7 +3737,7 @@ void yaffs_resize_file_down(struct yaffs_obj *obj, loff_t new_size)
 		yaffs_wr_data_obj(obj, last_chunk, local_buffer,
 				  new_partial, 1);
 
-		yaffs_release_temp_buffer(dev, local_buffer, __LINE__);
+		yaffs_release_temp_buffer(dev, local_buffer);
 	}
 
 	obj->variant.file_variant.file_size = new_size;
@@ -4440,7 +4421,7 @@ int yaffs_get_obj_name(struct yaffs_obj *obj, YCHAR *name, int buffer_size)
 #endif
 	else if (obj->hdr_chunk > 0) {
 		int result;
-		u8 *buffer = yaffs_get_temp_buffer(obj->my_dev, __LINE__);
+		u8 *buffer = yaffs_get_temp_buffer(obj->my_dev);
 
 		struct yaffs_obj_hdr *oh = (struct yaffs_obj_hdr *)buffer;
 
@@ -4454,7 +4435,7 @@ int yaffs_get_obj_name(struct yaffs_obj *obj, YCHAR *name, int buffer_size)
 		yaffs_load_name_from_oh(obj->my_dev, name, oh->name,
 					buffer_size);
 
-		yaffs_release_temp_buffer(obj->my_dev, buffer, __LINE__);
+		yaffs_release_temp_buffer(obj->my_dev, buffer);
 	}
 
 	yaffs_fix_null_name(obj, name, buffer_size);

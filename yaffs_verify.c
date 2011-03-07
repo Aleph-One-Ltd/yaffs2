@@ -349,7 +349,7 @@ void yaffs_verify_obj(struct yaffs_obj *obj)
 	if (chunk_valid && !yaffs_skip_nand_verification(dev)) {
 		struct yaffs_ext_tags tags;
 		struct yaffs_obj_hdr *oh;
-		u8 *buffer = yaffs_get_temp_buffer(dev, __LINE__);
+		u8 *buffer = yaffs_get_temp_buffer(dev);
 
 		oh = (struct yaffs_obj_hdr *)buffer;
 
@@ -357,7 +357,7 @@ void yaffs_verify_obj(struct yaffs_obj *obj)
 
 		yaffs_verify_oh(obj, oh, &tags, 1);
 
-		yaffs_release_temp_buffer(dev, buffer, __LINE__);
+		yaffs_release_temp_buffer(dev, buffer);
 	}
 
 	/* Verify it has a parent */
