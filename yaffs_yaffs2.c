@@ -20,6 +20,7 @@
 #include "yaffs_getblockinfo.h"
 #include "yaffs_verify.h"
 #include "yaffs_attribs.h"
+#include "yaffs_summary.h"
 
 /*
  * Checkpoints are really no benefit on very small partitions.
@@ -934,7 +935,8 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 		int blk, int chunk_in_block,
 		int *found_chunks,
 		u8 *chunk_data,
-		struct list_head *hard_list)
+		struct list_head *hard_list,
+		int summary_available)
 {
 	struct yaffs_obj_hdr *oh;
 	struct yaffs_obj *in;
@@ -951,7 +953,13 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 	struct yaffs_hardlink_var *hl_var;
 	struct yaffs_symlink_var *sl_var;
 
-	result = yaffs_rd_chunk_tags_nand(dev, chunk, NULL, &tags);
+	if (summary_available) {
+		result = yaffs_summary_fetch(dev, &tags, chunk_in_block);
+		tags.seq_number = bi->seq_number;
+	}
+	
+	if (!summary_available || tags.obj_id == 0)
+		result = yaffs_rd_chunk_tags_nand(dev, chunk, NULL, &tags);
 
 	/* Let's have a good look at this chunk... */
 
@@ -1346,6 +1354,7 @@ int yaffs2_scan_backwards(struct yaffs_dev *dev)
 	int alloc_failed = 0;
 	struct yaffs_block_index *block_index = NULL;
 	int alt_block_index = 0;
+	int summary_available;
 
 	yaffs_trace(YAFFS_TRACE_SCAN,
 		"yaffs2_scan_backwards starts  intstartblk %d intendblk %d...",
@@ -1455,18 +1464,27 @@ int yaffs2_scan_backwards(struct yaffs_dev *dev)
 		bi = yaffs_get_block_info(dev, blk);
 		deleted = 0;
 
+		summary_available = yaffs_summary_read(dev, blk);
+
 		/* For each chunk in each block that needs scanning.... */
 		found_chunks = 0;
-		for (c = dev->param.chunks_per_block - 1;
+		if(summary_available)
+			c = dev->chunks_per_summary - 1;
+		else
+			c = dev->param.chunks_per_block - 1;
+
+		for (/* c is already initialised */;
 		     !alloc_failed && c >= 0 &&
 		     (bi->block_state == YAFFS_BLOCK_STATE_NEEDS_SCAN ||
-		      bi->block_state == YAFFS_BLOCK_STATE_ALLOCATING); c--) {
+		      bi->block_state == YAFFS_BLOCK_STATE_ALLOCATING);
+		      c--) {
 			/* Scan backwards...
 			 * Read the tags and decide what to do
 			 */
 			if (yaffs2_scan_chunk(dev, bi, blk, c,
 					&found_chunks, chunk_data,
-					&hard_list) == YAFFS_FAIL)
+					&hard_list, summary_available) ==
+					YAFFS_FAIL)
 				alloc_failed = 1;
 		}
 

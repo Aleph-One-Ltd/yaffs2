@@ -15,13 +15,14 @@
 #include "yaffs_tagscompat.h"
 
 #include "yaffs_getblockinfo.h"
+#include "yaffs_summary.h"
 
 int yaffs_rd_chunk_tags_nand(struct yaffs_dev *dev, int nand_chunk,
 			     u8 *buffer, struct yaffs_ext_tags *tags)
 {
 	int result;
 	struct yaffs_ext_tags local_tags;
-	int realigned_chunk = nand_chunk - dev->chunk_offset;
+	int flash_chunk = nand_chunk - dev->chunk_offset;
 
 	dev->n_page_reads++;
 
@@ -31,11 +32,11 @@ int yaffs_rd_chunk_tags_nand(struct yaffs_dev *dev, int nand_chunk,
 
 	if (dev->param.read_chunk_tags_fn)
 		result =
-		    dev->param.read_chunk_tags_fn(dev, realigned_chunk, buffer,
+		    dev->param.read_chunk_tags_fn(dev, flash_chunk, buffer,
 						  tags);
 	else
 		result = yaffs_tags_compat_rd(dev,
-					      realigned_chunk, buffer, tags);
+					      flash_chunk, buffer, tags);
 	if (tags && tags->ecc_result > YAFFS_ECC_RESULT_NO_ERROR) {
 
 		struct yaffs_block_info *bi;
@@ -51,8 +52,10 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 				int nand_chunk,
 				const u8 *buffer, struct yaffs_ext_tags *tags)
 {
+	int result;
+	int flash_chunk = nand_chunk - dev->chunk_offset;
+
 	dev->n_page_writes++;
-	nand_chunk -= dev->chunk_offset;
 
 	if (tags) {
 		tags->seq_number = dev->seq_number;
@@ -67,10 +70,14 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 	}
 
 	if (dev->param.write_chunk_tags_fn)
-		return dev->param.write_chunk_tags_fn(dev, nand_chunk, buffer,
-							tags);
+		result = dev->param.write_chunk_tags_fn(dev, flash_chunk,
+							buffer, tags);
+	else
+		result = yaffs_tags_compat_wr(dev, flash_chunk, buffer, tags);
 
-	return yaffs_tags_compat_wr(dev, nand_chunk, buffer, tags);
+	yaffs_summary_add(dev, tags, nand_chunk);
+
+	return result;
 }
 
 int yaffs_mark_bad(struct yaffs_dev *dev, int block_no)

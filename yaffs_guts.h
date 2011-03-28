@@ -78,10 +78,12 @@
 #define YAFFS_OBJECTID_UNLINKED		3
 #define YAFFS_OBJECTID_DELETED		4
 
+/* Fake object Id for summary data */
+#define YAFFS_OBJECTID_SUMMARY		0x10
+
 /* Pseudo object ids for checkpointing */
-#define YAFFS_OBJECTID_SB_HEADER	0x10
 #define YAFFS_OBJECTID_CHECKPOINT_DATA	0x20
-#define YAFFS_SEQUENCE_CHECKPOINT_DATA  0x21
+#define YAFFS_SEQUENCE_CHECKPOINT_DATA	0x21
 
 #define YAFFS_MAX_SHORT_OP_CACHES	20
 
@@ -728,6 +730,10 @@ struct yaffs_dev {
 
 	/* Dirty directory handling */
 	struct list_head dirty_dirs;	/* List of dirty directories */
+
+	/* Summary */
+	int chunks_per_summary;
+	struct yaffs_summary_tags *sum_tags;
 
 	/* Statistcs */
 	u32 n_page_writes;

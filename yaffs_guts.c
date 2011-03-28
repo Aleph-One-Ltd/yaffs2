@@ -27,6 +27,7 @@
 #include "yaffs_nameval.h"
 #include "yaffs_allocator.h"
 #include "yaffs_attribs.h"
+#include "yaffs_summary.h"
 
 /* Note YAFFS_GC_GOOD_ENOUGH must be <= YAFFS_GC_PASSIVE_THRESHOLD */
 #define YAFFS_GC_GOOD_ENOUGH 2
@@ -4813,6 +4814,9 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 	if (!init_failed && !yaffs_create_initial_dir(dev))
 		init_failed = 1;
 
+	if(!init_failed && dev->param.is_yaffs2 && !yaffs_summary_init(dev))
+		init_failed = 1;
+
 	if (!init_failed) {
 		/* Now scan the flash. */
 		if (dev->param.is_yaffs2) {
@@ -4898,6 +4902,8 @@ void yaffs_deinitialise(struct yaffs_dev *dev)
 
 		yaffs_deinit_blocks(dev);
 		yaffs_deinit_tnodes_and_objs(dev);
+		yaffs_summary_deinit(dev);
+
 		if (dev->param.n_caches > 0 && dev->cache) {
 
 			for (i = 0; i < dev->param.n_caches; i++) {
