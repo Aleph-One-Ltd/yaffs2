@@ -29,7 +29,7 @@
 #include "yaffs_getblockinfo.h"
 #include "yaffs_bitmap.h"
 
-/* Summary tags don't need the sequence number becase that is redundant. */
+/* Summary tags don't need the sequence number because that is redundant. */
 struct yaffs_summary_tags {
 	unsigned obj_id;
 	unsigned chunk_id;
@@ -74,8 +74,8 @@ void yaffs_summary_deinit(struct yaffs_dev *dev)
 {
 	kfree(dev->sum_tags);
 	dev->sum_tags = NULL;
-	kfree(dev->sum_tags);
-	dev->sum_tags = NULL;
+	kfree(dev->gc_sum_tags);
+	dev->gc_sum_tags = NULL;
 	dev->chunks_per_summary = 0;
 }
 
@@ -96,7 +96,7 @@ static int yaffs_summary_write(struct yaffs_dev *dev, int blk)
 	memset(&tags, 0, sizeof(struct yaffs_ext_tags));
 	tags.obj_id = YAFFS_OBJECTID_SUMMARY;
 	tags.chunk_id = 1;
-	chunk_in_block = dev-> chunks_per_summary;
+	chunk_in_block = dev->chunks_per_summary;
 	chunk_in_nand = dev->alloc_block * dev->param.chunks_per_block +
 						dev-> chunks_per_summary;
 	do {
