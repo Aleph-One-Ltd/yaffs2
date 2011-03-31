@@ -957,9 +957,13 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 		result = yaffs_summary_fetch(dev, &tags, chunk_in_block);
 		tags.seq_number = bi->seq_number;
 	}
-	
-	if (!summary_available || tags.obj_id == 0)
+
+	if (!summary_available || tags.obj_id == 0) {
 		result = yaffs_rd_chunk_tags_nand(dev, chunk, NULL, &tags);
+		dev->tags_used++;
+	} else {
+		dev->summary_used++;
+	}
 
 	/* Let's have a good look at this chunk... */
 
@@ -1464,7 +1468,7 @@ int yaffs2_scan_backwards(struct yaffs_dev *dev)
 		bi = yaffs_get_block_info(dev, blk);
 		deleted = 0;
 
-		summary_available = yaffs_summary_read(dev, blk);
+		summary_available = yaffs_summary_read(dev, dev->sum_tags, blk);
 
 		/* For each chunk in each block that needs scanning.... */
 		found_chunks = 0;

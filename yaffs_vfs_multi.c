@@ -2534,6 +2534,7 @@ struct yaffs_options {
 	int lazy_loading_overridden;
 	int empty_lost_and_found;
 	int empty_lost_and_found_overridden;
+	int disable_summary;
 };
 
 #define MAX_OPT_LEN 30
@@ -2575,6 +2576,8 @@ static int yaffs_parse_options(struct yaffs_options *options,
 		} else if (!strcmp(cur_opt, "lazy-loading-on")) {
 			options->lazy_loading_enabled = 1;
 			options->lazy_loading_overridden = 1;
+		} else if (!strcmp(cur_opt, "disable_summary")) {
+			options->disable_summary = 1;
 		} else if (!strcmp(cur_opt, "empty-lost-and-found-off")) {
 			options->empty_lost_and_found = 0;
 			options->empty_lost_and_found_overridden = 1;
@@ -2873,6 +2876,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 #ifdef CONFIG_YAFFS__ALWAYS_CHECK_CHUNK_ERASED
 	param->always_check_erased = 1;
 #endif
+	param->disable_summary = options.disable_summary;
 
 	if (options.empty_lost_and_found_overridden)
 		param->empty_lost_n_found = options.empty_lost_and_found;
@@ -3168,6 +3172,8 @@ static char *yaffs_dump_dev_part1(char *buf, struct yaffs_dev *dev)
 				dev->n_unlinked_files);
 	buf += sprintf(buf, "refresh_count........ %u\n", dev->refresh_count);
 	buf += sprintf(buf, "n_bg_deletions....... %u\n", dev->n_bg_deletions);
+	buf += sprintf(buf, "tags_used............ %u\n", dev->tags_used);
+	buf += sprintf(buf, "summary_used......... %u\n", dev->summary_used);
 
 	return buf;
 }

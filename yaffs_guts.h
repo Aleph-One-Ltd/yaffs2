@@ -282,6 +282,7 @@ struct yaffs_block_info {
 				   Block should be prioritised for GC */
 	u32 chunk_error_strikes:3;	/* How many times we've had ecc etc
 				failures on this block and tried to reuse it */
+	u32 has_summary:1;	/* The block has a summary */
 
 #ifdef CONFIG_YAFFS_YAFFS2
 	u32 has_shrink_hdr:1;	/* This block has at least one shrink header */
@@ -590,6 +591,8 @@ struct yaffs_param {
 	int auto_unicode;
 #endif
 	int always_check_erased;	/* Force chunk erased check always on */
+
+	int disable_summary;
 };
 
 struct yaffs_dev {
@@ -689,6 +692,7 @@ struct yaffs_dev {
 	unsigned gc_block;
 	unsigned gc_chunk;
 	unsigned gc_skip;
+	struct yaffs_summary_tags *gc_sum_tags;
 
 	/* Special directories */
 	struct yaffs_obj *root_dir;
@@ -735,7 +739,7 @@ struct yaffs_dev {
 	int chunks_per_summary;
 	struct yaffs_summary_tags *sum_tags;
 
-	/* Statistcs */
+	/* Statistics */
 	u32 n_page_writes;
 	u32 n_page_reads;
 	u32 n_erasures;
@@ -756,6 +760,8 @@ struct yaffs_dev {
 	u32 n_unmarked_deletions;
 	u32 refresh_count;
 	u32 cache_hits;
+	u32 tags_used;
+	u32 summary_used;
 
 };
 

@@ -2383,6 +2383,8 @@ void yaffs_block_became_dirty(struct yaffs_dev *dev, int block_no)
 	bi->has_shrink_hdr = 0;
 	bi->skip_erased_check = 1;	/* Clean, so no need to check */
 	bi->gc_prioritise = 0;
+	bi->has_summary=0;
+
 	yaffs_clear_chunk_bits(dev, block_no);
 
 	yaffs_trace(YAFFS_TRACE_ERASE, "Erased block %d", block_no);
@@ -2557,6 +2559,8 @@ static int yaffs_gc_block(struct yaffs_dev *dev, int block, int whole_block)
 	bi->has_shrink_hdr = 0;	/* clear the flag so that the block can erase */
 
 	dev->gc_disable = 1;
+
+	yaffs_summary_gc(dev, block);
 
 	if (is_checkpt_block || !yaffs_still_some_chunks(dev, block)) {
 		yaffs_trace(YAFFS_TRACE_TRACING,
@@ -4814,7 +4818,9 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 	if (!init_failed && !yaffs_create_initial_dir(dev))
 		init_failed = 1;
 
-	if(!init_failed && dev->param.is_yaffs2 && !yaffs_summary_init(dev))
+	if(!init_failed && dev->param.is_yaffs2 &&
+		!dev->param.disable_summary &&
+		!yaffs_summary_init(dev))
 		init_failed = 1;
 
 	if (!init_failed) {

@@ -37,6 +37,7 @@ ifneq ($(KERNELRELEASE),)
 	yaffs2-objs += yaffs_yaffs1.o
 	yaffs2-objs += yaffs_yaffs2.o
 	yaffs2-objs += yaffs_verify.o
+	yaffs2-objs += yaffs_summary.o
 
 	yaffs2multi-objs := yaffs_mtdif.o yaffs_mtdif2_multi.o
 	yaffs2multi-objs += yaffs_mtdif1_multi.o yaffs_packedtags1.o
@@ -49,6 +50,7 @@ ifneq ($(KERNELRELEASE),)
 	yaffs2multi-objs += yaffs_yaffs1.o
 	yaffs2multi-objs += yaffs_yaffs2.o
 	yaffs2multi-objs += yaffs_verify.o
+	yaffs2multi-objs += yaffs_summary.o
 
 else
 	KERNELDIR ?= /lib/modules/$(shell uname -r)/build
