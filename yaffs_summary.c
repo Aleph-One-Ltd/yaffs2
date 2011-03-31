@@ -11,18 +11,16 @@
  * published by the Free Software Foundation.
  */
 
-/* Summaries write all the tags for the chunks in a block into packed tags
- * (just the tags part - no ECC) in the last n chunks of the block.
+/* Summaries write the useful part of the tags for the chunks in a block into an
+ * an array which is written to the last n chunks of the block.
  * Reading the summaries gives all the tags for the block in one read. Much
  * faster.
  *
  * Chunks holding summaries are marked with tags making it look like
  * they are part of a fake file.
  *
- * The chunks that hold the summary are removed from free space and are marked
- * as being in use.
+ * The summary could also be used during gc.
  *
- * THa above might need to be revisited.
  */
 
 #include "yaffs_summary.h"
@@ -245,6 +243,12 @@ void yaffs_summary_gc(struct yaffs_dev *dev, int blk)
 	if (!bi->has_summary)
 		return;
 
-	for (i = dev->chunks_per_summary; i < dev->param.chunks_per_block; i++)
-		yaffs_clear_chunk_bit(dev, blk, i);
+	for (i = dev->chunks_per_summary; i < dev->param.chunks_per_block; i++) {
+		if( yaffs_check_chunk_bit(dev, blk, i)) {
+			yaffs_clear_chunk_bit(dev, blk, i);
+			bi->pages_in_use--;
+			dev->n_free_chunks++;
+		}
+	}
+
 }
