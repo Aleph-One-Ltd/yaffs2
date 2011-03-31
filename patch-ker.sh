@@ -57,11 +57,13 @@ if [ $MULTIORSINGLE = m ]; then
    MTD1_CODE="yaffs_mtdif1_multi.c"
    MTD2_CODE="yaffs_mtdif2_multi.c"
    YPORTENV="yportenv_multi.h"
+   KCONFIG="Kconfig_multi"
 elif [ $MULTIORSINGLE = s ]; then
    VFS_CODE="yaffs_vfs_single.c"
    MTD1_CODE="yaffs_mtdif1_single.c"
    MTD2_CODE="yaffs_mtdif2_single.c"
    YPORTENV="yportenv_single.h"
+   KCONFIG="Kconfig_single"
 
    echo ""
    echo "*** Warning ***"
@@ -145,7 +147,7 @@ else
    rm yaffs*.mod.c
    mkdir $LINUXDIR/fs/yaffs2
    $CPY  $PWD/Makefile.kernel $LINUXDIR/fs/yaffs2/Makefile
-   $CPY $PWD/Kconfig $LINUXDIR/fs/yaffs2
+   $CPY $PWD/$KCONFIG $LINUXDIR/fs/yaffs2/Kconfig
    $CPY $PWD/*.c $PWD/*.h  $LINUXDIR/fs/yaffs2
    rm $LINUXDIR/fs/yaffs2/yaffs_vfs*.c $LINUXDIR/fs/yaffs2/yaffs_mtdif[12]*.c
    rm $LINUXDIR/fs/yaffs2/yportenv*.h

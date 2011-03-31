@@ -671,7 +671,6 @@ static u16 yaffs_calc_name_sum(const YCHAR *name)
 
 void yaffs_set_obj_name(struct yaffs_obj *obj, const YCHAR * name)
 {
-#ifndef CONFIG_YAFFS_NO_SHORT_NAMES
 	memset(obj->short_name, 0, sizeof(obj->short_name));
 	if (name &&
 		strnlen(name, YAFFS_SHORT_NAME_LENGTH + 1) <=
@@ -679,7 +678,6 @@ void yaffs_set_obj_name(struct yaffs_obj *obj, const YCHAR * name)
 		strcpy(obj->short_name, name);
 	else
 		obj->short_name[0] = _Y('\0');
-#endif
 	obj->sum = yaffs_calc_name_sum(name);
 }
 
@@ -4413,13 +4411,11 @@ int yaffs_get_obj_name(struct yaffs_obj *obj, YCHAR *name, int buffer_size)
 {
 	memset(name, 0, buffer_size * sizeof(YCHAR));
 	yaffs_check_obj_details_loaded(obj);
-	if (obj->obj_id == YAFFS_OBJECTID_LOSTNFOUND)
+	if (obj->obj_id == YAFFS_OBJECTID_LOSTNFOUND) {
 		strncpy(name, YAFFS_LOSTNFOUND_NAME, buffer_size - 1);
-#ifndef CONFIG_YAFFS_NO_SHORT_NAMES
-	else if (obj->short_name[0])
+	} else if (obj->short_name[0]) {
 		strcpy(name, obj->short_name);
-#endif
-	else if (obj->hdr_chunk > 0) {
+	} else if (obj->hdr_chunk > 0) {
 		int result;
 		u8 *buffer = yaffs_get_temp_buffer(obj->my_dev);
 
@@ -4533,8 +4529,6 @@ static int yaffs_check_dev_fns(const struct yaffs_dev *dev)
 	if (!dev->param.erase_fn || !dev->param.initialise_flash_fn)
 		return 0;
 
-#ifdef CONFIG_YAFFS_YAFFS2
-
 	/* Can use the "with tags" style interface for yaffs1 or yaffs2 */
 	if (dev->param.write_chunk_tags_fn &&
 	    dev->param.read_chunk_tags_fn &&
@@ -4542,7 +4536,6 @@ static int yaffs_check_dev_fns(const struct yaffs_dev *dev)
 	    !dev->param.read_chunk_fn &&
 	    dev->param.bad_block_fn && dev->param.query_block_fn)
 		return 1;
-#endif
 
 	/* Can use the "spare" style interface for yaffs1 */
 	if (!dev->param.is_yaffs2 &&

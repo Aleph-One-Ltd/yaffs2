@@ -38,13 +38,13 @@
 #define YAFFS_TNODES_INTERNAL_MASK	0x7
 #define YAFFS_TNODES_MAX_LEVEL		6
 
-#ifndef CONFIG_YAFFS_NO_YAFFS1
+
+/* Constants for YAFFS1 mode */
 #define YAFFS_BYTES_PER_SPARE		16
 #define YAFFS_BYTES_PER_CHUNK		512
 #define YAFFS_CHUNK_SIZE_SHIFT		9
 #define YAFFS_CHUNKS_PER_BLOCK		32
 #define YAFFS_BYTES_PER_BLOCK	(YAFFS_CHUNKS_PER_BLOCK*YAFFS_BYTES_PER_CHUNK)
-#endif
 
 #define YAFFS_MIN_YAFFS2_CHUNK_SIZE	1024
 #define YAFFS_MIN_YAFFS2_SPARE_SIZE	32
@@ -117,12 +117,11 @@ struct yaffs_cache {
 	u8 *data;
 };
 
-/* Tags structures in RAM
+/* yaffs1 tags structures in RAM
  * NB This uses bitfield. Bitfields should not straddle a u32 boundary
  * otherwise the structure size will get blown out.
  */
 
-#ifndef CONFIG_YAFFS_NO_YAFFS1
 struct yaffs_tags {
 	unsigned chunk_id:20;
 	unsigned serial_number:2;
@@ -137,7 +136,6 @@ union yaffs_tags_union {
 	u8 as_bytes[8];
 };
 
-#endif
 
 /* Stuff used for extended tags in YAFFS2 */
 
@@ -281,10 +279,8 @@ struct yaffs_block_info {
 	u32 chunk_error_strikes:3;	/* How many times we've had ecc etc
 				failures on this block and tried to reuse it */
 
-#ifdef CONFIG_YAFFS_YAFFS2
 	u32 has_shrink_hdr:1;	/* This block has at least one shrink header */
 	u32 seq_number;		/* block sequence number for yaffs2 */
-#endif
 
 };
 
@@ -433,9 +429,7 @@ struct yaffs_obj {
 
 	u32 yst_mode;
 
-#ifndef CONFIG_YAFFS_NO_SHORT_NAMES
 	YCHAR short_name[YAFFS_SHORT_NAME_LENGTH + 1];
-#endif
 
 #ifdef CONFIG_YAFFS_WINCE
 	u32 win_ctime[2];
@@ -521,6 +515,7 @@ struct yaffs_param {
 				 */
 	int use_nand_ecc;	/* Flag to decide whether or not to use
 				 * NAND driver ECC on data (yaffs1) */
+        int tags_9bytes;	/* Use 9 byte tags */
 	int no_tags_ecc;	/* Flag to decide whether or not to do ECC
 				 * on packed tags (yaffs2) */
 
@@ -548,7 +543,7 @@ struct yaffs_param {
 	int (*initialise_flash_fn) (struct yaffs_dev *dev);
 	int (*deinitialise_flash_fn) (struct yaffs_dev *dev);
 
-#ifdef CONFIG_YAFFS_YAFFS2
+	/* yaffs2 mode functions */
 	int (*write_chunk_tags_fn) (struct yaffs_dev *dev,
 				    int nand_chunk, const u8 *data,
 				    const struct yaffs_ext_tags *tags);
@@ -559,7 +554,6 @@ struct yaffs_param {
 	int (*query_block_fn) (struct yaffs_dev *dev, int block_no,
 			       enum yaffs_block_state *state,
 			       u32 *seq_number);
-#endif
 
 	/* The remove_obj_fn function must be supplied by OS flavours that
 	 * need it.

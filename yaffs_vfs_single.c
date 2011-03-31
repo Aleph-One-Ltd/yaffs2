@@ -72,6 +72,7 @@ unsigned int yaffs_wr_attempts = YAFFS_WR_ATTEMPTS;
 unsigned int yaffs_auto_checkpoint = 1;
 unsigned int yaffs_gc_control = 1;
 unsigned int yaffs_bg_enable = 1;
+unsigned int yaffs_auto_select = 1;
 
 /* Module Parameters */
 module_param(yaffs_trace_mask, uint, 0644);
@@ -79,6 +80,7 @@ module_param(yaffs_wr_attempts, uint, 0644);
 module_param(yaffs_auto_checkpoint, uint, 0644);
 module_param(yaffs_gc_control, uint, 0644);
 module_param(yaffs_bg_enable, uint, 0644);
+module_param(yaffs_auto_select, uint, 0644);
 
 #define yaffs_devname(sb, buf)	bdevname(sb->s_bdev, buf)
 
@@ -542,7 +544,6 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 	return error;
 }
 
-#ifdef CONFIG_YAFFS_XATTR
 static int yaffs_setxattr(struct dentry *dentry, const char *name,
 		   const void *value, size_t size, int flags)
 {
@@ -627,8 +628,6 @@ static ssize_t yaffs_listxattr(struct dentry *dentry, char *buff, size_t size)
 	return error;
 }
 
-#endif
-
 static const struct inode_operations yaffs_dir_inode_operations = {
 	.create = yaffs_create,
 	.lookup = yaffs_lookup,
@@ -640,12 +639,10 @@ static const struct inode_operations yaffs_dir_inode_operations = {
 	.mknod = yaffs_mknod,
 	.rename = yaffs_rename,
 	.setattr = yaffs_setattr,
-#ifdef CONFIG_YAFFS_XATTR
 	.setxattr = yaffs_setxattr,
 	.getxattr = yaffs_getxattr,
 	.listxattr = yaffs_listxattr,
 	.removexattr = yaffs_removexattr,
-#endif
 };
 /*-----------------------------------------------------------------*/
 /* Directory search context allows us to unlock access to yaffs during
@@ -1801,12 +1798,10 @@ static const struct address_space_operations yaffs_file_address_operations = {
 
 static const struct inode_operations yaffs_file_inode_operations = {
 	.setattr = yaffs_setattr,
-#ifdef CONFIG_YAFFS_XATTR
 	.setxattr = yaffs_setxattr,
 	.getxattr = yaffs_getxattr,
 	.listxattr = yaffs_listxattr,
 	.removexattr = yaffs_removexattr,
-#endif
 };
 
 static const struct inode_operations yaffs_symlink_inode_operations = {
@@ -1814,12 +1809,10 @@ static const struct inode_operations yaffs_symlink_inode_operations = {
 	.follow_link = yaffs_follow_link,
 	.put_link = yaffs_put_link,
 	.setattr = yaffs_setattr,
-#ifdef CONFIG_YAFFS_XATTR
 	.setxattr = yaffs_setxattr,
 	.getxattr = yaffs_getxattr,
 	.listxattr = yaffs_listxattr,
 	.removexattr = yaffs_removexattr,
-#endif
 };
 
 static void yaffs_fill_inode_from_obj(struct inode *inode,
@@ -2060,20 +2053,16 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	yaffs_trace(YAFFS_TRACE_OS, " erasesize %d", mtd->erasesize);
 	yaffs_trace(YAFFS_TRACE_OS, " size %lld", mtd->size);
 
-#ifdef CONFIG_YAFFS_AUTO_YAFFS2
-
-	if (yaffs_version == 1 && mtd->writesize >= 2048) {
+	if (yaffs_auto_select && yaffs_version == 1 && mtd->writesize >= 2048) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS, "auto selecting yaffs2");
 		yaffs_version = 2;
 	}
 
-	/* Added NCB 26/5/2006 for completeness */
-	if (yaffs_version == 2 && !options.inband_tags &&
+	if (yaffs_auto_select && yaffs_version == 2 && !options.inband_tags &&
 		mtd->writesize == 512) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS, "auto selecting yaffs1");
 		yaffs_version = 1;
 	}
-#endif
 
 	if (yaffs_version == 2) {
 		/* Check for version 2 style functions */
@@ -2170,40 +2159,19 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	param->n_caches = (options.no_cache) ? 0 : 10;
 	param->inband_tags = options.inband_tags;
 
-#ifdef CONFIG_YAFFS_DISABLE_LAZY_LOAD
 	param->disable_lazy_load = 1;
-#endif
-#ifdef CONFIG_YAFFS_XATTR
 	param->enable_xattr = 1;
-#endif
 	if (options.lazy_loading_overridden)
 		param->disable_lazy_load = !options.lazy_loading_enabled;
 
-#ifdef CONFIG_YAFFS_DISABLE_TAGS_ECC
-	param->no_tags_ecc = 1;
-#endif
-
-#ifdef CONFIG_YAFFS_DISABLE_BACKGROUND
-#else
 	param->defered_dir_update = 1;
-#endif
 
 	if (options.tags_ecc_overridden)
 		param->no_tags_ecc = !options.tags_ecc_on;
 
-#ifdef CONFIG_YAFFS_EMPTY_LOST_AND_FOUND
 	param->empty_lost_n_found = 1;
-#endif
 
-#ifdef CONFIG_YAFFS_DISABLE_BLOCK_REFRESHING
-	param->refresh_period = 0;
-#else
 	param->refresh_period = 500;
-#endif
-
-#ifdef CONFIG_YAFFS_ALWAYS_CHECK_CHUNK_ERASED
-	param->always_check_erased = 1;
-#endif
 
 	if (options.empty_lost_and_found_overridden)
 		param->empty_lost_n_found = options.empty_lost_and_found;
@@ -2242,9 +2210,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	yaffs_dev_to_lc(dev)->super = sb;
 
-#ifndef CONFIG_YAFFS_DOES_ECC
 	param->use_nand_ecc = 1;
-#endif
 
 	param->skip_checkpt_rd = options.skip_checkpoint_read;
 	param->skip_checkpt_wr = options.skip_checkpoint_write;
@@ -2343,8 +2309,6 @@ static struct file_system_type yaffs_fs_type = {
 	.fs_flags = FS_REQUIRES_DEV,
 };
 
-#ifdef CONFIG_YAFFS_YAFFS2
-
 static int yaffs2_internal_read_super_mtd(struct super_block *sb, void *data,
 					  int silent)
 {
@@ -2366,7 +2330,7 @@ static struct file_system_type yaffs2_fs_type = {
 	.kill_sb = kill_block_super,
 	.fs_flags = FS_REQUIRES_DEV,
 };
-#endif /* CONFIG_YAFFS_YAFFS2 */
+
 
 static struct proc_dir_entry *my_proc_entry;
 
@@ -2505,149 +2469,6 @@ static int yaffs_proc_read(char *page,
 }
 
 
-/**
- * Set the verbosity of the warnings and error messages.
- *
- * Note that the names can only be a..z or _ with the current code.
- */
-
-static struct {
-	char *mask_name;
-	unsigned mask_bitfield;
-} mask_flags[] = {
-	{"allocate", YAFFS_TRACE_ALLOCATE},
-	{"always", YAFFS_TRACE_ALWAYS},
-	{"background", YAFFS_TRACE_BACKGROUND},
-	{"bad_blocks", YAFFS_TRACE_BAD_BLOCKS},
-	{"buffers", YAFFS_TRACE_BUFFERS},
-	{"bug", YAFFS_TRACE_BUG},
-	{"checkpt", YAFFS_TRACE_CHECKPOINT},
-	{"deletion", YAFFS_TRACE_DELETION},
-	{"erase", YAFFS_TRACE_ERASE},
-	{"error", YAFFS_TRACE_ERROR},
-	{"gc_detail", YAFFS_TRACE_GC_DETAIL},
-	{"gc", YAFFS_TRACE_GC},
-	{"lock", YAFFS_TRACE_LOCK},
-	{"mtd", YAFFS_TRACE_MTD},
-	{"nandaccess", YAFFS_TRACE_NANDACCESS},
-	{"os", YAFFS_TRACE_OS},
-	{"scan_debug", YAFFS_TRACE_SCAN_DEBUG},
-	{"scan", YAFFS_TRACE_SCAN},
-	{"mount", YAFFS_TRACE_MOUNT},
-	{"tracing", YAFFS_TRACE_TRACING},
-	{"sync", YAFFS_TRACE_SYNC},
-	{"write", YAFFS_TRACE_WRITE},
-	{"verify", YAFFS_TRACE_VERIFY},
-	{"verify_nand", YAFFS_TRACE_VERIFY_NAND},
-	{"verify_full", YAFFS_TRACE_VERIFY_FULL},
-	{"verify_all", YAFFS_TRACE_VERIFY_ALL},
-	{"all", 0xffffffff},
-	{"none", 0},
-	{NULL, 0},
-};
-
-#define MAX_MASK_NAME_LENGTH 40
-static int yaffs_proc_write_trace_options(struct file *file, const char *buf,
-					  unsigned long count, void *data)
-{
-	unsigned rg = 0, mask_bitfield;
-	char *end;
-	char *mask_name;
-	const char *x;
-	char substring[MAX_MASK_NAME_LENGTH + 1];
-	int i;
-	int done = 0;
-	int add, len = 0;
-	int pos = 0;
-
-	rg = yaffs_trace_mask;
-
-	while (!done && (pos < count)) {
-		done = 1;
-		while ((pos < count) && isspace(buf[pos]))
-			pos++;
-
-		switch (buf[pos]) {
-		case '+':
-		case '-':
-		case '=':
-			add = buf[pos];
-			pos++;
-			break;
-
-		default:
-			add = ' ';
-			break;
-		}
-		mask_name = NULL;
-
-		mask_bitfield = simple_strtoul(buf + pos, &end, 0);
-
-		if (end > buf + pos) {
-			mask_name = "numeral";
-			len = end - (buf + pos);
-			pos += len;
-			done = 0;
-		} else {
-			for (x = buf + pos, i = 0;
-			     (*x == '_' || (*x >= 'a' && *x <= 'z')) &&
-			     i < MAX_MASK_NAME_LENGTH; x++, i++, pos++)
-				substring[i] = *x;
-			substring[i] = '\0';
-
-			for (i = 0; mask_flags[i].mask_name != NULL; i++) {
-				if (strcmp(substring, mask_flags[i].mask_name)
-				    == 0) {
-					mask_name = mask_flags[i].mask_name;
-					mask_bitfield =
-					    mask_flags[i].mask_bitfield;
-					done = 0;
-					break;
-				}
-			}
-		}
-
-		if (mask_name != NULL) {
-			done = 0;
-			switch (add) {
-			case '-':
-				rg &= ~mask_bitfield;
-				break;
-			case '+':
-				rg |= mask_bitfield;
-				break;
-			case '=':
-				rg = mask_bitfield;
-				break;
-			default:
-				rg |= mask_bitfield;
-				break;
-			}
-		}
-	}
-
-	yaffs_trace_mask = rg | YAFFS_TRACE_ALWAYS;
-
-	printk(KERN_DEBUG "new trace = 0x%08X\n", yaffs_trace_mask);
-
-	if (rg & YAFFS_TRACE_ALWAYS) {
-		for (i = 0; mask_flags[i].mask_name != NULL; i++) {
-			char flag;
-			flag = ((rg & mask_flags[i].mask_bitfield) ==
-				mask_flags[i].mask_bitfield) ? '+' : '-';
-			printk(KERN_DEBUG "%c%s\n", flag,
-			       mask_flags[i].mask_name);
-		}
-	}
-
-	return count;
-}
-
-static int yaffs_proc_write(struct file *file, const char *buf,
-			    unsigned long count, void *data)
-{
-	return yaffs_proc_write_trace_options(file, buf, count, data);
-}
 
 /* Stuff to handle installation of file systems */
 struct file_system_to_install {
@@ -2669,11 +2490,6 @@ static int __init init_yaffs_fs(void)
 	yaffs_trace(YAFFS_TRACE_ALWAYS,
 		"yaffs built " __DATE__ " " __TIME__ " Installing.");
 
-#ifdef CONFIG_YAFFS_ALWAYS_CHECK_CHUNK_ERASED
-	yaffs_trace(YAFFS_TRACE_ALWAYS,
-		"\n\nYAFFS-WARNING CONFIG_YAFFS_ALWAYS_CHECK_CHUNK_ERASED selected.\n\n\n");
-#endif
-
 	mutex_init(&yaffs_context_lock);
 
 	/* Install the proc_fs entries */
@@ -2681,7 +2497,7 @@ static int __init init_yaffs_fs(void)
 					  S_IRUGO | S_IFREG, NULL);
 
 	if (my_proc_entry) {
-		my_proc_entry->write_proc = yaffs_proc_write;
+		my_proc_entry->write_proc = NULL;
 		my_proc_entry->read_proc = yaffs_proc_read;
 		my_proc_entry->data = NULL;
 	} else {

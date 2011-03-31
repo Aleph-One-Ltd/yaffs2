@@ -39,15 +39,10 @@
 /* Don't compile this module if we don't have MTD's mtd_oob_ops interface */
 #if (MTD_VERSION_CODE > MTD_VERSION(2, 6, 17))
 
-#ifndef CONFIG_YAFFS_9BYTE_TAGS
-# define YTAG1_SIZE 8
-#else
-# define YTAG1_SIZE 9
-#endif
 
 #if 0
 /* Use the following nand_ecclayout with MTD when using
- * CONFIG_YAFFS_9BYTE_TAGS and the older on-NAND tags layout.
+ * 9 byte tags and the older on-NAND tags layout.
  * If you have existing Yaffs images and the byte order differs from this,
  * adjust 'oobfree' to match your existing Yaffs data.
  *
@@ -113,25 +108,25 @@ int nandmtd1_write_chunk_tags(struct yaffs_dev *dev,
 	 * that only zeroed-bits stick and set tag bytes to all-ones and
 	 * zero just the (not) deleted bit.
 	 */
-#ifndef CONFIG_YAFFS_9BYTE_TAGS
-	if (etags->is_deleted) {
-		memset(&pt1, 0xff, 8);
-		/* clear delete status bit to indicate deleted */
-		pt1.deleted = 0;
+	if(dev->param.tags_9bytes) {
+        	((u8 *) &pt1)[8] = 0xff;
+        	if (etags->is_deleted) {
+		        memset(&pt1, 0xff, 8);
+        		/* zero page_status byte to indicate deleted */
+	        	((u8 *) &pt1)[8] = 0;
+                }
+        } else {
+        	if (etags->is_deleted) {
+	        	memset(&pt1, 0xff, 8);
+	        	/* clear delete status bit to indicate deleted */
+        		pt1.deleted = 0;
+                }
 	}
-#else
-	((u8 *) &pt1)[8] = 0xff;
-	if (etags->is_deleted) {
-		memset(&pt1, 0xff, 8);
-		/* zero page_status byte to indicate deleted */
-		((u8 *) &pt1)[8] = 0;
-	}
-#endif
 
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OOB_AUTO;
 	ops.len = (data) ? chunk_bytes : 0;
-	ops.ooblen = YTAG1_SIZE;
+	ops.ooblen = dev->param.tags_9bytes ? 9 : 8;
 	ops.datbuf = (u8 *) data;
 	ops.oobbuf = (u8 *) &pt1;
 
@@ -184,7 +179,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OOB_AUTO;
 	ops.len = (data) ? chunk_bytes : 0;
-	ops.ooblen = YTAG1_SIZE;
+	ops.ooblen = dev->param.tags_9bytes ? 9 : 8;
 	ops.datbuf = data;
 	ops.oobbuf = (u8 *) &pt1;
 
@@ -230,16 +225,17 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 		/* when blank, upper layers want ecc_result to be <= NO_ERROR */
 		return rettags(etags, YAFFS_ECC_RESULT_NO_ERROR, YAFFS_OK);
 	}
-#ifndef CONFIG_YAFFS_9BYTE_TAGS
-	/* Read deleted status (bit) then return it to it's non-deleted
-	 * state before performing tags mini-ECC check. pt1.deleted is
-	 * inverted.
-	 */
-	deleted = !pt1.deleted;
-	pt1.deleted = 1;
-#else
-	deleted = (hweight8(((u8 *) &pt1)[8]) < 7);
-#endif
+
+	if(dev->param.tags_9bytes) {
+        	deleted = (hweight8(((u8 *) &pt1)[8]) < 7);
+        } else {
+        	/* Read deleted status (bit) then return it to it's non-deleted
+	         * state before performing tags mini-ECC check. pt1.deleted is
+        	 * inverted.
+	         */
+        	deleted = !pt1.deleted;
+        	pt1.deleted = 1;
+        }
 
 	/* Check the packed tags mini-ECC and correct if necessary/possible.
 	 */
@@ -295,16 +291,16 @@ int nandmtd1_mark_block_bad(struct yaffs_dev *dev, int block_no)
  *
  * Returns YAFFS_OK or YAFFS_FAIL.
  */
-static int nandmtd1_test_prerequists(struct mtd_info *mtd)
+static int nandmtd1_test_prerequists(struct yaffs_dev *dev, struct mtd_info *mtd)
 {
 	/* 2.6.18 has mtd->ecclayout->oobavail */
 	/* 2.6.21 has mtd->ecclayout->oobavail and mtd->oobavail */
 	int oobavail = mtd->ecclayout->oobavail;
 
-	if (oobavail < YTAG1_SIZE) {
+	if (oobavail < (dev->param.tags_9bytes ? 9 : 8)) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
 			"mtd device has only %d bytes for tags, need %d",
-			oobavail, YTAG1_SIZE);
+			oobavail, dev->param.tags_9bytes ? 9 : 8);
 		return YAFFS_FAIL;
 	}
 	return YAFFS_OK;
@@ -333,7 +329,7 @@ int nandmtd1_query_block(struct yaffs_dev *dev, int block_no,
 	/* We don't yet have a good place to test for MTD config prerequists.
 	 * Do it here as we are called during the initial scan.
 	 */
-	if (nandmtd1_test_prerequists(mtd) != YAFFS_OK)
+	if (nandmtd1_test_prerequists(dev, mtd) != YAFFS_OK)
 		return YAFFS_FAIL;
 
 	retval = nandmtd1_read_chunk_tags(dev, chunk_num, NULL, &etags);

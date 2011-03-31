@@ -128,12 +128,6 @@ void yaffs_ecc_cacl(const unsigned char *data, unsigned char *ecc)
 		t |= 0x01;
 	ecc[0] = ~t;
 
-#ifdef CONFIG_YAFFS_ECC_WRONG_ORDER
-	/* Swap the bytes into the wrong order */
-	t = ecc[0];
-	ecc[0] = ecc[1];
-	ecc[1] = t;
-#endif
 }
 
 /* Correct the ECC on a 256 byte block of data */
@@ -157,15 +151,6 @@ int yaffs_ecc_correct(unsigned char *data, unsigned char *read_ecc,
 
 		unsigned byte;
 		unsigned bit;
-
-#ifdef CONFIG_YAFFS_ECC_WRONG_ORDER
-		/* swap the bytes to correct for the wrong order */
-		unsigned char t;
-
-		t = d0;
-		d0 = d1;
-		d1 = t;
-#endif
 
 		bit = byte = 0;
 

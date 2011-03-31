@@ -35,12 +35,6 @@
 #include "linux/types.h"
 #include "linux/mtd/mtd.h"
 
-#ifndef CONFIG_YAFFS_9BYTE_TAGS
-# define YTAG1_SIZE 8
-#else
-# define YTAG1_SIZE 9
-#endif
-
 /* Write a chunk (page) of data to NAND.
  *
  * Caller always provides ExtendedTags data which are converted to a more
@@ -86,25 +80,26 @@ int nandmtd1_write_chunk_tags(struct yaffs_dev *dev,
 	 * that only zeroed-bits stick and set tag bytes to all-ones and
 	 * zero just the (not) deleted bit.
 	 */
-#ifndef CONFIG_YAFFS_9BYTE_TAGS
-	if (etags->is_deleted) {
-		memset(&pt1, 0xff, 8);
-		/* clear delete status bit to indicate deleted */
-		pt1.deleted = 0;
-	}
-#else
-	((u8 *) &pt1)[8] = 0xff;
-	if (etags->is_deleted) {
-		memset(&pt1, 0xff, 8);
-		/* zero page_status byte to indicate deleted */
-		((u8 *) &pt1)[8] = 0;
-	}
-#endif
+	 
+	if(dev->param.tags_9bytes) {
+        	((u8 *) &pt1)[8] = 0xff;
+        	if (etags->is_deleted) {
+		        memset(&pt1, 0xff, 8);
+		        /* zero page_status byte to indicate deleted */
+		        ((u8 *) &pt1)[8] = 0;
+                }
+        } else {
+        	if (etags->is_deleted) {
+	        	memset(&pt1, 0xff, 8);
+	        	/* clear delete status bit to indicate deleted */
+	        	pt1.deleted = 0;
+                }
+        }
 
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OOB_AUTO;
 	ops.len = (data) ? chunk_bytes : 0;
-	ops.ooblen = YTAG1_SIZE;
+	ops.ooblen = dev->param.tags_9bytes ? 9 : 8;
 	ops.datbuf = (u8 *) data;
 	ops.oobbuf = (u8 *) &pt1;
 
@@ -157,7 +152,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OOB_AUTO;
 	ops.len = (data) ? chunk_bytes : 0;
-	ops.ooblen = YTAG1_SIZE;
+	ops.ooblen =  dev->param.tags_9bytes ? 9 : 8;
 	ops.datbuf = data;
 	ops.oobbuf = (u8 *) &pt1;
 
@@ -270,10 +265,10 @@ static int nandmtd1_test_prerequists(struct mtd_info *mtd)
 	/* 2.6.21 has mtd->ecclayout->oobavail and mtd->oobavail */
 	int oobavail = mtd->ecclayout->oobavail;
 
-	if (oobavail < YTAG1_SIZE) {
+	if (oobavail < (dev->param.tags_9bytes ? 9 : 8)) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
 			"mtd device has only %d bytes for tags, need %d",
-			oobavail, YTAG1_SIZE);
+			oobavail, (dev->param.tags_9bytes ? 9 : 8);
 		return YAFFS_FAIL;
 	}
 	return YAFFS_OK;
