@@ -1023,6 +1023,7 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 			dev->n_free_chunks++;
 	} else if (tags.obj_id > YAFFS_MAX_OBJECT_ID ||
 		   tags.chunk_id > YAFFS_MAX_CHUNK_ID ||
+		   tags.obj_id == YAFFS_OBJECTID_SUMMARY ||
 		   (tags.chunk_id > 0 &&
 		     tags.n_bytes > dev->data_bytes_per_chunk) ||
 		   tags.seq_number != bi->seq_number) {
