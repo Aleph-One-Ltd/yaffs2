@@ -119,8 +119,6 @@ static int yaffs_summary_write(struct yaffs_dev *dev, int blk)
 		chunk_in_nand++;
 		chunk_in_block++;
 		tags.chunk_id++;
-
-		chunk_in_block++;
 	} while (result == YAFFS_OK && n_bytes > 0);
 	yaffs_release_temp_buffer(dev, buffer);
 
