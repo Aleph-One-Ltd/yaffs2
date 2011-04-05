@@ -2576,7 +2576,7 @@ static int yaffs_parse_options(struct yaffs_options *options,
 		} else if (!strcmp(cur_opt, "lazy-loading-on")) {
 			options->lazy_loading_enabled = 1;
 			options->lazy_loading_overridden = 1;
-		} else if (!strcmp(cur_opt, "disable_summary")) {
+		} else if (!strcmp(cur_opt, "disable-summary")) {
 			options->disable_summary = 1;
 		} else if (!strcmp(cur_opt, "empty-lost-and-found-off")) {
 			options->empty_lost_and_found = 0;
