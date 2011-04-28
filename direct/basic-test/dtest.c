@@ -2775,7 +2775,7 @@ int main(int argc, char *argv[])
 	 //null_name_test("yaffs2");
 
 	 test_flash_traffic("yaffs2");
-	 link_follow_test("/yaffs2");
+	 // link_follow_test("/yaffs2");
 
 	 return 0;
 	

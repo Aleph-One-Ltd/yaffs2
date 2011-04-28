@@ -41,7 +41,8 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o\
 		 yaffs_bitmap.o \
 		 yaffs_yaffs1.o \
 		 yaffs_yaffs2.o \
-		 yaffs_verify.o
+		 yaffs_verify.o \
+		 yaffs_summary.o
 
 #		 yaffs_checkptrwtest.o\
 
@@ -60,7 +61,8 @@ YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscomp
           yaffs_yaffs1.c yaffs_yaffs1.h \
           yaffs_yaffs2.c yaffs_yaffs2.h \
           yaffs_bitmap.c yaffs_bitmap.h \
-          yaffs_verify.c yaffs_verify.h
+          yaffs_verify.c yaffs_verify.h \
+          yaffs_summary.c yaffs_summary.h
 
 YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
 		       yaffsfs.h yaffs_osglue.h ydirectenv.h \

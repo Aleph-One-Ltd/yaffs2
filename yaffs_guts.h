@@ -78,10 +78,12 @@
 #define YAFFS_OBJECTID_UNLINKED		3
 #define YAFFS_OBJECTID_DELETED		4
 
+/* Fake object Id for summary data */
+#define YAFFS_OBJECTID_SUMMARY		0x10
+
 /* Pseudo object ids for checkpointing */
-#define YAFFS_OBJECTID_SB_HEADER	0x10
 #define YAFFS_OBJECTID_CHECKPOINT_DATA	0x20
-#define YAFFS_SEQUENCE_CHECKPOINT_DATA  0x21
+#define YAFFS_SEQUENCE_CHECKPOINT_DATA	0x21
 
 #define YAFFS_MAX_SHORT_OP_CACHES	20
 
@@ -278,6 +280,7 @@ struct yaffs_block_info {
 				   Block should be prioritised for GC */
 	u32 chunk_error_strikes:3;	/* How many times we've had ecc etc
 				failures on this block and tried to reuse it */
+	u32 has_summary:1;	/* The block has a summary */
 
 	u32 has_shrink_hdr:1;	/* This block has at least one shrink header */
 	u32 seq_number;		/* block sequence number for yaffs2 */
@@ -582,6 +585,8 @@ struct yaffs_param {
 	int auto_unicode;
 #endif
 	int always_check_erased;	/* Force chunk erased check always on */
+
+	int disable_summary;
 };
 
 struct yaffs_dev {
@@ -681,6 +686,7 @@ struct yaffs_dev {
 	unsigned gc_block;
 	unsigned gc_chunk;
 	unsigned gc_skip;
+	struct yaffs_summary_tags *gc_sum_tags;
 
 	/* Special directories */
 	struct yaffs_obj *root_dir;
@@ -723,7 +729,11 @@ struct yaffs_dev {
 	/* Dirty directory handling */
 	struct list_head dirty_dirs;	/* List of dirty directories */
 
-	/* Statistcs */
+	/* Summary */
+	int chunks_per_summary;
+	struct yaffs_summary_tags *sum_tags;
+
+	/* Statistics */
 	u32 n_page_writes;
 	u32 n_page_reads;
 	u32 n_erasures;
@@ -744,6 +754,8 @@ struct yaffs_dev {
 	u32 n_unmarked_deletions;
 	u32 refresh_count;
 	u32 cache_hits;
+	u32 tags_used;
+	u32 summary_used;
 
 };
 
