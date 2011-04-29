@@ -16,7 +16,7 @@
 
 #KERNELDIR = /usr/src/kernel-headers-2.4.18
 
-CFLAGS =   -I/usr/include -I.. -O2 -Wall -DCONFIG_YAFFS_UTIL
+CFLAGS =    -O2 -Wall -DCONFIG_YAFFS_UTIL
 CFLAGS+=   -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-declarations
 CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
 
@@ -25,30 +25,43 @@ MAKETOOLS =
 
 CC=$(MAKETOOLS)gcc
 
-COMMONLINKS = yaffs_ecc.c
-COMMONOBJS = $(COMMONLINKS:.c=.o)
+COMMON_BASE_C_LINKS = yaffs_ecc.c
+COMMON_BASE_LINKS = $(COMMON_BASE_C_LINKS) yaffs_ecc.h yaffs_guts.h yaffs_packedtags2.h yaffs_trace.h
+COMMON_DIRECT_C_LINKS = yaffs_hweight.c
+COMMON_C_LINKS = $(COMMON_DIRECT_C_LINKS) $(COMMON_BASE_C_LINKS)
+COMMON_DIRECT_LINKS= $(COMMON_DIRECT_C_LINKS) yportenv.h yaffs_hweight.h yaffs_list.h
+COMMONOBJS = $(COMMON_C_LINKS:.c=.o)
 
 MKYAFFSSOURCES = mkyaffsimage.c
 MKYAFFSIMAGEOBJS = $(MKYAFFSSOURCES:.c=.o)
 
 MKYAFFS2SOURCES = mkyaffs2image.c
-MKYAFFS2LINKS = yaffs_packedtags2.c yaffs_tagsvalidity.c
+MKYAFFS2LINKS = yaffs_packedtags2.c
 MKYAFFS2IMAGEOBJS = $(MKYAFFS2SOURCES:.c=.o) $(MKYAFFS2LINKS:.c=.o)
+
+BASE_LINKS = $(MKYAFFSLINKS) $(MKYAFFS2LINKS) $(COMMON_BASE_LINKS)
+DIRECT_LINKS = $(MKYAFFS_DIRECT_LINKS) $(MKYAFFS2_DIRECT_LINKS) $(COMMON_DIRECT_LINKS)
+ALL_LINKS = $(BASE_LINKS) $(DIRECT_LINKS)
 
 all: mkyaffsimage mkyaffs2image
 
-$(COMMONLINKS) $(MKYAFFSLINKS) $(MKYAFFS2LINKS):
+$(BASE_LINKS):
 	ln -s ../$@ $@
+
+$(DIRECT_LINKS):
+	ln -s ../direct/$@ $@
+
+$(COMMONOBJS) $(MKYAFFSIMAGEOBJS) $(MKYAFFS2IMAGEOBJS) : $(ALL_LINKS)
 
 $(COMMONOBJS) $(MKYAFFSIMAGEOBJS) $(MKYAFFS2IMAGEOBJS) : %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-mkyaffsimage: $(COMMONOBJS) $(MKYAFFSIMAGEOBJS)
-	$(CC) -o $@ $(COMMONOBJS) $(MKYAFFSIMAGEOBJS)
+mkyaffsimage: $(MKYAFFSIMAGEOBJS) $(COMMONOBJS)
+	$(CC) -o $@  $^
 
-mkyaffs2image: $(COMMONOBJS) $(MKYAFFS2IMAGEOBJS)
-	$(CC) -o $@ $(COMMONOBJS) $(MKYAFFS2IMAGEOBJS)
+mkyaffs2image: $(MKYAFFS2IMAGEOBJS) $(COMMONOBJS)
+	$(CC) -o $@ $^
 
 
 clean:
-	rm -f $(COMMONOBJS) $(MKYAFFSIMAGEOBJS) $(MKYAFFS2IMAGEOBJS) $(COMMONLINKS) $(MKYAFFSLINKS) $(MKYAFFS2LINKS) mkyaffsimage mkyaffs2image core
+	rm -f $(COMMONOBJS) $(MKYAFFSIMAGEOBJS) $(MKYAFFS2IMAGEOBJS) $(ALL_LINKS) mkyaffsimage mkyaffs2image core

@@ -275,54 +275,33 @@ static void object_header_little_to_big_endian(struct yaffs_obj_hdr* oh)
     oh->sum_no_longer_used = SWAP16(oh->sum_no_longer_used); // u16 - Not used, but done for completeness.
     // name = skip. Char array. Not swapped.
     oh->yst_mode = SWAP32(oh->yst_mode);
-#ifdef CONFIG_YAFFS_WINCE // WinCE doesn't implement this, but we need to just in case. 
-    // In fact, WinCE would be *THE* place where this would be an issue!
-    oh->not_for_wince[0] = SWAP32(oh->not_for_wince[0]);
-    oh->not_for_wince[1] = SWAP32(oh->not_for_wince[1]);
-    oh->not_for_wince[2] = SWAP32(oh->not_for_wince[2]);
-    oh->not_for_wince[3] = SWAP32(oh->not_for_wince[3]);
-    oh->not_for_wince[4] = SWAP32(oh->not_for_wince[4]);
-#else
+
     // Regular POSIX.
     oh->yst_uid = SWAP32(oh->yst_uid);
     oh->yst_gid = SWAP32(oh->yst_gid);
     oh->yst_atime = SWAP32(oh->yst_atime);
     oh->yst_mtime = SWAP32(oh->yst_mtime);
     oh->yst_ctime = SWAP32(oh->yst_ctime);
-#endif
 
     oh->file_size = SWAP32(oh->file_size); // Aiee. An int... signed, at that!
     oh->equiv_id = SWAP32(oh->equiv_id);
     // alias  - char array.
     oh->yst_rdev = SWAP32(oh->yst_rdev);
 
-#ifdef CONFIG_YAFFS_WINCE
     oh->win_ctime[0] = SWAP32(oh->win_ctime[0]);
     oh->win_ctime[1] = SWAP32(oh->win_ctime[1]);
     oh->win_atime[0] = SWAP32(oh->win_atime[0]);
     oh->win_atime[1] = SWAP32(oh->win_atime[1]);
     oh->win_mtime[0] = SWAP32(oh->win_mtime[0]);
     oh->win_mtime[1] = SWAP32(oh->win_mtime[1]);
-    oh->room_to_grow[0] = SWAP32(oh->room_to_grow[0]);
-    oh->room_to_grow[1] = SWAP32(oh->room_to_grow[1]);
-    oh->room_to_grow[2] = SWAP32(oh->room_to_grow[2]);
-    oh->room_to_grow[3] = SWAP32(oh->room_to_grow[3]);
-    oh->room_to_grow[4] = SWAP32(oh->room_to_grow[4]);
-    oh->room_to_grow[5] = SWAP32(oh->room_to_grow[5]);
-#else
-    oh->room_to_grow[0] = SWAP32(oh->room_to_grow[0]);
-    oh->room_to_grow[1] = SWAP32(oh->room_to_grow[1]);
-    oh->room_to_grow[2] = SWAP32(oh->room_to_grow[2]);
-    oh->room_to_grow[3] = SWAP32(oh->room_to_grow[3]);
-    oh->room_to_grow[4] = SWAP32(oh->room_to_grow[4]);
-    oh->room_to_grow[5] = SWAP32(oh->room_to_grow[5]);
-    oh->room_to_grow[6] = SWAP32(oh->room_to_grow[6]);
-    oh->room_to_grow[7] = SWAP32(oh->room_to_grow[7]);
-    oh->room_to_grow[8] = SWAP32(oh->room_to_grow[8]);
-    oh->room_to_grow[9] = SWAP32(oh->room_to_grow[9]);
-    oh->room_to_grow[10] = SWAP32(oh->room_to_grow[10]);
-    oh->room_to_grow[11] = SWAP32(oh->room_to_grow[11]);
-#endif
+
+    oh->reserved[0] = SWAP32(oh->reserved[0]);
+    oh->reserved[1] = SWAP32(oh->reserved[1]);
+
+    oh->inband_shadowed_obj_id = SWAP32(oh->inband_shadowed_obj_id);
+    oh->inband_is_shrink = SWAP32(oh->inband_is_shrink);
+    oh->shadows_obj = SWAP32(oh->shadows_obj);
+    oh->is_shrink = SWAP32(oh->is_shrink);
 }
 
 static int write_object_header(int obj_id, enum yaffs_obj_type t, struct stat *s, int parent, const char *name, int equivalentObj, const char * alias)
