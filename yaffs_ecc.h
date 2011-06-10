@@ -32,7 +32,7 @@ struct yaffs_ecc_other {
 	unsigned line_parity_prime;
 };
 
-void yaffs_ecc_cacl(const unsigned char *data, unsigned char *ecc);
+void yaffs_ecc_calc(const unsigned char *data, unsigned char *ecc);
 int yaffs_ecc_correct(unsigned char *data, unsigned char *read_ecc,
 		      const unsigned char *test_ecc);
 

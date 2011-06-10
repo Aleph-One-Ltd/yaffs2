@@ -24,8 +24,8 @@ static void yaffs_handle_rd_data_error(struct yaffs_dev *dev, int nand_chunk);
 
 void yaffs_calc_ecc(const u8 *data, struct yaffs_spare *spare)
 {
-	yaffs_ecc_cacl(data, spare->ecc1);
-	yaffs_ecc_cacl(&data[256], spare->ecc2);
+	yaffs_ecc_calc(data, spare->ecc1);
+	yaffs_ecc_calc(&data[256], spare->ecc2);
 }
 
 void yaffs_calc_tags_ecc(struct yaffs_tags *tags)
@@ -162,10 +162,10 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 			int ecc_result1, ecc_result2;
 			u8 calc_ecc[3];
 
-			yaffs_ecc_cacl(data, calc_ecc);
+			yaffs_ecc_calc(data, calc_ecc);
 			ecc_result1 =
 			    yaffs_ecc_correct(data, spare->ecc1, calc_ecc);
-			yaffs_ecc_cacl(&data[256], calc_ecc);
+			yaffs_ecc_calc(&data[256], calc_ecc);
 			ecc_result2 =
 			    yaffs_ecc_correct(&data[256], spare->ecc2,
 					      calc_ecc);
