@@ -132,8 +132,8 @@ static u16 yaffs_calc_name_sum(const char *name)
 
 static void yaffs_calc_ecc(const u8 *data, struct yaffs_spare *spare)
 {
-	yaffs_ecc_cacl(data , spare->ecc1);
-	yaffs_ecc_cacl(&data[256] , spare->ecc2);
+	yaffs_ecc_calc(data , spare->ecc1);
+	yaffs_ecc_calc(&data[256] , spare->ecc2);
 }
 
 static void yaffs_calc_tags_ecc(struct yaffs_tags *tags)
