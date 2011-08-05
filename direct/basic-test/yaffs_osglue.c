@@ -75,7 +75,7 @@ void yaffsfs_LockInit(void)
 
 u32 yaffsfs_CurrentTime(void)
 {
-	return 0;
+	return time(NULL);
 }
 
 

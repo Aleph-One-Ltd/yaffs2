@@ -1,5 +1,5 @@
 /*
- * YAFFS: Yet another Flash File System . A NAND-flash specific file system. 
+ * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
  * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
@@ -77,6 +77,13 @@ struct yaffs_stat{
 #endif
 };
 
+
+struct yaffs_utimbuf {
+	unsigned long actime;
+	unsigned long modtime;
+};
+
+
 int yaffs_open(const YCHAR *path, int oflag, int mode) ;
 
 int yaffs_close(int fd) ;
@@ -106,6 +113,10 @@ int yaffs_stat(const YCHAR *path, struct yaffs_stat *buf) ;
 int yaffs_lstat(const YCHAR *path, struct yaffs_stat *buf) ;
 int yaffs_fstat(int fd, struct yaffs_stat *buf) ;
 
+int yaffs_utime(const YCHAR *path, const struct yaffs_utimbuf *buf);
+int yaffs_futime(int fd, const struct yaffs_utimbuf *buf);
+
+
 int yaffs_setxattr(const char *path, const char *name, const void *data, int size, int flags);
 int yaffs_lsetxattr(const char *path, const char *name, const void *data, int size, int flags);
 int yaffs_fsetxattr(int fd, const char *name, const void *data, int size, int flags);
@@ -130,8 +141,8 @@ int yaffs_get_wince_times(int fd, unsigned *wctime, unsigned *watime, unsigned *
 
 #endif
 
-int yaffs_chmod(const YCHAR *path, mode_t mode); 
-int yaffs_fchmod(int fd, mode_t mode); 
+int yaffs_chmod(const YCHAR *path, mode_t mode);
+int yaffs_fchmod(int fd, mode_t mode);
 
 int yaffs_mkdir(const YCHAR *path, mode_t mode) ;
 int yaffs_rmdir(const YCHAR *path) ;
@@ -150,10 +161,10 @@ int yaffs_remount(const YCHAR *path, int force, int read_only);
 
 int yaffs_sync(const YCHAR *path) ;
 
-int yaffs_symlink(const YCHAR *oldpath, const YCHAR *newpath); 
-int yaffs_readlink(const YCHAR *path, YCHAR *buf, int bufsiz); 
+int yaffs_symlink(const YCHAR *oldpath, const YCHAR *newpath);
+int yaffs_readlink(const YCHAR *path, YCHAR *buf, int bufsiz);
 
-int yaffs_link(const YCHAR *oldpath, const YCHAR *newpath); 
+int yaffs_link(const YCHAR *oldpath, const YCHAR *newpath);
 int yaffs_mknod(const YCHAR *pathname, mode_t mode, dev_t dev);
 
 loff_t yaffs_freespace(const YCHAR *path);
@@ -190,7 +201,7 @@ unsigned  yaffs_get_trace(void);
 
 
 /*
- * YAFFS: Yet another Flash File System . A NAND-flash specific file system. 
+ * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
  * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering

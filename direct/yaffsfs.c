@@ -90,7 +90,7 @@ static yaffsfs_Handle yaffsfs_handle[YAFFSFS_N_HANDLES];
 static int yaffsfs_handlesInitialised;
 
 
-unsigned yaffs_set_trace(unsigned  tm) 
+unsigned yaffs_set_trace(unsigned  tm)
 {
 	yaffs_trace_mask = tm;
 	return yaffs_trace_mask;
@@ -143,7 +143,7 @@ static yaffsfs_Inode *yaffsfs_HandleToInode(int handle)
 {
 	yaffsfs_FileDes *fd = yaffsfs_HandleToFileDes(handle);
 
-	if(fd && fd->handleCount > 0 && 
+	if(fd && fd->handleCount > 0 &&
 		fd->inodeId >= 0 && fd->inodeId < YAFFSFS_N_HANDLES)
 		return  &yaffsfs_inode[fd->inodeId];
 
@@ -169,7 +169,7 @@ static int yaffsfs_FindInodeIdForObject(struct yaffs_obj *obj)
 {
 	int i;
 	int ret = -1;
-	
+
 	if(obj)
 		obj = yaffs_get_equivalent_obj(obj);
 
@@ -190,7 +190,7 @@ static int yaffsfs_GetInodeIdForObject(struct yaffs_obj *obj)
 	int i;
 	int ret;
 	yaffsfs_Inode *in = NULL;
-	
+
 	if(obj)
 		obj = yaffs_get_equivalent_obj(obj);
 
@@ -208,8 +208,8 @@ static int yaffsfs_GetInodeIdForObject(struct yaffs_obj *obj)
 		in->iObj = obj;
 		in->count++;
 	}
-	
-	
+
+
 	return ret;
 }
 
@@ -227,12 +227,12 @@ static int yaffsfs_CountHandles(struct yaffs_obj *obj)
 static void yaffsfs_ReleaseInode(yaffsfs_Inode *in)
 {
 	struct yaffs_obj *obj;
-	
+
 	obj = in->iObj;
 
 	if(obj->unlinked)
 		yaffs_del_obj(obj);
-	
+
 	obj->my_inode = NULL;
 	in->iObj = NULL;
 
@@ -247,7 +247,7 @@ static void yaffsfs_PutInode(int inodeId)
 			yaffsfs_ReleaseInode(in);
 			in->count = 0;
 		}
-	}	
+	}
 }
 
 
@@ -307,7 +307,7 @@ static int yaffsfs_GetHandle(int handle)
 {
 	yaffsfs_Handle *h = yaffsfs_HandleToPointer(handle);
 
-	if(h && h->useCount > 0){	
+	if(h && h->useCount > 0){
 		h->useCount++;
 		return 0;
 	}
@@ -340,7 +340,7 @@ static int yaffsfs_PutHandle(int handle)
 {
 	yaffsfs_Handle *h = yaffsfs_HandleToPointer(handle);
 
-	if(h && h->useCount > 0){	
+	if(h && h->useCount > 0){
 		h->useCount--;
 		if(h->useCount < 1){
 			yaffsfs_PutFileDes(h->fdId);
@@ -366,7 +366,7 @@ static void yaffsfs_BreakDeviceHandles(struct yaffs_dev *dev)
 			h->fdId = 0;
 		}
 		if(fd && fd->handleCount>0 && obj && obj->my_dev == dev){
-			
+
 			fd->handleCount = 0;
 			yaffsfs_PutInode(fd->inodeId);
 			fd->inodeId = -1;
@@ -403,10 +403,10 @@ int yaffsfs_IsPathDivider(YCHAR ch)
 
 int yaffsfs_CheckNameLength(const char *name)
 {
-	int retVal = 0;		
+	int retVal = 0;
 
 	int nameLength = strnlen(name,YAFFS_MAX_NAME_LENGTH+1);
-		
+
 	if(nameLength == 0){
 		yaffsfs_SetError(-ENOENT);
 		retVal = -1;
@@ -415,7 +415,7 @@ int yaffsfs_CheckNameLength(const char *name)
 		retVal = -1;
 	}
 
-	return retVal;	
+	return retVal;
 }
 
 
@@ -438,7 +438,7 @@ static int yaffsfs_alt_dir_path(const YCHAR *path, YCHAR **ret_path)
 	 * Curveball: Need to handle multiple path dividers:
 	 * eg. /foof/sdfse///// -> /foo/sdfse
 	 */
-	if(path_length > 0 && 
+	if(path_length > 0 &&
 		yaffsfs_IsPathDivider(path[path_length-1])){
 		alt_path = kmalloc(path_length + 1, 0);
 		if(!alt_path)
@@ -546,7 +546,7 @@ static int yaffsfs_CheckPath(const YCHAR *path)
 			n++;
 		path++;
 	}
-	
+
 	return (*path) ? -1 : 0;
 }
 
@@ -659,13 +659,13 @@ static struct yaffs_obj *yaffsfs_DoFindDirectory(struct yaffs_obj *startDir,
 
 				dir = yaffsfs_FollowLink(dir,symDepth,loop);
 
-				if(dir && dir->variant_type != 
+				if(dir && dir->variant_type !=
 					YAFFS_OBJECT_TYPE_DIRECTORY){
 					if(notDir)
 						*notDir = 1;
 					dir = NULL;
 				}
-				
+
 			}
 		}
 	}
@@ -712,7 +712,7 @@ static struct yaffs_obj *yaffsfs_FindObject(struct yaffs_obj *relDir,
 
 
 /*************************************************************************
- *	Start of yaffsfs visible functions. 
+ *	Start of yaffsfs visible functions.
  *************************************************************************/
 
 int yaffs_dup(int handle)
@@ -841,7 +841,7 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 			if( writeRequested && !(obj->yst_mode & S_IWRITE))
 				openDenied = 1;
 
-			if( !errorReported && writeRequested && 
+			if( !errorReported && writeRequested &&
 				obj->my_dev->read_only){
 				openDenied = 1;
 				yaffsfs_SetError(-EROFS);
@@ -881,7 +881,7 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 
 
 
-				if((!sharedReadAllowed && readRequested)|| 
+				if((!sharedReadAllowed && readRequested)||
 					(!shareRead  && alreadyReading) ||
 					(!sharedWriteAllowed && writeRequested) ||
 					(!shareWrite && alreadyWriting)){
@@ -936,10 +936,10 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 			if(inodeId<0) {
 				/*
 				 * Todo: Fix any problem if inodes run out, though that
-				 * can't happen if the number of inode items >= number of handles. 
+				 * can't happen if the number of inode items >= number of handles.
 				 */
 			}
-			
+
 			fd->inodeId = inodeId;
 			fd->reading = readRequested;
 			fd->writing = writeRequested;
@@ -955,7 +955,7 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
                                 yaffs_resize_file(obj,0);
 		} else {
 			yaffsfs_PutHandle(handle);
-			if(!errorReported) 
+			if(!errorReported)
 				yaffsfs_SetError(0); /* Problem */
 			handle = -1;
 		}
@@ -985,7 +985,7 @@ int yaffs_Dofsync(int handle,int datasync)
 		yaffsfs_SetError(-EBADF);
 	else if(obj->my_dev->read_only)
 		yaffsfs_SetError(-EROFS);
-	else {		
+	else {
 		yaffs_flush_file(obj,1,datasync);
 		retVal = 0;
 	}
@@ -1077,7 +1077,7 @@ int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte, int isPread, int
 			startPos = fd->position;
 
 		pos = startPos;
-					
+
 		if(yaffs_get_obj_length(obj) > pos)
 			maxRead = yaffs_get_obj_length(obj) - pos;
 		else
@@ -1103,7 +1103,7 @@ int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte, int isPread, int
 			if(nToRead > nbyte)
 				nToRead = nbyte;
 
-			/* Tricky bit... 
+			/* Tricky bit...
 			 * Need to reverify object in case the device was
 			 * unmounted in another thread.
 			 */
@@ -1123,8 +1123,8 @@ int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte, int isPread, int
 				nbyte-=nRead;
 			else
 				nbyte = 0; /* no more to read */
-					
-					
+
+
 			if(nbyte > 0){
 				yaffsfs_Unlock();
 				yaffsfs_Lock();
@@ -1216,7 +1216,7 @@ int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte, int isPwr
 			if(nToWrite > nbyte)
 				nToWrite = nbyte;
 
-			/* Tricky bit... 
+			/* Tricky bit...
 			 * Need to reverify object in case the device was
 			 * remounted or unmounted in another thread.
 			 */
@@ -1373,7 +1373,7 @@ off_t yaffs_lseek(int handle, off_t offset, int whence)
 			fSize = yaffs_get_obj_length(obj);
 			if(fSize >= 0 && (fSize + offset) >= 0)
 				pos = fSize + offset;
-		} 
+		}
 
 		if(pos >= 0 && pos <= YAFFS_MAX_FILE_SIZE)
 			fd->position = pos;
@@ -1492,7 +1492,7 @@ int yaffs_rename(const YCHAR *oldPath, const YCHAR *newPath)
 	obj = yaffsfs_FindObject(NULL,oldPath,0,0,NULL,NULL,NULL);
 	newobj = yaffsfs_FindObject(NULL,newPath,0,0,NULL,NULL,NULL);
 
-	/* If the object being renamed is a directory and the 
+	/* If the object being renamed is a directory and the
 	 * path ended with a "/" then the olddir == obj.
 	 * We pass through NULL for the old name to tell the lower layers
 	 * to use olddir as the object.
@@ -1527,7 +1527,7 @@ int yaffs_rename(const YCHAR *oldPath, const YCHAR *newPath)
 		/*
 		 * It is a directory, check that it is not being renamed to
 		 * being its own decendent.
-		 * Do this by tracing from the new directory back to the root, 
+		 * Do this by tracing from the new directory back to the root,
 		 * checking for obj
 		 */
 
@@ -1671,6 +1671,95 @@ int yaffs_fstat(int fd, struct yaffs_stat *buf)
 	return retVal;
 }
 
+static int yaffsfs_DoUtime(struct yaffs_obj *obj,const struct yaffs_utimbuf *buf)
+{
+	int retVal = -1;
+	int result;
+
+	struct yaffs_utimbuf local;
+
+	obj = yaffs_get_equivalent_obj(obj);
+
+	if(obj && obj->my_dev->read_only) {
+		yaffsfs_SetError(-EROFS);
+		return -1;
+	}
+
+
+	if(!buf){
+		local.actime = Y_CURRENT_TIME;
+		local.modtime = local.actime;
+		buf = &local;
+	}
+
+	if(obj){
+		obj->yst_atime = buf->actime;
+		obj->yst_mtime = buf->modtime;
+		obj->dirty = 1;
+		result = yaffs_flush_file(obj,0,0);
+		retVal = result == YAFFS_OK ? 0 : -1;
+	}
+
+	return retVal;
+}
+
+int yaffs_utime(const YCHAR *path, const struct yaffs_utimbuf *buf)
+{
+	struct yaffs_obj *obj=NULL;
+	struct yaffs_obj *dir=NULL;
+	int retVal = -1;
+	int notDir = 0;
+	int loop = 0;
+
+	if(!path){
+		yaffsfs_SetError(-EFAULT);
+		return -1;
+	}
+
+	if(yaffsfs_CheckPath(path) < 0){
+		yaffsfs_SetError(-ENAMETOOLONG);
+		return -1;
+	}
+
+	yaffsfs_Lock();
+
+	obj = yaffsfs_FindObject(NULL,path,0,1,&dir,&notDir,&loop);
+
+	if(!dir && notDir)
+		yaffsfs_SetError(-ENOTDIR);
+	else if(loop)
+		yaffsfs_SetError(-ELOOP);
+	else if(!dir || !obj)
+		yaffsfs_SetError(-ENOENT);
+	else
+		retVal = yaffsfs_DoUtime(obj,buf);
+
+	yaffsfs_Unlock();
+
+	return retVal;
+
+}
+int yaffs_futime(int fd, const struct yaffs_utimbuf *buf)
+{
+	struct yaffs_obj *obj;
+
+	int retVal = -1;
+
+	yaffsfs_Lock();
+	obj = yaffsfs_HandleToObject(fd);
+
+	if(obj)
+		retVal = yaffsfs_DoUtime(obj,buf);
+	else
+		/* bad handle */
+		yaffsfs_SetError(-EBADF);
+
+	yaffsfs_Unlock();
+
+	return retVal;
+}
+
+
 #ifndef CONFIG_YAFFS_WINCE
 /* xattrib functions */
 
@@ -1702,11 +1791,11 @@ static int yaffs_do_setxattr(const YCHAR *path, const char *name,
 	if(follow)
 		obj = yaffsfs_FollowLink(obj,0,&loop);
 
-	if(!dir && notDir) 
+	if(!dir && notDir)
 		yaffsfs_SetError(-ENOTDIR);
-	else if(loop) 
+	else if(loop)
 		yaffsfs_SetError(-ELOOP);
-	else if(!dir || !obj) 
+	else if(!dir || !obj)
 		yaffsfs_SetError(-ENOENT);
 	else {
 		retVal = yaffs_set_xattrib(obj,name,data,size,flags);
@@ -1748,7 +1837,7 @@ int yaffs_fsetxattr(int fd, const char *name, const void *data, int size, int fl
 	yaffsfs_Lock();
 	obj = yaffsfs_HandleToObject(fd);
 
-	if(!obj) 
+	if(!obj)
 		yaffsfs_SetError(-EBADF);
 	else {
 		retVal = yaffs_set_xattrib(obj,name,data,size,flags);
@@ -1788,11 +1877,11 @@ static int yaffs_do_getxattr(const YCHAR *path, const char *name, void *data, in
 	if(follow)
 		obj = yaffsfs_FollowLink(obj,0,&loop);
 
-	if(!dir && notDir) 
+	if(!dir && notDir)
 		yaffsfs_SetError(-ENOTDIR);
-	else if(loop) 
+	else if(loop)
 		yaffsfs_SetError(-ELOOP);
-	else if(!dir || !obj) 
+	else if(!dir || !obj)
 		yaffsfs_SetError(-ENOENT);
 	else {
 		retVal = yaffs_get_xattrib(obj,name,data,size);
@@ -1872,11 +1961,11 @@ static int yaffs_do_listxattr(const YCHAR *path, char *data, int size, int follo
 	if(follow)
 		obj = yaffsfs_FollowLink(obj,0,&loop);
 
-	if(!dir && notDir) 
+	if(!dir && notDir)
 		yaffsfs_SetError(-ENOTDIR);
-	else if(loop) 
+	else if(loop)
 		yaffsfs_SetError(-ELOOP);
-	else if(!dir || !obj) 
+	else if(!dir || !obj)
 		yaffsfs_SetError(-ENOENT);
 	else {
 		retVal = yaffs_list_xattrib(obj, data,size);
@@ -1956,11 +2045,11 @@ static int yaffs_do_removexattr(const YCHAR *path, const char *name, int follow)
 	if(follow)
 		obj = yaffsfs_FollowLink(obj,0,&loop);
 
-	if(!dir && notDir) 
+	if(!dir && notDir)
 		yaffsfs_SetError(-ENOTDIR);
-	else if(loop) 
+	else if(loop)
 		yaffsfs_SetError(-ELOOP);
-	else if(!dir || !obj) 
+	else if(!dir || !obj)
 		yaffsfs_SetError(-ENOENT);
 	else {
 		retVal = yaffs_remove_xattrib(obj,name);
@@ -2045,17 +2134,17 @@ int yaffs_get_wince_times(int fd, unsigned *wctime, unsigned *watime, unsigned *
 		retVal = 0;
 	} else
 		/*  bad handle */
-		yaffsfs_SetError(-EBADF);		
-	
+		yaffsfs_SetError(-EBADF);
+
 	yaffsfs_Unlock();
-	
+
 	return retVal;
 }
 
 
-int yaffs_set_wince_times(int fd, 
-						  const unsigned *wctime, 
-						  const unsigned *watime, 
+int yaffs_set_wince_times(int fd,
+						  const unsigned *wctime,
+						  const unsigned *watime,
                                                   const unsigned *wmtime)
 {
         struct yaffs_obj *obj;
@@ -2140,11 +2229,11 @@ int yaffs_access(const YCHAR *path, int amode)
 	obj = yaffsfs_FindObject(NULL,path,0,1, &dir,&notDir,&loop);
 	obj = yaffsfs_FollowLink(obj,0,&loop);
 
-	if(!dir && notDir) 
+	if(!dir && notDir)
 		yaffsfs_SetError(-ENOTDIR);
-	else if(loop) 
+	else if(loop)
 		yaffsfs_SetError(-ELOOP);
-	else if(!dir || !obj) 
+	else if(!dir || !obj)
 		yaffsfs_SetError(-ENOENT);
 	else if((amode & W_OK) && obj->my_dev->read_only)
 		yaffsfs_SetError(-EROFS);
@@ -2199,11 +2288,11 @@ int yaffs_chmod(const YCHAR *path, mode_t mode)
 	obj = yaffsfs_FindObject(NULL,path,0,1, &dir, &notDir,&loop);
 	obj = yaffsfs_FollowLink(obj,0,&loop);
 
-	if(!dir && notDir) 
+	if(!dir && notDir)
 		yaffsfs_SetError(-ENOTDIR);
-	else if(loop) 
+	else if(loop)
 		yaffsfs_SetError(-ELOOP);
-	else if(!dir || !obj) 
+	else if(!dir || !obj)
 		yaffsfs_SetError(-ENOENT);
 	else if(obj->my_dev->read_only)
 		yaffsfs_SetError(-EROFS);
@@ -2268,7 +2357,7 @@ int yaffs_mkdir(const YCHAR *path, mode_t mode)
 	}
 	if(alt_path)
 		path = alt_path;
-	
+
 	yaffsfs_Lock();
 	parent = yaffsfs_FindDirectory(NULL,path,&name,0,&notDir,&loop);
 	if(!parent && notDir)
@@ -2398,7 +2487,7 @@ int yaffs_sync(const YCHAR *path)
 		yaffsfs_SetError(-ENAMETOOLONG);
 		return -1;
 	}
-        
+
         yaffsfs_Lock();
         dev = yaffsfs_FindDevice(path,&dummy);
         if(dev){
@@ -2407,17 +2496,17 @@ int yaffs_sync(const YCHAR *path)
 		else if(dev->read_only)
 			yaffsfs_SetError(-EROFS);
 		else {
-                        
+
                         yaffs_flush_whole_cache(dev);
                         yaffs_checkpoint_save(dev);
                         retVal = 0;
-                        
-                }      
+
+                }
         }else
                 yaffsfs_SetError(-ENODEV);
 
         yaffsfs_Unlock();
-        return retVal;  
+        return retVal;
 }
 
 
@@ -2572,7 +2661,7 @@ loff_t yaffs_totalspace(const YCHAR *path)
 	yaffsfs_Lock();
 	dev = yaffsfs_FindDevice(path,&dummy);
 	if(dev  && dev->is_mounted){
-		retVal = (dev->param.end_block - dev->param.start_block + 1) - 
+		retVal = (dev->param.end_block - dev->param.start_block + 1) -
 			dev->param.n_reserved_blocks;
 		retVal *= dev->param.chunks_per_block;
 		retVal *= dev->data_bytes_per_chunk;
@@ -2607,12 +2696,12 @@ int yaffs_inodecount(const YCHAR *path)
 	   if(n_obj > dev->n_hardlinks)
 		retVal = n_obj - dev->n_hardlinks;
 	}
-	
+
 	if(retVal < 0)
 		yaffsfs_SetError(-EINVAL);
-	
+
 	yaffsfs_Unlock();
-	return retVal;	
+	return retVal;
 }
 
 
@@ -2652,7 +2741,7 @@ typedef struct
         struct yaffs_obj *dirObj;           /* ptr to directory being searched */
         struct yaffs_obj *nextReturn;       /* obj to be returned by next readddir */
         int offset;
-        struct list_head others;       
+        struct list_head others;
 } yaffsfs_DirectorySearchContext;
 
 
@@ -2769,7 +2858,7 @@ yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
                         if(!search_contexts.next)
                                 INIT_LIST_HEAD(&search_contexts);
 
-                        list_add(&dsc->others,&search_contexts);       
+                        list_add(&dsc->others,&search_contexts);
                         yaffsfs_SetDirRewound(dsc);
 		}
 
@@ -2910,11 +2999,11 @@ int yaffs_readlink(const YCHAR *path, YCHAR *buf, int bufsiz)
 
 	obj = yaffsfs_FindObject(NULL,path,0,1, &dir,&notDir,&loop);
 
-	if(!dir && notDir) 
+	if(!dir && notDir)
 		yaffsfs_SetError(-ENOTDIR);
-	else if(loop) 
+	else if(loop)
 		yaffsfs_SetError(-ELOOP);
-	else if(!dir || !obj) 
+	else if(!dir || !obj)
 		yaffsfs_SetError(-ENOENT);
 	else if(obj->variant_type != YAFFS_OBJECT_TYPE_SYMLINK)
 		yaffsfs_SetError(-EINVAL);
@@ -2971,9 +3060,9 @@ int yaffs_link(const YCHAR *oldpath, const YCHAR *linkpath)
 		yaffsfs_SetError(-EEXIST);
 	else if(lnk_dir->my_dev != obj->my_dev)
 		yaffsfs_SetError(-EXDEV);
-	else {		
+	else {
 		retVal = yaffsfs_CheckNameLength(newname);
-		
+
 		if(retVal == 0) {
 			lnk = yaffs_link_obj(lnk_dir,newname,obj);
 			if(lnk)
@@ -3003,7 +3092,7 @@ int yaffs_mknod(const YCHAR *pathname, mode_t mode, dev_t dev)
 /*
  * D E B U G   F U N C T I O N S
  */
- 
+
 /*
  * yaffs_n_handles()
  * Returns number of handles attached to the object
