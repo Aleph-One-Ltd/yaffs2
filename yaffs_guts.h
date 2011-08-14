@@ -744,7 +744,7 @@ struct yaffs_dev {
 	u32 oldest_dirty_gc_count;
 	u32 n_gc_blocks;
 	u32 bg_gcs;
-	u32 n_retired_writes;
+	u32 n_retried_writes;
 	u32 n_retired_blocks;
 	u32 n_ecc_fixed;
 	u32 n_ecc_unfixed;

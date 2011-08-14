@@ -598,7 +598,7 @@ static int yaffs_write_new_chunk(struct yaffs_dev *dev,
 		yaffs_trace(YAFFS_TRACE_ERROR,
 			"**>> yaffs write required %d attempts",
 			attempts);
-		dev->n_retired_writes += (attempts - 1);
+		dev->n_retried_writes += (attempts - 1);
 	}
 
 	return chunk;
@@ -4878,7 +4878,7 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 	dev->n_page_writes = 0;
 	dev->n_erasures = 0;
 	dev->n_gc_copies = 0;
-	dev->n_retired_writes = 0;
+	dev->n_retried_writes = 0;
 
 	dev->n_retired_blocks = 0;
 

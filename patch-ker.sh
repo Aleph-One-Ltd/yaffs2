@@ -92,7 +92,7 @@ PATCHLEVEL=`grep -s PATCHLEVEL <$LINUXDIR/Makefile | head -n 1 | sed s/'PATCHLEV
 SUBLEVEL=`grep -s SUBLEVEL <$LINUXDIR/Makefile | head -n 1 | sed s/'SUBLEVEL = '//`
 
 # Can we handle this version?
-if [ $VERSION -ne 2  -o $PATCHLEVEL -lt 6  ]
+if [ $VERSION$PATCHLEVEL -lt 26  ]
 then
 	echo "Cannot patch kernel version $VERSION.$PATCHLEVEL.$SUBLEVEL, must be 2.6.x or higher"
 	exit 1;

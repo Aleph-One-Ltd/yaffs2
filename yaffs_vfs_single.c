@@ -2391,7 +2391,7 @@ static char *yaffs_dump_dev_part1(char *buf, struct yaffs_dev *dev)
 	buf += sprintf(buf, "n_gc_blocks........... %u\n", dev->n_gc_blocks);
 	buf += sprintf(buf, "bg_gcs................ %u\n", dev->bg_gcs);
 	buf +=
-	    sprintf(buf, "n_retired_writes...... %u\n", dev->n_retired_writes);
+	    sprintf(buf, "n_retried_writes...... %u\n", dev->n_retried_writes);
 	buf +=
 	    sprintf(buf, "n_retired_blocks...... %u\n", dev->n_retired_blocks);
 	buf += sprintf(buf, "n_ecc_fixed........... %u\n", dev->n_ecc_fixed);
