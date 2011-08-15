@@ -171,21 +171,21 @@ class yaffs_dirent_struct(Structure):
 #yaffs_DIR *yaffs_opendir(const YCHAR *dirname) ;
 yaffs_opendir = ylib.yaffs_opendir
 yaffs_opendir.argtypes = [c_char_p]
-yaffs_opendir.restype = c_int
+yaffs_opendir.restype = c_void_p
 
 #struct yaffs_dirent *yaffs_readdir(yaffs_DIR *dirp) ;
 yaffs_readdir= ylib.yaffs_readdir
-yaffs_readdir.argtypes=[c_int]
+yaffs_readdir.argtypes=[c_void_p]
 yaffs_readdir.restype=POINTER(yaffs_dirent_struct)
 
 #void yaffs_rewinddir(yaffs_DIR *dirp) ;
 yaffs_rewinddir = ylib.yaffs_rewinddir
-yaffs_rewinddir.argtypes = [c_int]
-yaffs_rewinddir.restype = c_int ###### Should be void
+yaffs_rewinddir.argtypes = [c_void_p]
+yaffs_rewinddir.restype = None # void
 
 #int yaffs_closedir(yaffs_DIR *dirp) ;
 yaffs_closedir = ylib.yaffs_closedir
-yaffs_closedir.argtypes = [c_int]
+yaffs_closedir.argtypes = [c_void_p]
 yaffs_closedir.restype = c_int
 
 
