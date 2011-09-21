@@ -24,11 +24,6 @@ typedef unsigned short u16;
 typedef unsigned u32;
 
 
-#ifndef WIN32
-#include <sys/stat.h>
-#endif
-
-
 #ifdef CONFIG_YAFFS_PROVIDE_DEFS
 /* File types */
 
@@ -43,10 +38,6 @@ typedef unsigned u32;
 #define DT_SOCK		12
 #define DT_WHT		14
 
-
-#ifndef WIN32
-#include <sys/stat.h>
-#endif
 
 /*
  * Attribute flags.
@@ -227,6 +218,22 @@ struct iattr {
 #define S_IFMT		0170000
 #endif
 
+#ifndef S_IFSOCK
+#define S_IFSOCK	0140000
+#endif
+
+#ifndef S_IFIFO
+#define S_IFIFO		0010000
+#endif
+
+#ifndef S_IFCHR
+#define S_IFCHR		0020000
+#endif
+
+#ifndef S_IFBLK
+#define S_IFBLK		0060000
+#endif
+
 #ifndef S_IFLNK
 #define S_IFLNK		0120000
 #endif
@@ -238,6 +245,15 @@ struct iattr {
 #ifndef S_IFREG
 #define S_IFREG		0100000
 #endif
+
+#define S_ISSOCK(m)	(((m) & S_IFMT) == S_IFSOCK)
+#define S_ISLNK(m)	(((m) & S_IFMT) == S_IFLNK)
+#define S_ISDIR(m)	(((m) & S_IFMT) == S_IFDIR)
+#define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
+#define S_ISBLK(m)	(((m) & S_IFMT) == S_IFBLK)
+#define S_ISCHR(m)	(((m) & S_IFMT) == S_IFCHR)
+#define S_ISFIFO(m)	(((m) & S_IFMT) == S_IFIFO)
+
 
 #ifndef S_IREAD 
 #define S_IREAD		0000400
