@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -13,11 +13,20 @@
  * Note: Only YAFFS headers are LGPL, YAFFS C code is covered by GPL.
  */
 
-#ifndef __YAFFS_TAGS_VALIDITY_H__
-#define __YAFFS_TAGS_VALIDITY_H__
 
-#include "yaffs_guts.h"
+#ifndef __YAFFS_UTILSENV_H__
+#define __YAFFS_UTILSENV_H__
 
-void yaffs_init_tags(struct yaffs_ext_tags *tags);
-int yaffs_validate_tags(struct yaffs_ext_tags *tags);
+#define YCHAR char
+#define YUCHAR unsigned char
+
+#include <sys/types.h>
+#include <string.h>
+#include "yaffs_list.h"
+#include "yaffs_hweight.h"
+
+#define hweight8(x) yaffs_hweight8(x)
+#define hweight32(x) yaffs_hweight32(x)
+
+#define yaffs_trace(...) do {} while (0)
 #endif

@@ -57,11 +57,13 @@ if [ $MULTIORSINGLE = m ]; then
    MTD1_CODE="yaffs_mtdif1_multi.c"
    MTD2_CODE="yaffs_mtdif2_multi.c"
    YPORTENV="yportenv_multi.h"
+   KCONFIG_SRC="Kconfig_multi"
 elif [ $MULTIORSINGLE = s ]; then
    VFS_CODE="yaffs_vfs_single.c"
    MTD1_CODE="yaffs_mtdif1_single.c"
    MTD2_CODE="yaffs_mtdif2_single.c"
    YPORTENV="yportenv_single.h"
+   KCONFIG_SRC="Kconfig_single"
 
    echo ""
    echo "*** Warning ***"
@@ -90,7 +92,7 @@ PATCHLEVEL=`grep -s PATCHLEVEL <$LINUXDIR/Makefile | head -n 1 | sed s/'PATCHLEV
 SUBLEVEL=`grep -s SUBLEVEL <$LINUXDIR/Makefile | head -n 1 | sed s/'SUBLEVEL = '//`
 
 # Can we handle this version?
-if [ $VERSION -ne 2  -o $PATCHLEVEL -lt 6  ]
+if [ $VERSION$PATCHLEVEL -lt 26  ]
 then
 	echo "Cannot patch kernel version $VERSION.$PATCHLEVEL.$SUBLEVEL, must be 2.6.x or higher"
 	exit 1;
@@ -142,10 +144,10 @@ then
    echo "already there then delete $YAFFSDIR and re-run this script"
    echo " eg.  \"rm -rf $YAFFSDIR\" "
 else
-   rm yaffs*.mod.c
+   rm yaffs*.mod.c 2> /dev/null
    mkdir $LINUXDIR/fs/yaffs2
    $CPY  $PWD/Makefile.kernel $LINUXDIR/fs/yaffs2/Makefile
-   $CPY $PWD/Kconfig $LINUXDIR/fs/yaffs2
+   $CPY $PWD/$KCONFIG_SRC $LINUXDIR/fs/yaffs2/Kconfig
    $CPY $PWD/*.c $PWD/*.h  $LINUXDIR/fs/yaffs2
    rm $LINUXDIR/fs/yaffs2/yaffs_vfs*.c $LINUXDIR/fs/yaffs2/yaffs_mtdif[12]*.c
    rm $LINUXDIR/fs/yaffs2/yportenv*.h

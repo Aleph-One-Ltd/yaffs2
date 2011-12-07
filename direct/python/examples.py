@@ -30,12 +30,12 @@ def yaffs_ls(dname):
             isDir  = True if st.st_mode & 0x4000 else False
 
             if isFile :
-                print "File ",se.d_ino, hex(perms), st.st_size, fullname
+                print "File ",se.d_ino, hex(perms), st.st_size, fullname, " times ", st.yst_atime, st.yst_ctime, st.yst_mtime
             elif isDir :
-                print "Dir  ",se.d_ino, hex(perms), fullname
+                print "Dir  ",se.d_ino, hex(perms), fullname, " times ", st.yst_atime, st.yst_ctime, st.yst_mtime
                 yaffs_ls(fullname)
             else :
-            	print "Other (",hex(st.st_mode),") ",se.d_ino, hex(perms), fullname
+            	print "Other (",hex(st.st_mode),") ",se.d_ino, hex(perms), fullname, " times ", st.yst_atime, st.yst_ctime, st.yst_mtime
 
             sep = yaffs_readdir(dc)
         yaffs_closedir(dc)
@@ -96,4 +96,3 @@ h = yaffs_open(root+"/dd/111",66,0666)
 yaffs_close(h)
 
 yaffs_ls(root)
-

@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -55,7 +55,7 @@ void yaffs_deinit_raw_tnodes_and_objs(struct yaffs_dev *dev)
 		} else {
 			T(YAFFS_TRACE_ALWAYS,
 				(TSTR("NULL tnode cache\n")));
-			YBUG();
+			BUG();
 		}
 
 		if(allocator->object_cache){
@@ -64,7 +64,7 @@ void yaffs_deinit_raw_tnodes_and_objs(struct yaffs_dev *dev)
 		} else {
 			T(YAFFS_TRACE_ALWAYS,
 				(TSTR("NULL object cache\n")));
-			YBUG();
+			BUG();
 		}
 
 		kfree(allocator);
@@ -72,7 +72,7 @@ void yaffs_deinit_raw_tnodes_and_objs(struct yaffs_dev *dev)
 	} else {
 		T(YAFFS_TRACE_ALWAYS,
 			(TSTR("Deinitialising NULL allocator\n")));
-		YBUG();
+		BUG();
 	}
 	dev->allocator = NULL;
 }
@@ -110,7 +110,7 @@ void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev)
 	T(YAFFS_TRACE_ALLOCATE,(TSTR("Initialising yaffs allocator\n")));
 
 	if(dev->allocator)
-		YBUG();
+		BUG();
 	else if(mount_id >= 10){
 		T(YAFFS_TRACE_ALWAYS,(TSTR("Bad mount_id %u\n"),mount_id));
 	} else {
@@ -121,7 +121,7 @@ void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev)
 		if(!dev->allocator){
 			T(YAFFS_TRACE_ALWAYS,
 				(TSTR("yaffs allocator creation failed\n")));
-			YBUG();
+			BUG();
 			return;
 
 		}
@@ -141,7 +141,7 @@ void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev)
 		else {
 			T(YAFFS_TRACE_ALWAYS,
 				(TSTR("yaffs cache creation failed\n")));
-			YBUG();
+			BUG();
 		}
 
 
@@ -159,7 +159,7 @@ void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev)
 		else {
 			T(YAFFS_TRACE_ALWAYS,
 				(TSTR("yaffs cache creation failed\n")));
-			YBUG();
+			BUG();
 		}
 	} 
 }
@@ -169,7 +169,7 @@ struct yaffs_tnode *yaffs_alloc_raw_tnode(struct yaffs_dev *dev)
 {
 	yaffs_Allocator *allocator = dev->allocator;
 	if(!allocator || !allocator->tnode_cache){
-		YBUG();
+		BUG();
 		return NULL;
 	}
 	return kmem_cache_alloc(allocator->tnode_cache, GFP_NOFS);
@@ -185,11 +185,11 @@ struct yaffs_obj *yaffs_alloc_raw_obj(struct yaffs_dev *dev)
 {
 	yaffs_Allocator *allocator = dev->allocator;
 	if(!allocator){
-		YBUG();
+		BUG();
 		return NULL;
 	}
 	if(!allocator->object_cache){
-		YBUG();
+		BUG();
 		return NULL;
 	}
 	return kmem_cache_alloc(allocator->object_cache, GFP_NOFS);

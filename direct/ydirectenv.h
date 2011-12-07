@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet another Flash File System . A NAND-flash specific file system. 
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -29,8 +29,8 @@
 #include "yaffs_hweight.h"
 
 #include "assert.h"
-#define YBUG() assert(0)
-//#define YBUG() do { *((int *)0) =1;} while(0)
+#define BUG() assert(0)
+//#define BUG() do { *((int *)0) =1;} while(0)
 
 
 #define YCHAR char
@@ -53,10 +53,10 @@ void yaffs_qsort(void *aa, size_t n, size_t es,
 #define inline __inline__
 #endif
 
-#define kmalloc(x,flags) yaffs_malloc(x)
-#define kfree(x)   yaffs_free(x)
-#define vmalloc(x) yaffs_malloc(x)
-#define vfree(x) yaffs_free(x)
+#define kmalloc(x,flags) yaffsfs_malloc(x)
+#define kfree(x)   yaffsfs_free(x)
+#define vmalloc(x) yaffsfs_malloc(x)
+#define vfree(x) yaffsfs_free(x)
 
 #define cond_resched()  do {} while(0)
 

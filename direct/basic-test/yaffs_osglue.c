@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -75,7 +75,7 @@ void yaffsfs_LockInit(void)
 
 u32 yaffsfs_CurrentTime(void)
 {
-	return 0;
+	return time(NULL);
 }
 
 
@@ -83,7 +83,7 @@ static int yaffs_kill_alloc = 0;
 static size_t total_malloced = 0;
 static size_t malloc_limit = 0 & 6000000;
 
-void *yaffs_malloc(size_t size)
+void *yaffsfs_malloc(size_t size)
 {
 	void * this;
 	if(yaffs_kill_alloc)
@@ -97,7 +97,7 @@ void *yaffs_malloc(size_t size)
 	return this;
 }
 
-void yaffs_free(void *ptr)
+void yaffsfs_free(void *ptr)
 {
 	free(ptr);
 }

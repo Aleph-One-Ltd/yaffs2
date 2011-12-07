@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -26,7 +26,6 @@ const char *yaffs_flashif2_c_version = "$Id: yaffs_fileem2k.c,v 1.24 2010-02-18 
 #include "yaffs_guts.h"
 #include "yaffs_fileem2k.h"
 #include "yaffs_packedtags2.h"
-#include "yaffs_tagsvalidity.h"
 
 
 #include <sys/types.h>
@@ -407,7 +406,7 @@ int yflash2_ReadChunkWithTagsFromNAND(struct yaffs_dev *dev,int nand_chunk, u8 *
 		/* Got to suck the tags out of the data area */
 		if(!data) {
 			localData=1;
-			data = yaffs_get_temp_buffer(dev,__LINE__);
+			data = yaffs_get_temp_buffer(dev);
 		}
 
 		
@@ -428,7 +427,7 @@ int yflash2_ReadChunkWithTagsFromNAND(struct yaffs_dev *dev,int nand_chunk, u8 *
 			retval = YAFFS_FAIL;
 			
 		if(localData)
-			yaffs_release_temp_buffer(dev,data,__LINE__);
+			yaffs_release_temp_buffer(dev, data);
 
 
 
@@ -460,14 +459,10 @@ int yflash2_ReadChunkWithTagsFromNAND(struct yaffs_dev *dev,int nand_chunk, u8 *
 				nread= read(h,tags,sizeof(struct yaffs_ext_tags));
 				if(nread != sizeof(struct yaffs_ext_tags))
 					 retval =  YAFFS_FAIL;
-				if(yaffs_check_all_ff((u8 *)tags,sizeof(struct yaffs_ext_tags)))
-				{
-					yaffs_init_tags(tags);
-				}
+				if(yaffs_check_all_ff((u8 *)tags, sizeof(struct yaffs_ext_tags)))
+					memset(tags, 0, sizeof(struct yaffs_ext_tags));
 				else
-				{
 					tags->chunk_used = 1;
-				}
 			}
 			else
 			{
@@ -599,7 +594,7 @@ int yflash2_QueryNANDBlock(struct yaffs_dev *dev, int block_no, enum yaffs_block
 	}
 	else if(tags.chunk_used)
 	{
-		*state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+		*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 		*seq_number = tags.seq_number;
 	}
 	return YAFFS_OK;

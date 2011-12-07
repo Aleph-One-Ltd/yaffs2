@@ -29,10 +29,24 @@ CFLAGS +=    -Wextra -Wpointer-arith
 #CFLAGS+=   -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-declarations
 #CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
 
-
-COMMONTESTOBJS = yaffscfg2k.o yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
+COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o\
+		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
 		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
-		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_tagsvalidity.o yaffs_nand.o \
+		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_nand.o \
+		 yaffs_checkptrw.o  yaffs_qsort.o\
+		 yaffs_nameval.o yaffs_attribs.o \
+		 yaffs_norif1.o  ynorsim.o  \
+		 yaffs_allocator.o \
+		 yaffs_bitmap.o \
+		 yaffs_yaffs1.o \
+		 yaffs_yaffs2.o \
+		 yaffs_verify.o
+
+
+SSCOMMONTESTOBJS = yaffscfg2k.o yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
+		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
+		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_nand.o \
+		 yaffs_attribs.o yaffs_allocator.o \
 		 yaffs_checkptrw.o  yaffs_qsort.o\
 		 yaffs_nameval.o \
 		 yaffs_norif1.o  ynorsim.o   \
@@ -49,12 +63,12 @@ YAFFSTESTOBJS  = $(COMMONTESTOBJS) yaffs_tester.o message_buffer.o error_handler
 
 ALLOBJS = $(sort $(YAFFSTESTOBJS))
 
-YAFFSSYMLINKS = devextras.h yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffsinterface.h yportenv.h yaffs_tagscompat.c yaffs_tagscompat.h \
-          yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h  yaffs_nandemul2k.h \
-          yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h yaffs_list.h \
-          yaffs_tagsvalidity.c yaffs_tagsvalidity.h yaffs_checkptrw.h yaffs_checkptrw.c \
+YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
+          yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h  \
+          yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
+          yaffs_checkptrw.h yaffs_checkptrw.c \
           yaffs_nameval.c yaffs_nameval.h \
-          yaffs_qsort.c yaffs_qsort.h yaffs_trace.h \
+          yaffs_trace.h yaffs_attribs.h \
           yaffs_allocator.c yaffs_allocator.h \
           yaffs_yaffs1.c yaffs_yaffs1.h \
           yaffs_yaffs2.c yaffs_yaffs2.h \
@@ -62,15 +76,18 @@ YAFFSSYMLINKS = devextras.h yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h ya
           yaffs_verify.c yaffs_verify.h
 
 YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
-		       yaffsfs.h yaffs_malloc.h ydirectenv.h \
-		       yaffs_flashif.c yaffscfg.h \
-		       yaffs_nandif.c yaffs_nandif.h
+		       yaffsfs.h yaffs_osglue.h ydirectenv.h \
+		       yaffs_flashif.c yaffscfg.h yaffs_qsort.c \
+		       yaffs_nandemul2k.h yaffs_list.h \
+		       yaffs_attribs.c \
+		       yaffs_nandif.c yaffs_nandif.h yportenv.h \
+		       yaffs_hweight.c yaffs_hweight.h
 
 
 DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
 			yaffs_fileem.c yaffs_norif1.c yaffs_norif1.h \
 			yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
-			ynorsim.h ynorsim.c
+			ynorsim.h ynorsim.c yaffs_osglue.c
 
 SYMLINKS = $(YAFFSSYMLINKS) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
 #all: directtest2k boottest

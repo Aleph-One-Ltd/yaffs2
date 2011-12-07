@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -34,7 +34,6 @@
 #include "yaffs_ecc.h"
 #include "yaffs_guts.h"
 
-#include "yaffs_tagsvalidity.h"
 #include "yaffs_packedtags2.h"
 
 unsigned yaffs_trace_mask=0;
@@ -188,7 +187,7 @@ static int write_chunk(u8 *data, u32 id, u32 chunk_id, u32 n_bytes)
 	if (write(outFile,data,chunkSize) != chunkSize)
 		fatal("write");
 
-	yaffs_init_tags(&t);
+	memset(&t, 0, sizeof(t));
 	
 	t.chunk_id = chunk_id;
 //	t.serial_number = 0;
@@ -230,51 +229,40 @@ static int write_chunk(u8 *data, u32 id, u32 chunk_id, u32 n_bytes)
 // This one is easier, since the types are more standard. No funky shifts here.
 static void object_header_little_to_big_endian(struct yaffs_obj_hdr* oh)
 {
-    int i;    
     oh->type = SWAP32(oh->type); // GCC makes enums 32 bits.
     oh->parent_obj_id = SWAP32(oh->parent_obj_id); // int
     oh->sum_no_longer_used = SWAP16(oh->sum_no_longer_used); // u16 - Not used, but done for completeness.
     // name = skip. Char array. Not swapped.
     oh->yst_mode = SWAP32(oh->yst_mode);
-#ifdef CONFIG_YAFFS_WINCE // WinCE doesn't implement this, but we need to just in case. 
-    // In fact, WinCE would be *THE* place where this would be an issue.
-    // Why? WINCE is little-endian only.
 
-    {
-        int n = sizeof(oh->not_for_wince)/sizeof(oh->not_for_wince[0]);
-        for(i = 0; i < n; i++)
-            oh->not_for_wince[i] = SWAP32(oh->not_for_wince[i]);
-    }
-#else
     // Regular POSIX.
     oh->yst_uid = SWAP32(oh->yst_uid);
     oh->yst_gid = SWAP32(oh->yst_gid);
     oh->yst_atime = SWAP32(oh->yst_atime);
     oh->yst_mtime = SWAP32(oh->yst_mtime);
     oh->yst_ctime = SWAP32(oh->yst_ctime);
-#endif
 
     oh->file_size = SWAP32(oh->file_size); // Aiee. An int... signed, at that!
     oh->equiv_id = SWAP32(oh->equiv_id);
     // alias  - char array.
     oh->yst_rdev = SWAP32(oh->yst_rdev);
 
-#ifdef CONFIG_YAFFS_WINCE
     oh->win_ctime[0] = SWAP32(oh->win_ctime[0]);
     oh->win_ctime[1] = SWAP32(oh->win_ctime[1]);
     oh->win_atime[0] = SWAP32(oh->win_atime[0]);
     oh->win_atime[1] = SWAP32(oh->win_atime[1]);
     oh->win_mtime[0] = SWAP32(oh->win_mtime[0]);
     oh->win_mtime[1] = SWAP32(oh->win_mtime[1]);
-#else
 
-    {
-        int n = sizeof(oh->room_to_grow)/sizeof(oh->room_to_grow[0]);
-        for(i=0; i < n; i++)
-            oh->room_to_grow[i] = SWAP32(oh->room_to_grow[i]);
-    }
-#endif
+    oh->reserved[0] = SWAP32(oh->reserved[0]);
+    oh->reserved[1] = SWAP32(oh->reserved[1]);
+
+    oh->inband_shadowed_obj_id = SWAP32(oh->inband_shadowed_obj_id);
+    oh->inband_is_shrink = SWAP32(oh->inband_is_shrink);
+    oh->shadows_obj = SWAP32(oh->shadows_obj);
+    oh->is_shrink = SWAP32(oh->is_shrink);
 }
+
 
 static int write_object_header(int id, enum yaffs_obj_type t, struct stat *s, int parent, const char *name, int equivalentObj, const char * alias)
 {

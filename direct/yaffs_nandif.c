@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -92,7 +92,7 @@ int ynandif_ReadChunkWithTagsFromNAND(struct yaffs_dev * dev, int nand_chunk,
 		
 		if(!data) {
 			localData = 1;
-			data = yaffs_get_temp_buffer(dev,__LINE__);
+			data = yaffs_get_temp_buffer(dev);
 		}
 		spare = NULL;
 		spareSize = 0;
@@ -133,7 +133,7 @@ int ynandif_ReadChunkWithTagsFromNAND(struct yaffs_dev * dev, int nand_chunk,
 	}
 
 	if(localData)
-		yaffs_release_temp_buffer(dev,data,__LINE__);
+		yaffs_release_temp_buffer(dev, data);
 	
 	return retval;
 }
@@ -184,7 +184,7 @@ int ynandif_QueryNANDBlock(struct yaffs_dev *dev, int blockId,
 		}
 		else 
 		{
-			*state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+			*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 			*seq_number = tags.seq_number;
 		}
 	}

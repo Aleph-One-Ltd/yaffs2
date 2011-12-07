@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -22,16 +22,15 @@ static void yaffs_handle_rd_data_error(struct yaffs_dev *dev, int nand_chunk);
 
 /********** Tags ECC calculations  *********/
 
-void yaffs_calc_ecc(const u8 * data, struct yaffs_spare *spare)
+void yaffs_calc_ecc(const u8 *data, struct yaffs_spare *spare)
 {
-	yaffs_ecc_cacl(data, spare->ecc1);
-	yaffs_ecc_cacl(&data[256], spare->ecc2);
+	yaffs_ecc_calc(data, spare->ecc1);
+	yaffs_ecc_calc(&data[256], spare->ecc2);
 }
 
 void yaffs_calc_tags_ecc(struct yaffs_tags *tags)
 {
 	/* Calculate an ecc */
-
 	unsigned char *b = ((union yaffs_tags_union *)tags)->as_bytes;
 	unsigned i, j;
 	unsigned ecc = 0;
@@ -46,9 +45,7 @@ void yaffs_calc_tags_ecc(struct yaffs_tags *tags)
 				ecc ^= bit;
 		}
 	}
-
 	tags->ecc = ecc;
-
 }
 
 int yaffs_check_tags_ecc(struct yaffs_tags *tags)
@@ -76,7 +73,6 @@ int yaffs_check_tags_ecc(struct yaffs_tags *tags)
 		/* TODO Need to do somethiong here */
 		return -1;	/* unrecovered error */
 	}
-
 	return 0;
 }
 
@@ -124,11 +120,11 @@ static void yaffs_get_tags_from_spare(struct yaffs_dev *dev,
 
 static void yaffs_spare_init(struct yaffs_spare *spare)
 {
-	memset(spare, 0xFF, sizeof(struct yaffs_spare));
+	memset(spare, 0xff, sizeof(struct yaffs_spare));
 }
 
 static int yaffs_wr_nand(struct yaffs_dev *dev,
-			 int nand_chunk, const u8 * data,
+			 int nand_chunk, const u8 *data,
 			 struct yaffs_spare *spare)
 {
 	if (nand_chunk < dev->param.start_block * dev->param.chunks_per_block) {
@@ -143,7 +139,7 @@ static int yaffs_wr_nand(struct yaffs_dev *dev,
 
 static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 			       int nand_chunk,
-			       u8 * data,
+			       u8 *data,
 			       struct yaffs_spare *spare,
 			       enum yaffs_ecc_result *ecc_result,
 			       int correct_errors)
@@ -166,10 +162,10 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 			int ecc_result1, ecc_result2;
 			u8 calc_ecc[3];
 
-			yaffs_ecc_cacl(data, calc_ecc);
+			yaffs_ecc_calc(data, calc_ecc);
 			ecc_result1 =
 			    yaffs_ecc_correct(data, spare->ecc1, calc_ecc);
-			yaffs_ecc_cacl(&data[256], calc_ecc);
+			yaffs_ecc_calc(&data[256], calc_ecc);
 			ecc_result2 =
 			    yaffs_ecc_correct(&data[256], spare->ecc2,
 					      calc_ecc);
@@ -268,9 +264,8 @@ static void yaffs_handle_rd_data_error(struct yaffs_dev *dev, int nand_chunk)
 	int flash_block = nand_chunk / dev->param.chunks_per_block;
 
 	/* Mark the block for retirement */
-	yaffs_get_block_info(dev,
-			     flash_block + dev->block_offset)->needs_retiring =
-	    1;
+	yaffs_get_block_info(dev, flash_block + dev->block_offset)->
+		needs_retiring = 1;
 	yaffs_trace(YAFFS_TRACE_ERROR | YAFFS_TRACE_BAD_BLOCKS,
 		"**>>Block %d marked for retirement",
 		flash_block);
@@ -284,20 +279,20 @@ static void yaffs_handle_rd_data_error(struct yaffs_dev *dev, int nand_chunk)
 
 int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 			 int nand_chunk,
-			 const u8 * data, const struct yaffs_ext_tags *ext_tags)
+			 const u8 *data, const struct yaffs_ext_tags *ext_tags)
 {
 	struct yaffs_spare spare;
 	struct yaffs_tags tags;
 
 	yaffs_spare_init(&spare);
-        
+
 	if (ext_tags->is_deleted)
 		spare.page_status = 0;
 	else {
 		tags.obj_id = ext_tags->obj_id;
 		tags.chunk_id = ext_tags->chunk_id;
 
-		tags.n_bytes_lsb = ext_tags->n_bytes & 0x3ff;
+		tags.n_bytes_lsb = ext_tags->n_bytes & (1024 - 1);
 
 		if (dev->data_bytes_per_chunk >= 1024)
 			tags.n_bytes_msb = (ext_tags->n_bytes >> 10) & 3;
@@ -310,69 +305,61 @@ int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 			yaffs_calc_ecc(data, &spare);
 
 		yaffs_load_tags_to_spare(&spare, &tags);
-
 	}
-
 	return yaffs_wr_nand(dev, nand_chunk, data, &spare);
 }
 
 int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 			 int nand_chunk,
-			 u8 * data, struct yaffs_ext_tags *ext_tags)
+			 u8 *data, struct yaffs_ext_tags *ext_tags)
 {
-
 	struct yaffs_spare spare;
 	struct yaffs_tags tags;
 	enum yaffs_ecc_result ecc_result = YAFFS_ECC_RESULT_UNKNOWN;
-
 	static struct yaffs_spare spare_ff;
 	static int init;
+	int deleted;
 
 	if (!init) {
-		memset(&spare_ff, 0xFF, sizeof(spare_ff));
+		memset(&spare_ff, 0xff, sizeof(spare_ff));
 		init = 1;
 	}
 
-	if (yaffs_rd_chunk_nand(dev, nand_chunk, data, &spare, &ecc_result, 1)) {
-		/* ext_tags may be NULL */
-		if (ext_tags) {
-
-			int deleted =
-			    (hweight8(spare.page_status) < 7) ? 1 : 0;
-
-			ext_tags->is_deleted = deleted;
-			ext_tags->ecc_result = ecc_result;
-			ext_tags->block_bad = 0;	/* We're reading it */
-			/* therefore it is not a bad block */
-			ext_tags->chunk_used =
-			    (memcmp(&spare_ff, &spare, sizeof(spare_ff)) !=
-			     0) ? 1 : 0;
-
-			if (ext_tags->chunk_used) {
-				yaffs_get_tags_from_spare(dev, &spare, &tags);
-
-				ext_tags->obj_id = tags.obj_id;
-				ext_tags->chunk_id = tags.chunk_id;
-				ext_tags->n_bytes = tags.n_bytes_lsb;
-
-				if (dev->data_bytes_per_chunk >= 1024)
-					ext_tags->n_bytes |=
-					    (((unsigned)tags.
-					      n_bytes_msb) << 10);
-
-				ext_tags->serial_number = tags.serial_number;
-			}
-		}
-
-		return YAFFS_OK;
-	} else {
+	if (!yaffs_rd_chunk_nand(dev, nand_chunk,
+					data, &spare, &ecc_result, 1))
 		return YAFFS_FAIL;
+
+	/* ext_tags may be NULL */
+	if (!ext_tags)
+		return YAFFS_OK;
+
+	deleted = (hweight8(spare.page_status) < 7) ? 1 : 0;
+
+	ext_tags->is_deleted = deleted;
+	ext_tags->ecc_result = ecc_result;
+	ext_tags->block_bad = 0;	/* We're reading it */
+	/* therefore it is not a bad block */
+	ext_tags->chunk_used =
+		memcmp(&spare_ff, &spare, sizeof(spare_ff)) ? 1 : 0;
+
+	if (ext_tags->chunk_used) {
+		yaffs_get_tags_from_spare(dev, &spare, &tags);
+		ext_tags->obj_id = tags.obj_id;
+		ext_tags->chunk_id = tags.chunk_id;
+		ext_tags->n_bytes = tags.n_bytes_lsb;
+
+		if (dev->data_bytes_per_chunk >= 1024)
+			ext_tags->n_bytes |=
+				(((unsigned)tags.n_bytes_msb) << 10);
+
+		ext_tags->serial_number = tags.serial_number;
 	}
+
+	return YAFFS_OK;
 }
 
 int yaffs_tags_compat_mark_bad(struct yaffs_dev *dev, int flash_block)
 {
-
 	struct yaffs_spare spare;
 
 	memset(&spare, 0xff, sizeof(struct yaffs_spare));
@@ -385,22 +372,20 @@ int yaffs_tags_compat_mark_bad(struct yaffs_dev *dev, int flash_block)
 		      NULL, &spare);
 
 	return YAFFS_OK;
-
 }
 
 int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 				  int block_no,
 				  enum yaffs_block_state *state,
-				  u32 * seq_number)
+				  u32 *seq_number)
 {
-
 	struct yaffs_spare spare0, spare1;
 	static struct yaffs_spare spare_ff;
 	static int init;
 	enum yaffs_ecc_result dummy;
 
 	if (!init) {
-		memset(&spare_ff, 0xFF, sizeof(spare_ff));
+		memset(&spare_ff, 0xff, sizeof(spare_ff));
 		init = 1;
 	}
 
@@ -416,7 +401,7 @@ int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 	else if (memcmp(&spare_ff, &spare0, sizeof(spare_ff)) == 0)
 		*state = YAFFS_BLOCK_STATE_EMPTY;
 	else
-		*state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+		*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 
 	return YAFFS_OK;
 }

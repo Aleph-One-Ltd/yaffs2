@@ -1,4 +1,4 @@
-\#!/bin/sh
+#!/bin/sh
 # Script that gathers data erased vs free data from /proc/yaffs_stats and simultaneously \
 # plots it using gnuplot.
 
@@ -25,9 +25,24 @@ i=0;
 rm -f $log_file
 
 while [ ! -e $done_file ] ; do
-	erased_blocks=$(cat /proc/yaffs | grep n_erased_blocks | cut -d ' ' -f 2)
-	free_chunks=$(cat /proc/yaffs | grep n_free_chunks | cut -d ' ' -f 2)
-
+	xx='1'
+	erased_blocks='2'
+	while [ "$xx" !=  "$erased_blocks" ] ; do
+		xx=$(cat /proc/yaffs | grep n_erased_blocks | cut -d ' ' -f 2)
+		erased_blocks=$(cat /proc/yaffs | grep n_erased_blocks | cut -d ' ' -f 2)
+		if [ -z "$xx" ] ; then
+			xx='bad value'
+		fi
+	done
+	xx='1'
+	free_chunks='2'
+	while [ "$xx" != "$free_chunks" ] ; do
+		xx=$(cat /proc/yaffs | grep n_free_chunks | cut -d ' ' -f 2)
+		free_chunks=$(cat /proc/yaffs | grep n_free_chunks | cut -d ' ' -f 2)
+		if [ -z "$xx" ] ; then
+			xx='bad value'
+		fi
+	done
 	erased_chunks=$(($erased_blocks*64))
 	str=" $i, 0, $free_chunks, $erased_chunks"
 	echo $str

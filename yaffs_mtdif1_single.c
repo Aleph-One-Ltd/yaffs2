@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet another FFS. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -30,17 +30,10 @@
 #include "yaffs_packedtags1.h"
 #include "yaffs_tagscompat.h"	/* for yaffs_calc_tags_ecc */
 #include "yaffs_linux.h"
-
 #include "linux/kernel.h"
 #include "linux/version.h"
 #include "linux/types.h"
 #include "linux/mtd/mtd.h"
-
-#ifndef CONFIG_YAFFS_9BYTE_TAGS
-# define YTAG1_SIZE 8
-#else
-# define YTAG1_SIZE 9
-#endif
 
 /* Write a chunk (page) of data to NAND.
  *
@@ -64,7 +57,7 @@
  * Returns YAFFS_OK or YAFFS_FAIL.
  */
 int nandmtd1_write_chunk_tags(struct yaffs_dev *dev,
-			      int nand_chunk, const u8 * data,
+			      int nand_chunk, const u8 *data,
 			      const struct yaffs_ext_tags *etags)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
@@ -87,27 +80,28 @@ int nandmtd1_write_chunk_tags(struct yaffs_dev *dev,
 	 * that only zeroed-bits stick and set tag bytes to all-ones and
 	 * zero just the (not) deleted bit.
 	 */
-#ifndef CONFIG_YAFFS_9BYTE_TAGS
-	if (etags->is_deleted) {
-		memset(&pt1, 0xff, 8);
-		/* clear delete status bit to indicate deleted */
-		pt1.deleted = 0;
-	}
-#else
-	((u8 *) & pt1)[8] = 0xff;
-	if (etags->is_deleted) {
-		memset(&pt1, 0xff, 8);
-		/* zero page_status byte to indicate deleted */
-		((u8 *) & pt1)[8] = 0;
-	}
-#endif
+	 
+	if(dev->param.tags_9bytes) {
+        	((u8 *) &pt1)[8] = 0xff;
+        	if (etags->is_deleted) {
+		        memset(&pt1, 0xff, 8);
+		        /* zero page_status byte to indicate deleted */
+		        ((u8 *) &pt1)[8] = 0;
+                }
+        } else {
+        	if (etags->is_deleted) {
+	        	memset(&pt1, 0xff, 8);
+	        	/* clear delete status bit to indicate deleted */
+	        	pt1.deleted = 0;
+                }
+        }
 
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OOB_AUTO;
 	ops.len = (data) ? chunk_bytes : 0;
-	ops.ooblen = YTAG1_SIZE;
+	ops.ooblen = dev->param.tags_9bytes ? 9 : 8;
 	ops.datbuf = (u8 *) data;
-	ops.oobbuf = (u8 *) & pt1;
+	ops.oobbuf = (u8 *) &pt1;
 
 	retval = mtd->write_oob(mtd, addr, &ops);
 	if (retval) {
@@ -143,7 +137,7 @@ static int rettags(struct yaffs_ext_tags *etags, int ecc_result, int retval)
  * Returns YAFFS_OK or YAFFS_FAIL.
  */
 int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
-			     int nand_chunk, u8 * data,
+			     int nand_chunk, u8 *data,
 			     struct yaffs_ext_tags *etags)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
@@ -158,9 +152,9 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OOB_AUTO;
 	ops.len = (data) ? chunk_bytes : 0;
-	ops.ooblen = YTAG1_SIZE;
+	ops.ooblen =  dev->param.tags_9bytes ? 9 : 8;
 	ops.datbuf = data;
-	ops.oobbuf = (u8 *) & pt1;
+	ops.oobbuf = (u8 *) &pt1;
 
 	/* Read page and oob using MTD.
 	 * Check status and determine ECC result.
@@ -195,7 +189,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 
 	/* Check for a blank/erased chunk.
 	 */
-	if (yaffs_check_ff((u8 *) & pt1, 8)) {
+	if (yaffs_check_ff((u8 *) &pt1, 8)) {
 		/* when blank, upper layers want ecc_result to be <= NO_ERROR */
 		return rettags(etags, YAFFS_ECC_RESULT_NO_ERROR, YAFFS_OK);
 	}
@@ -207,7 +201,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	deleted = !pt1.deleted;
 	pt1.deleted = 1;
 #else
-	deleted = (hweight8(((u8 *) & pt1)[8]) < 7);
+	deleted = (hweight8(((u8 *) &pt1)[8]) < 7);
 #endif
 
 	/* Check the packed tags mini-ECC and correct if necessary/possible.
@@ -232,7 +226,7 @@ int nandmtd1_read_chunk_tags(struct yaffs_dev *dev,
 	/* Unpack the tags to extended form and set ECC result.
 	 * [set should_be_ff just to keep yaffs_unpack_tags1 happy]
 	 */
-	pt1.should_be_ff = 0xFFFFFFFF;
+	pt1.should_be_ff = 0xffffffff;
 	yaffs_unpack_tags1(etags, &pt1);
 	etags->ecc_result = eccres;
 
@@ -271,10 +265,10 @@ static int nandmtd1_test_prerequists(struct mtd_info *mtd)
 	/* 2.6.21 has mtd->ecclayout->oobavail and mtd->oobavail */
 	int oobavail = mtd->ecclayout->oobavail;
 
-	if (oobavail < YTAG1_SIZE) {
+	if (oobavail < (dev->param.tags_9bytes ? 9 : 8)) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
 			"mtd device has only %d bytes for tags, need %d",
-			oobavail, YTAG1_SIZE);
+			oobavail, (dev->param.tags_9bytes ? 9 : 8);
 		return YAFFS_FAIL;
 	}
 	return YAFFS_OK;
@@ -284,7 +278,7 @@ static int nandmtd1_test_prerequists(struct mtd_info *mtd)
  *
  * Examine the tags of the first chunk of the block and return the state:
  *  - YAFFS_BLOCK_STATE_DEAD, the block is marked bad
- *  - YAFFS_BLOCK_STATE_NEEDS_SCANNING, the block is in use
+ *  - YAFFS_BLOCK_STATE_NEEDS_SCAN, the block is in use
  *  - YAFFS_BLOCK_STATE_EMPTY, the block is clean
  *
  * Always returns YAFFS_OK.
@@ -314,9 +308,9 @@ int nandmtd1_query_block(struct yaffs_dev *dev, int block_no,
 		state = YAFFS_BLOCK_STATE_DEAD;
 	} else if (etags.ecc_result != YAFFS_ECC_RESULT_NO_ERROR) {
 		/* bad tags, need to look more closely */
-		state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+		state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 	} else if (etags.chunk_used) {
-		state = YAFFS_BLOCK_STATE_NEEDS_SCANNING;
+		state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 		seqnum = etags.seq_number;
 	} else {
 		state = YAFFS_BLOCK_STATE_EMPTY;

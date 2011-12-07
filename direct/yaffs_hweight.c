@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2010 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -45,9 +45,9 @@ int yaffs_hweight8(u8 x)
 
 int yaffs_hweight32(u32 x)
 {
-	return hweight8(x & 0xff) + 
-		hweight8((x >> 8) & 0xff) +
-		hweight8((x >> 16) & 0xff) +
-		hweight8((x >> 24) & 0xff);
+	return yaffs_hweight8(x & 0xff) + 
+		yaffs_hweight8((x >> 8) & 0xff) +
+		yaffs_hweight8((x >> 16) & 0xff) +
+		yaffs_hweight8((x >> 24) & 0xff);
 }
 
