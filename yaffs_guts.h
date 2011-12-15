@@ -29,6 +29,18 @@
  */
 #define YAFFS_MAGIC			0x5941ff53
 
+/*
+ * Tnodes form a tree with the tnodes in "levels"
+ * Levels greater than 0 hold 8 slots which point to other tnodes.
+ * Those at level 0 hold 16 slots which point to chunks in NAND.
+ *
+ * A maximum level of 8 thust supports files of size up to:
+ *
+ * 2^(3*MAX_LEVEL+4)
+ *
+ * Thus a max level of 8 supports files with up to 2^^28 chunks which gives
+ * a maximum file size of arounf 51Gbytees with 2k chunks.
+ */
 #define YAFFS_NTNODES_LEVEL0		16
 #define YAFFS_TNODES_LEVEL0_BITS	4
 #define YAFFS_TNODES_LEVEL0_MASK	0xf
@@ -36,7 +48,7 @@
 #define YAFFS_NTNODES_INTERNAL		(YAFFS_NTNODES_LEVEL0 / 2)
 #define YAFFS_TNODES_INTERNAL_BITS	(YAFFS_TNODES_LEVEL0_BITS - 1)
 #define YAFFS_TNODES_INTERNAL_MASK	0x7
-#define YAFFS_TNODES_MAX_LEVEL		6
+#define YAFFS_TNODES_MAX_LEVEL		8
 
 
 /* Constants for YAFFS1 mode */
@@ -60,7 +72,7 @@
 #define YAFFS_OBJECT_SPACE		0x40000
 #define YAFFS_MAX_OBJECT_ID		(YAFFS_OBJECT_SPACE - 1)
 
-#define YAFFS_CHECKPOINT_VERSION	4
+#define YAFFS_CHECKPOINT_VERSION	5
 
 #ifdef CONFIG_YAFFS_UNICODE
 #define YAFFS_MAX_NAME_LENGTH		127
@@ -185,7 +197,7 @@ struct yaffs_ext_tags {
 
 	enum yaffs_obj_type extra_obj_type;	/* What object type? */
 
-	unsigned extra_length;	/* Length if it is a file */
+	loff_t extra_file_size;		/* Length if it is a file */
 	unsigned extra_equiv_id;	/* Equivalent object for a hard link */
 };
 
@@ -308,7 +320,7 @@ struct yaffs_obj_hdr {
 	u32 yst_ctime;
 
 	/* File size  applies to files only */
-	int file_size;
+	u32 file_size_low;
 
 	/* Equivalent object id applies to hard links only. */
 	int equiv_id;
@@ -325,7 +337,8 @@ struct yaffs_obj_hdr {
 	u32 inband_shadowed_obj_id;
 	u32 inband_is_shrink;
 
-	u32 reserved[2];
+	u32 file_size_high;
+	u32 reserved[1];
 	int shadows_obj;	/* This object header shadows the
 				specified object if > 0 */
 
@@ -349,9 +362,9 @@ struct yaffs_tnode {
  */
 
 struct yaffs_file_var {
-	u32 file_size;
-	u32 scanned_size;
-	u32 shrink_size;
+	loff_t file_size;
+	loff_t scanned_size;
+	loff_t shrink_size;
 	int top_level;
 	struct yaffs_tnode *top;
 };
@@ -479,7 +492,7 @@ struct yaffs_checkpt_obj {
 	u8 unlink_allowed:1;
 	u8 serial;
 	int n_data_chunks;
-	u32 size_or_equiv_obj;
+	loff_t size_or_equiv_obj;
 };
 
 /*--------------------- Temporary buffers ----------------
@@ -816,7 +829,7 @@ int yaffs_unlinker(struct yaffs_obj *dir, const YCHAR * name);
 int yaffs_del_obj(struct yaffs_obj *obj);
 
 int yaffs_get_obj_name(struct yaffs_obj *obj, YCHAR * name, int buffer_size);
-int yaffs_get_obj_length(struct yaffs_obj *obj);
+loff_t yaffs_get_obj_length(struct yaffs_obj *obj);
 int yaffs_get_obj_inode(struct yaffs_obj *obj);
 unsigned yaffs_get_obj_type(struct yaffs_obj *obj);
 int yaffs_get_obj_link_count(struct yaffs_obj *obj);
@@ -935,4 +948,12 @@ u32 yaffs_get_group_base(struct yaffs_dev *dev, struct yaffs_tnode *tn,
 			 unsigned pos);
 
 int yaffs_is_non_empty_dir(struct yaffs_obj *obj);
+
+/*\
+ * Marshalling functions to get loff_t file sizes into aand out of
+ * object headers.
+ */
+void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize);
+loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh);
+
 #endif

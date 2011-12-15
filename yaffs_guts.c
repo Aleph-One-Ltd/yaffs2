@@ -2496,9 +2496,10 @@ static inline int yaffs_gc_process_chunk(struct yaffs_dev *dev,
 
 			/* Update file size */
 			if (object->variant_type == YAFFS_OBJECT_TYPE_FILE) {
-				oh->file_size =
+				yaffs_oh_size_load( oh,
+				    object->variant.file_variant.file_size);
+				tags.extra_file_size =
 				    object->variant.file_variant.file_size;
-				tags.extra_length = oh->file_size;
 			}
 
 			yaffs_verify_oh(object, oh, &tags, 1);
@@ -3214,6 +3215,7 @@ static void yaffs_load_name_from_oh(struct yaffs_dev *dev, YCHAR *name,
 		}
 	} else {
 #else
+	dev = dev;
 	{
 #endif
 		strncpy(name, oh_name, buff_size - 1);
@@ -3257,6 +3259,7 @@ static void yaffs_load_oh_from_name(struct yaffs_dev *dev, YCHAR *oh_name,
 		}
 	} else {
 #else
+	dev = dev;
 	{
 #endif
 		strncpy(oh_name, name, YAFFS_MAX_NAME_LENGTH - 1);
@@ -3282,6 +3285,7 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 	u8 *buffer = NULL;
 	YCHAR old_name[YAFFS_MAX_NAME_LENGTH + 1];
 	struct yaffs_obj_hdr *oh = NULL;
+	loff_t file_size = 0;
 
 	strcpy(old_name, _Y("silly old name"));
 
@@ -3334,10 +3338,10 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 		/* Should not happen */
 		break;
 	case YAFFS_OBJECT_TYPE_FILE:
-		oh->file_size =
-		    (oh->parent_obj_id == YAFFS_OBJECTID_DELETED ||
-		     oh->parent_obj_id == YAFFS_OBJECTID_UNLINKED) ?
-		     0 : in->variant.file_variant.file_size;
+		if (oh->parent_obj_id != YAFFS_OBJECTID_DELETED &&
+		     oh->parent_obj_id != YAFFS_OBJECTID_UNLINKED)
+		     file_size = in->variant.file_variant.file_size;
+		yaffs_oh_size_load(oh, file_size);
 		break;
 	case YAFFS_OBJECT_TYPE_HARDLINK:
 		oh->equiv_id = in->variant.hardlink_variant.equiv_id;
@@ -3371,7 +3375,7 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 	/* Add extra info for file header */
 	new_tags.extra_available = 1;
 	new_tags.extra_parent_id = oh->parent_obj_id;
-	new_tags.extra_length = oh->file_size;
+	new_tags.extra_file_size = file_size;
 	new_tags.extra_is_shrink = oh->is_shrink;
 	new_tags.extra_equiv_id = oh->equiv_id;
 	new_tags.extra_shadows = (oh->shadows_obj > 0) ? 1 : 0;
@@ -3751,7 +3755,7 @@ void yaffs_resize_file_down(struct yaffs_obj *obj, loff_t new_size)
 int yaffs_resize_file(struct yaffs_obj *in, loff_t new_size)
 {
 	struct yaffs_dev *dev = in->my_dev;
-	int old_size = in->variant.file_variant.file_size;
+	loff_t old_size = in->variant.file_variant.file_size;
 
 	yaffs_flush_file_cache(in);
 	yaffs_invalidate_whole_cache(in);
@@ -4444,7 +4448,7 @@ int yaffs_get_obj_name(struct yaffs_obj *obj, YCHAR *name, int buffer_size)
 	return strnlen(name, YAFFS_MAX_NAME_LENGTH);
 }
 
-int yaffs_get_obj_length(struct yaffs_obj *obj)
+loff_t yaffs_get_obj_length(struct yaffs_obj *obj)
 {
 	/* Dereference any hard linking */
 	obj = yaffs_get_equivalent_obj(obj);
@@ -4983,4 +4987,21 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev)
 		n_free = 0;
 
 	return n_free;
+}
+
+/*\
+ * Marshalling functions to get loff_t file sizes into aand out of
+ * object headers.
+ */
+void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize)
+{
+	oh->file_size_low = (fsize & 0xFFFFFFFF);
+	oh->file_size_high = ((fsize >> 32) & 0xFFFFFFFF);
+}
+
+loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh)
+{
+	loff_t retval = (((loff_t) oh->file_size_high) << 32) |
+			(((loff_t) oh->file_size_low) & 0xFFFFFFFF);
+	return retval;
 }
