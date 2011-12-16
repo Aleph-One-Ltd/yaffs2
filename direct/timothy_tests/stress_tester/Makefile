@@ -18,7 +18,7 @@
 
 #EXTRA_COMPILE_FLAGS = -DYAFFS_IGNORE_TAGS_ECC
 
-CFLAGS =      -DCONFIG_YAFFS_DIRECT -DCONFIG_YAFFS_YAFFS2  
+CFLAGS =      -DCONFIG_YAFFS_DIRECT -DCONFIG_YAFFS_SHORT_NAMES_IN_RAM -DCONFIG_YAFFS_YAFFS2  
 CFLAGS +=     -DCONFIG_YAFFS_PROVIDE_DEFS -DCONFIG_YAFFSFS_PROVIDE_VALUES
 CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Wstrict-aliasing 
 #CFLAGS +=    -fno-strict-aliasing
@@ -29,8 +29,7 @@ CFLAGS +=    -Wextra -Wpointer-arith
 #CFLAGS+=   -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-declarations
 #CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
 
-
-COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
+COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o\
 		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
 		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
 		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_nand.o \
@@ -42,23 +41,31 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
 		 yaffs_yaffs1.o \
 		 yaffs_yaffs2.o \
 		 yaffs_verify.o \
-		 yaffs_error.o	\
 		 yaffs_summary.o
+
+
+SSCOMMONTESTOBJS = yaffscfg2k.o yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
+		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
+		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_nand.o \
+		 yaffs_attribs.o yaffs_allocator.o \
+		 yaffs_checkptrw.o  yaffs_qsort.o\
+		 yaffs_nameval.o \
+		 yaffs_norif1.o  ynorsim.o   \
+		 yaffs_allocator.o \
+		 yaffs_bitmap.o \
+		 yaffs_yaffs1.o \
+		 yaffs_yaffs2.o \
+		 yaffs_verify.o
 
 #		 yaffs_checkptrwtest.o\
 
-TESTFILES = 	handle_test.o 
+YAFFSTESTOBJS  = $(COMMONTESTOBJS) yaffs_tester.o message_buffer.o error_handler.o
 
 
-		  
-
-YAFFSTESTOBJS  = $(COMMONTESTOBJS) $(TESTFILES)
-
-
-ALLOBJS = $(sort $(YAFFSTESTOBJS)) $(PYTHONOBJS)
+ALLOBJS = $(sort $(YAFFSTESTOBJS))
 
 YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
-          yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h \
+          yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h  \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
           yaffs_checkptrw.h yaffs_checkptrw.c \
           yaffs_nameval.c yaffs_nameval.h \
@@ -71,13 +78,12 @@ YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscomp
 		  yaffs_summary.c yaffs_summary.h
 
 YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
-		       yaffsfs.h ydirectenv.h \
+		       yaffsfs.h yaffs_osglue.h ydirectenv.h \
 		       yaffs_flashif.c yaffscfg.h yaffs_qsort.c \
 		       yaffs_nandemul2k.h yaffs_list.h \
-		       yaffs_attribs.c yaffs_osglue.h \
+		       yaffs_attribs.c \
 		       yaffs_nandif.c yaffs_nandif.h yportenv.h \
-		       yaffs_hweight.h yaffs_hweight.c \
-		       yaffs_error.c
+		       yaffs_hweight.c yaffs_hweight.h
 
 
 DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
@@ -85,16 +91,14 @@ DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
 			yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
 			ynorsim.h ynorsim.c yaffs_osglue.c
 
-SYMLINKS = $(YAFFSSYMLINKS) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS) $(PYTONOSYMLINKS)
+SYMLINKS = $(YAFFSSYMLINKS) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
 #all: directtest2k boottest
 
-all: handle_test
+all: yaffs_tester 
 
 $(ALLOBJS): %.o: %.c
 	gcc -c $(CFLAGS) -o $@ $<
 
-$(PYTONOSYMLINKS):
-	ln -s ../../python/$@ $@
 
 $(YAFFSSYMLINKS):
 	ln -s ../../../$@ $@
@@ -106,10 +110,13 @@ $(DIRECTEXTRASYMLINKS):
 	ln -s ../../basic-test/$@ $@
 
 
-handle_test: $(SYMLINKS) $(ALLOBJS)
-	gcc $(CFLLAG) -o $@ $(ALLOBJS)
+yaffs_tester: $(SYMLINKS) $(YAFFSTESTOBJS)
+	gcc $(CFLLAG) -o $@ $(YAFFSTESTOBJS)
+
+
+
 
 
 
 clean:
-	rm -f handle_test  $(ALLOBJS) core $(SYMLINKS) 
+	rm -f yaffs_tester  $(ALLOBJS) core $(SYMLINKS) log.txt 

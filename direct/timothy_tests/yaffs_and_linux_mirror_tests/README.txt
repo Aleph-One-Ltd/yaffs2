@@ -1,4 +1,4 @@
-Made by Timothy Manning on 24/12/10 <timothy@yaffs.net>
+Made by Timothy Manning on 24/12/2010 <timothy@yaffs.net>
 
 
 	mirror_tests is designed to check that yaffs behaves the same way as linux.
@@ -11,14 +11,17 @@ Made by Timothy Manning on 24/12/10 <timothy@yaffs.net>
 
 	rm test/*;rmdir test/;./mirror_tests -n 100 -v
 
+compile command: make
+run command: mirror_tests
+
 Command line arguments
-	-yaffs_path [PATH] //sets the path for yaffs.
-	-linux_path [PATH] //sets the path for linux.
-	-p [NUMBER] //sets the print level for mirror_tests.
-	-v //verbose mode everything is printed
-	-q //quiet mode nothing is printed.
-	-n [number] //sets the number of random tests to run.
-	-s [number] //seeds rand with the number
-	-t [number] //sets yaffs_trace to the number
-	-clean //removes emfile and test dir
+	-yaffs_path [PATH] 		sets the path for yaffs.
+	-linux_path [PATH] 		sets the path for linux.
+	-p [NUMBER] 			sets the print level for mirror_tests.
+	-v 						verbose mode everything is printed
+	-q 						quiet mode nothing is printed.
+	-n [number] 			sets the number of random tests to run.
+	-s [number] 			seeds rand with the number
+	-t [number] 			sets yaffs_trace to the number
+	-clean 					removes emfile and test dir
 

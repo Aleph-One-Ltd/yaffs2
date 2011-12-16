@@ -25,7 +25,7 @@
 #include "message_buffer.h"
 #include "error_handler.h"
 	
-#define MAX_NUMBER_OF_OPENED_HANDLES 50
+#define MAX_NUMBER_OF_OPENED_HANDLES 70
 #define MAX_FILE_NAME_SIZE 51
 
 typedef struct handle_regster_template{

@@ -171,7 +171,7 @@ void open_random_file(char *yaffs_test_dir, handle_regster *P_open_handles_array
 	{
 		generate_random_string(name,MAX_FILE_NAME_SIZE);
 		printf("before %d %d %d\n",strlen(yaffs_test_dir),strlen(name),strlen(path));
-		join_paths(yaffs_test_dir,name,path);//bug###################### here
+		join_paths(yaffs_test_dir,name,path);
 		printf("after %d %d %d\n",strlen(yaffs_test_dir),strlen(name),strlen(path));
 		add_to_buffer(&message_buffer,"trying to open file: ",MESSAGE_LEVEL_BASIC_TASKS,NPRINT);
 		append_to_buffer(&message_buffer,path,MESSAGE_LEVEL_BASIC_TASKS,PRINT);
@@ -202,7 +202,7 @@ void open_random_file(char *yaffs_test_dir, handle_regster *P_open_handles_array
 		
 		P_open_handles_array->number_of_open_handles++; 
 	}
-	else close_random_file(P_open_handles_array);
+	else  close_random_file(P_open_handles_array);
  
 }
 
@@ -271,11 +271,17 @@ void close_random_file(handle_regster *P_open_handles_array){
 	int x=0;
 	int output=0;
 	int start=0;
+	printf("trying to clear handle");
 	if (P_open_handles_array->number_of_open_handles>0){
 		start=rand() % (MAX_NUMBER_OF_OPENED_HANDLES-1);
-		for (x=start;P_open_handles_array->handle[x] !=-3 &&(x+1>start ||x<start);){
+
+		for (x=start;(x+1>start ||x<start);){
 			x++;			
-			if (x>MAX_NUMBER_OF_OPENED_HANDLES-1) x=0;		
+			if (x>MAX_NUMBER_OF_OPENED_HANDLES-1) x=0;
+			if (P_open_handles_array->handle[x] !=-3 ){
+				//the handle is open, so try to close it.
+				break;
+			}
 
 		}
 		if (P_open_handles_array->handle[x]!=-3)
@@ -341,14 +347,17 @@ void test(char*yaffs_test_dir){
 		open_handles_array.path[x][0]='\0';
 
 	}
+
 	while(1)
 	{
+
 		x=rand() % 3;
+		printf("running test: %d",x);
 		switch(x){
 			case 0 :open_random_file(yaffs_test_dir,&open_handles_array);break;
-			//case 1 :write_to_random_file(&open_handles_array);break;
-			case 2 :close_random_file(&open_handles_array);break;
-			case 3 :truncate_random_file(&open_handles_array);break;
+			case 3 :write_to_random_file(&open_handles_array);break;
+//			case 1 :close_random_file(&open_handles_array);break;
+			case 2 :truncate_random_file(&open_handles_array);break;
 		}
 	}
 }

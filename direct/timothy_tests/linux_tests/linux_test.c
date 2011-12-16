@@ -149,6 +149,10 @@ dir_struct * scan_dir(void)
 
 
 	open_dir=opendir(ROOT_PATH);
+	if (open_dir < 0){
+		sprintf(message,"failed to find the directory: %s",ROOT_PATH);
+		print_message(1,message);
+	}
 	dir_data=readdir(open_dir);
 	while(dir_data){
 		dir->path_list=linked_list_add_node(HEAD,dir->path_list);

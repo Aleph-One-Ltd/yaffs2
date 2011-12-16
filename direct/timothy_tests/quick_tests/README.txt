@@ -1,6 +1,20 @@
-
 Made by Timothy Manning <timothy@yaffs.net> on 04/11/2010
 
+This test is designed to test the response and error handling of the yaffs functions.
+
+compile command: make
+run command: ./quick_tests
+
+command line options:
+	-h 				prints the available command line options.
+	-c				tests will continue even if a test fails, rather than exiting the test.
+	-v 				verbose mode. will print all messages.
+	-q				quiet mode. will not print any messages.
+	-t [number]		sets the yaffs_trace() function to the number.
+	-n [number]		sets the number of randomly selected tests to run after the test has run through 
+					after running all of listed tests.
+
+############################# development infomation ####################################################################
 
 Tests made
 
