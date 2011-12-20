@@ -44,8 +44,8 @@ static int yaffs_wr_data_obj(struct yaffs_obj *in, int inode_chunk,
 
 /* Function to calculate chunk and offset */
 
-static inline void yaffs_addr_to_chunk(struct yaffs_dev *dev, loff_t addr,
-					int *chunk_out, u32 *offset_out)
+void yaffs_addr_to_chunk(struct yaffs_dev *dev, loff_t addr,
+				int *chunk_out, u32 *offset_out)
 {
 	int chunk;
 	u32 offset;
@@ -5001,7 +5001,13 @@ void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize)
 
 loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh)
 {
-	loff_t retval = (((loff_t) oh->file_size_high) << 32) |
+	loff_t retval;
+	
+	if(~(oh->file_size_high))
+		retval = (((loff_t) oh->file_size_high) << 32) |
 			(((loff_t) oh->file_size_low) & 0xFFFFFFFF);
+	else
+		retval = (loff_t) oh->file_size_low;
+
 	return retval;
 }

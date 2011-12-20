@@ -949,7 +949,9 @@ u32 yaffs_get_group_base(struct yaffs_dev *dev, struct yaffs_tnode *tn,
 
 int yaffs_is_non_empty_dir(struct yaffs_obj *obj);
 
-/*\
+void yaffs_addr_to_chunk(struct yaffs_dev *dev, loff_t addr,
+				int *chunk_out, u32 *offset_out);
+/*
  * Marshalling functions to get loff_t file sizes into aand out of
  * object headers.
  */

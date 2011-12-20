@@ -1068,9 +1068,9 @@ static int yaffs_writepage(struct page *page)
 
 		if (page->index > end_index || !n_bytes) {
 			yaffs_trace(YAFFS_TRACE_OS,
-				"yaffs_writepage at %08x, inode size = %08x!!",
-				(unsigned)(page->index << PAGE_CACHE_SHIFT),
-				(unsigned)inode->i_size);
+				"yaffs_writepage at %lld, inode size = %lld!!",
+				((loff_t)page->index) << PAGE_CACHE_SHIFT,
+				inode->i_size);
 			yaffs_trace(YAFFS_TRACE_OS,
 				"                -> don't care!!");
 
@@ -1094,11 +1094,11 @@ static int yaffs_writepage(struct page *page)
 	yaffs_gross_lock(dev);
 
 	yaffs_trace(YAFFS_TRACE_OS,
-		"yaffs_writepage at %08x, size %08x",
-		(unsigned)(page->index << PAGE_CACHE_SHIFT), n_bytes);
+		"yaffs_writepage at %lld, size %08x",
+		((loff_t)page->index) << PAGE_CACHE_SHIFT, n_bytes);
 	yaffs_trace(YAFFS_TRACE_OS,
-		"writepag0: obj = %05x, ino = %05x",
-		(int)obj->variant.file_variant.file_size, (int)inode->i_size);
+		"writepag0: obj = %lld, ino = %lld",
+		obj->variant.file_variant.file_size, inode->i_size);
 
 	n_written = yaffs_wr_file(obj, buffer,
 				  page->index << PAGE_CACHE_SHIFT, n_bytes, 0);
@@ -1106,8 +1106,8 @@ static int yaffs_writepage(struct page *page)
 	yaffs_touch_super(dev);
 
 	yaffs_trace(YAFFS_TRACE_OS,
-		"writepag1: obj = %05x, ino = %05x",
-		(int)obj->variant.file_variant.file_size, (int)inode->i_size);
+		"writepag1: obj = %lld, ino = %lld",
+		obj->variant.file_variant.file_size, inode->i_size);
 
 	yaffs_gross_unlock(dev);
 
@@ -1206,8 +1206,8 @@ static int yaffs_write_end(struct file *filp, struct address_space *mapping,
 	addr = kva + offset_into_page;
 
 	yaffs_trace(YAFFS_TRACE_OS,
-		"yaffs_write_end addr %p pos %x n_bytes %d",
-		addr, (unsigned)pos, copied);
+		"yaffs_write_end addr %p pos %lld n_bytes %d",
+		addr, pos, copied);
 
 	ret = yaffs_file_write(filp, addr, copied, &pos);
 
@@ -1236,17 +1236,12 @@ static int yaffs_commit_write(struct file *f, struct page *pg, unsigned offset,
 	int n_bytes = to - offset;
 	int n_written;
 
-	unsigned spos = pos;
-	unsigned saddr;
-
 	kva = kmap(pg);
 	addr = kva + offset;
 
-	saddr = (unsigned)addr;
-
 	yaffs_trace(YAFFS_TRACE_OS,
-		"yaffs_commit_write addr %x pos %x n_bytes %d",
-		saddr, spos, n_bytes);
+		"yaffs_commit_write addr %p pos %lld n_bytes %d",
+		addr, pos, n_bytes);
 
 	n_written = yaffs_file_write(f, addr, n_bytes, &pos);
 
@@ -1333,9 +1328,9 @@ static void yaffs_fill_inode_from_obj(struct inode *inode,
 		inode->i_nlink = yaffs_get_obj_link_count(obj);
 
 		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_fill_inode mode %x uid %d gid %d size %d count %d",
+			"yaffs_fill_inode mode %x uid %d gid %d size %lld count %d",
 			inode->i_mode, inode->i_uid, inode->i_gid,
-			(int)inode->i_size, atomic_read(&inode->i_count));
+			inode->i_size, atomic_read(&inode->i_count));
 
 		switch (obj->yst_mode & S_IFMT) {
 		default:	/* fifo, device or socket */
@@ -1410,7 +1405,8 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 				loff_t * pos)
 {
 	struct yaffs_obj *obj;
-	int n_written, ipos;
+	int n_written;
+	loff_t ipos;
 	struct inode *inode;
 	struct yaffs_dev *dev;
 
@@ -1434,8 +1430,8 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 		ipos = *pos;
 
 	yaffs_trace(YAFFS_TRACE_OS,
-		"yaffs_file_write about to write writing %u(%x) bytes to object %d at %d(%x)",
-		(unsigned)n, (unsigned)n, obj->obj_id, ipos, ipos);
+		"yaffs_file_write about to write writing %u(%x) bytes to object %d at %lld",
+		(unsigned)n, (unsigned)n, obj->obj_id, ipos);
 
 	n_written = yaffs_wr_file(obj, buf, ipos, n, 0);
 
@@ -1453,7 +1449,7 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 			inode->i_blocks = (ipos + 511) >> 9;
 
 			yaffs_trace(YAFFS_TRACE_OS,
-				"yaffs_file_write size updated to %d bytes, %d blocks",
+				"yaffs_file_write size updated to %lld bytes, %d blocks",
 				ipos, (int)(inode->i_blocks));
 		}
 
@@ -1920,10 +1916,11 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_setattr of object %d",
 		yaffs_inode_to_obj(inode)->obj_id);
-
+#if 0
 	/* Fail if a requested resize >= 2GB */
 	if (attr->ia_valid & ATTR_SIZE && (attr->ia_size >> 31))
 		error = -EINVAL;
+#endif
 
 	if (error == 0)
 		error = inode_change_ok(inode, attr);
