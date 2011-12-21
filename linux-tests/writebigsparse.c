@@ -36,6 +36,7 @@ void write_big_sparse_file(int h)
 		if(pos != offset) {
 			printf("mismatched seek pos %lld offset %lld\n",
 				pos, offset);
+			perror("lseek64");
 			exit(1);
 		}
 		wrote = write(h, buffer, n);

@@ -2815,6 +2815,8 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	sb->u.generic_sbp = dev;
 #endif
 
+	sb->s_maxbytes = 32000000000UL;
+
 	dev->driver_context = mtd;
 	param->name = mtd->name;
 

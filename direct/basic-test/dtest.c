@@ -533,7 +533,7 @@ void dumpDirFollow(const char *dname)
 
 			yaffs_lstat(str,&s);
 
-			printf("%s ino %d length %d mode %X ",de->d_name,(int)s.st_ino,(int)s.st_size,s.st_mode);
+			printf("%s ino %lld length %d mode %X ",de->d_name,(int)s.st_ino,s.st_size,s.st_mode);
 			switch(s.st_mode & S_IFMT)
 			{
 				case S_IFREG: printf("data file"); break;
@@ -580,7 +580,8 @@ void dump_directory_tree_worker(const char *dname,int recursive)
 
 			yaffs_lstat(str,&s);
 
-			printf("%s inode %d obj %x length %d mode %X ",str,s.st_ino,de->d_dont_use,(int)s.st_size,s.st_mode);
+			printf("%s inode %d obj %x length %lld mode %X ",
+				str,s.st_ino,de->d_dont_use, s.st_size,s.st_mode);
 			switch(s.st_mode & S_IFMT)
 			{
 				case S_IFREG: printf("data file"); break;
@@ -2755,6 +2756,151 @@ void link_follow_test(const char *mountpt)
 
 }
 
+
+#define N_WRITES 2000
+#define STRIDE	 2000
+
+#define BUFFER_N 1100
+unsigned  xxbuffer[BUFFER_N];
+
+
+void set_buffer(int n)
+{
+	int i;
+	for(i = 0; i < BUFFER_N; i++)
+		xxbuffer[i] = i + n;
+}
+
+void write_big_sparse_file(int h)
+{
+	int i;
+	loff_t offset = 0;
+	loff_t pos;
+	int n = sizeof(xxbuffer);
+	int wrote;
+
+	for(i = 0; i < N_WRITES; i++) {
+		printf("writing at %lld\n", offset);
+		set_buffer(i);
+		pos = yaffs_lseek(h, offset, SEEK_SET);
+		if(pos != offset) {
+			printf("mismatched seek pos %lld offset %lld\n",
+				pos, offset);
+			perror("lseek64");
+			exit(1);
+		}
+		wrote = yaffs_write(h, xxbuffer, n);
+
+		if(wrote != n) {
+			printf("mismatched write wrote %d n %d\n", wrote, n);
+			exit(1);
+		}
+
+		offset += (STRIDE * sizeof(xxbuffer));
+	}
+
+	yaffs_ftruncate(h, offset);
+
+}
+
+
+
+
+void verify_big_sparse_file(int h)
+{
+	unsigned check_buffer[BUFFER_N];
+	int i;
+	loff_t offset = 0;
+	loff_t pos;
+	int n = sizeof(check_buffer);
+	int result;
+	const char * check_type;
+	int checks_failed = 0;
+	int checks_passed = 0;
+
+	for(i = 0; i < N_WRITES * STRIDE; i++) {
+		if(i % STRIDE) {
+			check_type = "zero";
+			memset(xxbuffer,0, n);
+		} else {
+			check_type = "buffer";
+			set_buffer(i/STRIDE);
+		}
+		printf("%s checking %lld\n", check_type, offset);
+		pos = yaffs_lseek(h, offset, SEEK_SET);
+		if(pos != offset) {
+			printf("mismatched seek pos %lld offset %lld\n",
+				pos, offset);
+			perror("lseek64");
+			exit(1);
+		}
+		result = yaffs_read(h, check_buffer, n);
+
+		if(result != n) {
+			printf("mismatched read result %d n %d\n", result, n);
+			exit(1);
+		}
+
+
+
+
+		if(memcmp(xxbuffer, check_buffer, n)) {
+			int j;
+
+			printf("buffer at %lld mismatches\n", pos);
+			printf("xxbuffer ");
+			for(j = 0; j < 20; j++)
+				printf(" %d",xxbuffer[j]);
+			printf("\n");
+			printf("check_buffer ");
+			for(j = 0; j < 20; j++)
+				printf(" %d",check_buffer[j]);
+			printf("\n");
+
+			checks_failed++;
+		} else {
+			checks_passed++;
+		}
+
+		offset += sizeof(xxbuffer);
+	}
+
+	printf("%d checks passed, %d checks failed\n", checks_passed, checks_failed);
+
+}
+
+
+void large_file_test(const char *mountpt)
+{
+	int handle;
+	char fullname[100];
+
+	yaffs_trace_mask = 0;
+
+	yaffs_start_up();
+
+	yaffs_mount(mountpt);
+	printf("mounted\n");
+        dumpDir(mountpt);
+
+	sprintf(fullname, "%s/%s", mountpt, "big-test-file");
+	handle = yaffs_open(fullname, O_CREAT | O_RDWR | O_TRUNC, S_IREAD | S_IWRITE);
+
+	if(handle < 0) {
+		perror("opening file");
+		exit(1);
+	}
+
+	write_big_sparse_file(handle);
+	verify_big_sparse_file(handle);
+
+	printf("Job done\n");
+	yaffs_unmount(mountpt);
+
+
+}
+
+
 int random_seed;
 int simulate_power_failure;
 
@@ -2820,7 +2966,10 @@ int main(int argc, char *argv[])
 
 	 //test_flash_traffic("yaffs2");
 	 // link_follow_test("/yaffs2");
-	 basic_utime_test("/yaffs2");
+
+	 large_file_test("/yaffs2");
+
+	 //basic_utime_test("/yaffs2");
 
 	 return 0;
 

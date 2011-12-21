@@ -3504,7 +3504,7 @@ int yaffs_file_rd(struct yaffs_obj *in, u8 * buffer, loff_t offset, int n_bytes)
 }
 
 int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
-		     int n_bytes, int write_trhrough)
+		     int n_bytes, int write_through)
 {
 
 	int chunk;
@@ -3513,10 +3513,10 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 	int n = n_bytes;
 	int n_done = 0;
 	int n_writeback;
-	int start_write = offset;
+	loff_t start_write = offset;
 	int chunk_written = 0;
 	u32 n_bytes_read;
-	u32 chunk_start;
+	loff_t chunk_start;
 	struct yaffs_dev *dev;
 
 	dev = in->my_dev;
@@ -3524,11 +3524,11 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 	while (n > 0 && chunk_written >= 0) {
 		yaffs_addr_to_chunk(dev, offset, &chunk, &start);
 
-		if (chunk * dev->data_bytes_per_chunk + start != offset ||
+		if (((loff_t)chunk) * dev->data_bytes_per_chunk + start != offset ||
 		    start >= dev->data_bytes_per_chunk) {
 			yaffs_trace(YAFFS_TRACE_ERROR,
-				"AddrToChunk of offset %d gives chunk %d start %d",
-				(int)offset, chunk, start);
+				"AddrToChunk of offset %lld gives chunk %d start %d",
+				offset, chunk, start);
 		}
 		chunk++;	/* File pos to chunk in file offset */
 
@@ -3545,7 +3545,7 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 			 * before.
 			 */
 
-			chunk_start = ((chunk - 1) * dev->data_bytes_per_chunk);
+			chunk_start = (((loff_t)(chunk - 1)) * dev->data_bytes_per_chunk);
 
 			if (chunk_start > in->variant.file_variant.file_size)
 				n_bytes_read = 0;	/* Past end of file */
@@ -3613,7 +3613,7 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 					cache->locked = 0;
 					cache->n_bytes = n_writeback;
 
-					if (write_trhrough) {
+					if (write_through) {
 						chunk_written =
 						    yaffs_wr_data_obj
 						    (cache->object,
@@ -3673,10 +3673,10 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 }
 
 int yaffs_wr_file(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
-		  int n_bytes, int write_trhrough)
+		  int n_bytes, int write_through)
 {
 	yaffs2_handle_hole(in, offset);
-	return yaffs_do_file_wr(in, buffer, offset, n_bytes, write_trhrough);
+	return yaffs_do_file_wr(in, buffer, offset, n_bytes, write_through);
 }
 
 /* ---------------------- File resizing stuff ------------------ */
@@ -5002,7 +5002,7 @@ void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize)
 loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh)
 {
 	loff_t retval;
-	
+
 	if(~(oh->file_size_high))
 		retval = (((loff_t) oh->file_size_high) << 32) |
 			(((loff_t) oh->file_size_low) & 0xFFFFFFFF);

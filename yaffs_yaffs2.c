@@ -836,7 +836,7 @@ int yaffs2_handle_hole(struct yaffs_obj *obj, loff_t new_size)
 	 * of hole marker.
 	 */
 	loff_t old_file_size;
-	int increase;
+	loff_t increase;
 	int small_hole;
 	int result = YAFFS_OK;
 	struct yaffs_dev *dev = NULL;
