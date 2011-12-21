@@ -154,6 +154,8 @@ int yaffs_closedir(yaffs_DIR *dirp) ;
 
 int yaffs_mount(const YCHAR *path) ;
 int yaffs_mount2(const YCHAR *path, int read_only);
+int yaffs_mount_common(const YCHAR *path, int read_only, int skip_checkpt);
+
 int yaffs_unmount(const YCHAR *path) ;
 int yaffs_unmount2(const YCHAR *path, int force);
 int yaffs_remount(const YCHAR *path, int force, int read_only);

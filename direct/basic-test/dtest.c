@@ -2884,6 +2884,9 @@ void large_file_test(const char *mountpt)
         dumpDir(mountpt);
 
 	sprintf(fullname, "%s/%s", mountpt, "big-test-file");
+
+	handle = yaffs_open(fullname, O_RDONLY, 0);
+
 	handle = yaffs_open(fullname, O_CREAT | O_RDWR | O_TRUNC, S_IREAD | S_IWRITE);
 
 	if(handle < 0) {
@@ -2894,9 +2897,25 @@ void large_file_test(const char *mountpt)
 	write_big_sparse_file(handle);
 	verify_big_sparse_file(handle);
 
+	yaffs_close(handle);
+
 	printf("Job done\n");
 	yaffs_unmount(mountpt);
 
+	yaffs_mount(mountpt);
+	printf("mounted again\n");
+        dumpDir(mountpt);
+	handle = yaffs_open(fullname, O_RDONLY, 0);
+	verify_big_sparse_file(handle);
+	yaffs_unmount(mountpt);
+
+
+	yaffs_mount_common(mountpt, 0, 1);
+	printf("mounted with no checkpt\n");
+        dumpDir(mountpt);
+	handle = yaffs_open(fullname, O_RDONLY, 0);
+	verify_big_sparse_file(handle);
+	yaffs_unmount(mountpt);
 
 }
 

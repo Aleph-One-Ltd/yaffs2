@@ -2425,7 +2425,7 @@ void * yaffs_getdev(const YCHAR *path)
 	return (void *)dev;
 }
 
-int yaffs_mount2(const YCHAR *path,int read_only)
+int yaffs_mount_common(const YCHAR *path,int read_only, int skip_checkpt)
 {
 	int retVal=-1;
 	int result=YAFFS_FAIL;
@@ -2451,7 +2451,15 @@ int yaffs_mount2(const YCHAR *path,int read_only)
 	if(dev){
 		if(!dev->is_mounted){
 			dev->read_only = read_only ? 1 : 0;
-			result = yaffs_guts_initialise(dev);
+			if(skip_checkpt) {
+				u8 skip = dev->param.skip_checkpt_rd;
+				dev->param.skip_checkpt_rd = 1;
+				result = yaffs_guts_initialise(dev);
+				dev->param.skip_checkpt_rd = skip;
+			} else {
+				result = yaffs_guts_initialise(dev);
+			}
+
 			if(result == YAFFS_FAIL)
 				yaffsfs_SetError(-ENOMEM);
 			retVal = result ? 0 : -1;
@@ -2467,9 +2475,13 @@ int yaffs_mount2(const YCHAR *path,int read_only)
 
 }
 
+int yaffs_mount2(const YCHAR *path, int readonly)
+{
+	return yaffs_mount_common(path, readonly, 0);
+}
 int yaffs_mount(const YCHAR *path)
 {
-	return yaffs_mount2(path,0);
+	return yaffs_mount_common(path, 0, 0);
 }
 
 int yaffs_sync(const YCHAR *path)
