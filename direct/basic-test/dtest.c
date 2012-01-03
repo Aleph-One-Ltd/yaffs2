@@ -2826,7 +2826,7 @@ void verify_big_sparse_file(int h)
 			check_type = "buffer";
 			set_buffer(i/STRIDE);
 		}
-		printf("%s checking %lld\n", check_type, offset);
+		//printf("%s checking %lld\n", check_type, offset);
 		pos = yaffs_lseek(h, offset, SEEK_SET);
 		if(pos != offset) {
 			printf("mismatched seek pos %lld offset %lld\n",

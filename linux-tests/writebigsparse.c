@@ -7,8 +7,8 @@
 #include <stdlib.h>
 
 
-#define N_WRITES 2000
-#define STRIDE	 2000
+#define N_WRITES 16
+#define STRIDE	 250000
 
 #define BUFFER_N 1100
 unsigned  xxbuffer[BUFFER_N];

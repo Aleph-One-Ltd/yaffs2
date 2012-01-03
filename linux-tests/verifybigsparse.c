@@ -8,8 +8,8 @@
 #include <string.h>
 
 
-#define N_WRITES 2000
-#define STRIDE	 2000
+#define N_WRITES 16
+#define STRIDE	 250000
 
 #define BUFFER_N 1100
 unsigned  xxbuffer[BUFFER_N];
@@ -43,7 +43,7 @@ void verify_big_sparse_file(int h)
 			check_type = "buffer";
 			set_buffer(i/STRIDE);
 		}
-		printf("%s checking %lld\n", check_type, offset);
+		//printf("%s checking %lld\n", check_type, offset);
 		pos = lseek64(h, offset, SEEK_SET);
 		if(pos != offset) {
 			printf("mismatched seek pos %lld offset %lld\n",
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	handle = open(argv[1], O_CREAT | O_RDWR | O_TRUNC, S_IREAD | S_IWRITE);
+	handle = open(argv[1], O_RDONLY);
 
 	if(handle < 0) {
 		perror("opening file");
