@@ -960,5 +960,7 @@ void yaffs_addr_to_chunk(struct yaffs_dev *dev, loff_t addr,
  */
 void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize);
 loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh);
+loff_t yaffs_max_file_size(struct yaffs_dev *dev);
+
 
 #endif

@@ -696,6 +696,11 @@ void yaffs_set_obj_name_from_oh(struct yaffs_obj *obj,
 #endif
 }
 
+loff_t yaffs_max_file_size(struct yaffs_dev *dev)
+{
+	return ((loff_t) YAFFS_MAX_CHUNK_ID) * dev->data_bytes_per_chunk;
+}
+
 /*-------------------- TNODES -------------------
 
  * List of spare tnodes
@@ -1953,7 +1958,8 @@ struct yaffs_obj *yaffs_new_obj(struct yaffs_dev *dev, int number,
 	case YAFFS_OBJECT_TYPE_FILE:
 		the_obj->variant.file_variant.file_size = 0;
 		the_obj->variant.file_variant.scanned_size = 0;
-		the_obj->variant.file_variant.shrink_size = ~0; /* max */
+		the_obj->variant.file_variant.shrink_size =
+						yaffs_max_file_size(dev);
 		the_obj->variant.file_variant.top_level = 0;
 		the_obj->variant.file_variant.top = tn;
 		break;
