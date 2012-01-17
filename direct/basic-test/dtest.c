@@ -2755,6 +2755,48 @@ void link_follow_test(const char *mountpt)
 
 }
 
+void max_files_test(const char *mountpt)
+{
+	char fn[100];
+	char sn[100];
+	char hn[100];
+	int result;
+	int h;
+	int i;
+
+	yaffs_trace_mask = 0;
+
+	yaffs_start_up();
+
+	yaffs_mount(mountpt);
+
+	for(i = 0; i < 5000; i++) {
+		sprintf(fn,"%s/file%d", mountpt, i);
+		yaffs_unlink(fn);
+		h = yaffs_open(fn,O_CREAT| O_RDWR, S_IREAD | S_IWRITE);
+		if(h < 0)
+			printf("File %s not created\n", fn);
+		yaffs_write(h,fn,100);
+		result = yaffs_close(h);
+	}
+	for(i = 0; i < 5; i++){
+		sprintf(fn,"%s/file%d",mountpt, i);
+		yaffs_unlink(fn);
+	}
+
+	for(i = 1000; i < 1010; i++){
+		sprintf(fn,"%s/file%d",mountpt, i);
+		h = yaffs_open(fn,O_CREAT| O_RDWR, S_IREAD | S_IWRITE);
+		yaffs_write(h,fn,100);
+		if(h < 0)
+			printf("File %s not created\n", fn);
+		result = yaffs_close(h);
+	}
+
+	h =yaffs_open(hn,O_RDWR,0);
+
+}
+
 int random_seed;
 int simulate_power_failure;
 
@@ -2791,7 +2833,7 @@ int main(int argc, char *argv[])
 	 //checkpoint_upgrade_test("/flash/flash",20);
 	  //small_overwrite_test("/flash/flash",1000);
 	  //checkpoint_fill_test("/flash/flash",20);
-	// random_small_file_test("/flash/flash",10000);
+	//random_small_file_test("/flash/flash",10000);
 	 // huge_array_test("/flash/flash",10);
 
 
@@ -2820,7 +2862,10 @@ int main(int argc, char *argv[])
 
 	 //test_flash_traffic("yaffs2");
 	 // link_follow_test("/yaffs2");
-	 basic_utime_test("/yaffs2");
+	 //basic_utime_test("/yaffs2");
+
+	 max_files_test("/yaffs2");
+
 
 	 return 0;
 

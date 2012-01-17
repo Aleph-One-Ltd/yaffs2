@@ -743,7 +743,15 @@ int yaffs_dup(int handle)
 
 }
 
+static int yaffsfs_TooManyObjects(struct yaffs_dev *dev)
+{
+	int current_objects = dev->n_obj - dev->n_deleted_files;
 
+	if(dev->param.max_objects && current_objects > dev->param.max_objects)
+		return 1;
+	else
+		return 0;
+}
 
 int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 {
@@ -914,6 +922,9 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 			/* Let's see if we can create this file if it does not exist. */
 			if(dir->my_dev->read_only){
 				yaffsfs_SetError(-EROFS);
+				errorReported = 1;
+			} else if(yaffsfs_TooManyObjects(dir->my_dev)) {
+				yaffsfs_SetError(-ENFILE);
 				errorReported = 1;
 			} else
 				obj = yaffs_create_file(dir,name,mode,0,0);
@@ -2366,6 +2377,8 @@ int yaffs_mkdir(const YCHAR *path, mode_t mode)
 		yaffsfs_SetError(-ELOOP);
 	else if(!parent)
 		yaffsfs_SetError(-ENOENT);
+	else if(yaffsfs_TooManyObjects(parent->my_dev))
+		yaffsfs_SetError(-ENFILE);
 	else if(strnlen(name,5) == 0){
 		/* Trying to make the root itself */
 		yaffsfs_SetError(-EEXIST);
@@ -2964,6 +2977,8 @@ int yaffs_symlink(const YCHAR *oldpath, const YCHAR *newpath)
 		yaffsfs_SetError(-ELOOP);
 	else if( !parent || strnlen(name,5) < 1)
 		yaffsfs_SetError(-ENOENT);
+	else if(yaffsfs_TooManyObjects(parent->my_dev))
+		yaffsfs_SetError(-ENFILE);
 	else if(parent->my_dev->read_only)
 		yaffsfs_SetError(-EROFS);
 	else if(parent){
@@ -3056,6 +3071,8 @@ int yaffs_link(const YCHAR *oldpath, const YCHAR *linkpath)
 		yaffsfs_SetError(-ENOENT);
 	else if(obj->my_dev->read_only)
 		yaffsfs_SetError(-EROFS);
+	else if(yaffsfs_TooManyObjects(obj->my_dev))
+		yaffsfs_SetError(-ENFILE);
 	else if(lnk)
 		yaffsfs_SetError(-EEXIST);
 	else if(lnk_dir->my_dev != obj->my_dev)

@@ -587,6 +587,11 @@ struct yaffs_param {
 	int always_check_erased;	/* Force chunk erased check always on */
 
 	int disable_summary;
+
+	int max_objects;	/*
+				 * Set to limit the number of objects created.
+				 * 0 = no limit.
+				*/
 };
 
 struct yaffs_dev {
