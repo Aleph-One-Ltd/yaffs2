@@ -2720,6 +2720,14 @@ int yaffs_inodecount(const YCHAR *path)
 
 void yaffs_add_device(struct yaffs_dev *dev)
 {
+	struct list_head *cfg;
+	/* First check that the device is not in the list. */
+
+	list_for_each(cfg, &yaffsfs_deviceList){
+		if(dev == list_entry(cfg, struct yaffs_dev, dev_list))
+			return;
+	}
+
 	dev->is_mounted = 0;
 	dev->param.remove_obj_fn = yaffsfs_RemoveObjectCallback;
 

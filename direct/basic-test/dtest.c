@@ -2797,6 +2797,18 @@ void max_files_test(const char *mountpt)
 
 }
 
+void start_twice(const char *mountpt)
+{
+         printf("About to do first yaffs_start\n");
+         yaffs_start_up();
+         printf("started\n");
+         printf("First mount returns %d\n", yaffs_mount(mountpt));
+         printf("About to do second yaffs_start\n");
+         yaffs_start_up();
+         printf("started\n");
+         printf("Second mount returns %d\n", yaffs_mount(mountpt));
+}
+
 int random_seed;
 int simulate_power_failure;
 
@@ -2864,7 +2876,9 @@ int main(int argc, char *argv[])
 	 // link_follow_test("/yaffs2");
 	 //basic_utime_test("/yaffs2");
 
-	 max_files_test("/yaffs2");
+	 //max_files_test("/yaffs2");
+	 
+	 start_twice("/yaffs2");
 
 
 	 return 0;

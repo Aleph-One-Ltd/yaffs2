@@ -30,19 +30,19 @@
 
 #include <errno.h>
 
-unsigned yaffs_trace_mask = 
+unsigned yaffs_trace_mask =
 
-	YAFFS_TRACE_SCAN |  
+	YAFFS_TRACE_SCAN |
 	YAFFS_TRACE_GC |
-	YAFFS_TRACE_ERASE | 
-	YAFFS_TRACE_ERROR | 
-	YAFFS_TRACE_TRACING | 
-	YAFFS_TRACE_ALLOCATE | 
+	YAFFS_TRACE_ERASE |
+	YAFFS_TRACE_ERROR |
+	YAFFS_TRACE_TRACING |
+	YAFFS_TRACE_ALLOCATE |
 	YAFFS_TRACE_BAD_BLOCKS |
-	YAFFS_TRACE_VERIFY | 
-	
+	YAFFS_TRACE_VERIFY |
+
 	0;
-        
+
 
 
 // Configuration
@@ -58,10 +58,16 @@ struct yaffs_dev m18_1Dev;
 
 int yaffs_start_up(void)
 {
+	static int start_up_called = 0;
+
+	if(start_up_called)
+		return;
+	start_up_called = 1;
+
 	// Stuff to configure YAFFS
 	// Stuff to initialise anything special (eg lock semaphore).
 	yaffsfs_OSInitialisation();
-	
+
 	// Set up devices
 	// /ram1   ram, yaffs1
 	memset(&ram1Dev,0,sizeof(ram1Dev));
@@ -70,7 +76,7 @@ int yaffs_start_up(void)
 	ram1Dev.param.chunks_per_block = 32;
 	ram1Dev.param.n_reserved_blocks = 2; // Set this smaller for RAM
 	ram1Dev.param.start_block = 0; // Can use block 0
-	ram1Dev.param.end_block = 127; // Last block in 2MB.	
+	ram1Dev.param.end_block = 127; // Last block in 2MB.
 	//ram1Dev.param.use_nand_ecc = 1;
 	ram1Dev.param.n_caches = 0;	// Disable caching on this device.
 	ram1Dev.driver_context = (void *) 0;	// Used to identify the device in fstat.
@@ -78,7 +84,7 @@ int yaffs_start_up(void)
 	ram1Dev.param.read_chunk_tags_fn = yramdisk_rd_chunk;
 	ram1Dev.param.erase_fn = yramdisk_erase;
 	ram1Dev.param.initialise_flash_fn = yramdisk_initialise;
-	
+
 	yaffs_add_device(&ram1Dev);
 
 	// /M18-1 yaffs1 on M18 nor sim
@@ -130,7 +136,7 @@ int yaffs_start_up(void)
 	yaffs_add_device(&flashDev);
 
 // todo	yaffs_initialise(yaffsfs_config);
-	
+
 	return 0;
 }
 
