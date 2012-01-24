@@ -24,8 +24,6 @@
 #define __YAFFS_LIST_H__
 
 
-#include "yportenv.h"
-
 /*
  * This is a simple doubly linked list implementation that matches the
  * way the Linux kernel doubly linked list implementation works.
