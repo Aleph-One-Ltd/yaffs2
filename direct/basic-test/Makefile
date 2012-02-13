@@ -24,6 +24,7 @@ CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Werror=strict-aliasing
 #CFLAGS +=    -fno-strict-aliasing
 CFLAGS +=    -O0
 #CFLAGS +=    -DVALGRIND_TEST
+#CFLAGS +=     -DCONFIG_YAFFS_CASE_INSENSITIVE
 
 CFLAGS+=   -Wshadow -Werror=pointer-arith -Werror=write-strings
 CFLAGS+=   -Werror=strict-prototypes -Werror=missing-parameter-type
@@ -50,7 +51,7 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
 #		 yaffs_checkptrwtest.o\
 
 
-YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
+YAFFS_SOURCES = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
           yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
           yaffs_checkptrw.h yaffs_checkptrw.c \
@@ -72,7 +73,7 @@ YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
 
 
 
-SYMLINKS = $(YAFFSSYMLINKS) $(YAFFSDIRECTSYMLINKS)
+COPIED_SOURCES = $(YAFFS_SOURCES) $(YAFFSDIRECTSYMLINKS)
 
 
 DIRECTTESTOBJS = $(COMMONTESTOBJS) dtest.o
@@ -89,6 +90,15 @@ $(ALLOBJS): %.o: %.c
 	gcc -c $(CFLAGS) -o $@ $<
 
 
+$(YAFFS_SOURCES):
+	sed ../../$@ \
+	-e "s/strcat/yaffs_strcat/g" \
+	-e "s/strcpy/yaffs_strcpy/g" \
+	-e "s/strncpy/yaffs_strncpy/g" \
+	-e "s/strnlen/yaffs_strnlen/g" \
+	-e "s/strcmp/yaffs_strcmp/g" \
+	-e "s/strncmp/yaffs_strncmp/g" >$@
+                                                        
 $(YAFFSSYMLINKS):
 	ln -s ../../$@ $@
 
@@ -96,16 +106,16 @@ $(YAFFSDIRECTSYMLINKS):
 	ln -s ../$@ $@
 
 
-directtest2k: $(SYMLINKS) $(DIRECTTESTOBJS)
+directtest2k: $(COPIED_SOURCES) $(DIRECTTESTOBJS)
 	gcc -o $@ $(DIRECTTESTOBJS)
 
-yaffs_test: $(SYMLINKS) $(YAFFSTESTOBJS)
+yaffs_test: $(COPIED_SOURCES) $(YAFFSTESTOBJS)
 	gcc -o $@ $(YAFFSTESTOBJS)
 
 
-boottest: $(SYMLINKS) $(BOOTTESTOBJS)
+boottest: $(COPIED_SOURCES) $(BOOTTESTOBJS)
 	gcc -o $@ $(BOOTTESTOBJS)
 
 
 clean:
-	rm -f $(TARGETS) $(ALLOBJS) core core $(SYMLINKS)
+	rm -f $(TARGETS) $(ALLOBJS) core core $(COPIED_SOURCES)

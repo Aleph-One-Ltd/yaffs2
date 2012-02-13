@@ -51,7 +51,7 @@ YAFFSTESTOBJS  = $(COMMONTESTOBJS) yaffs_test.o
 
 ALLOBJS = $(sort $(YAFFSTESTOBJS))
 
-YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
+YAFFSSOURCEFILES = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
           yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h  \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
           yaffs_checkptrw.h yaffs_checkptrw.c \
@@ -78,7 +78,7 @@ DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
 			yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
 			ynorsim.h ynorsim.c yaffs_osglue.c
 
-SYMLINKS = $(YAFFSSYMLINKS) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
+COPIED_SOURCES = $(YAFFSSOURCEFILES) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
 #all: directtest2k boottest
 
 all: yaffs_test fuzzer
@@ -87,8 +87,14 @@ $(ALLOBJS): %.o: %.c
 	gcc -c $(CFLAGS) -o $@ $<
 
 
-$(YAFFSSYMLINKS):
-	ln -s ../../$@ $@
+$(YAFFSSOURCEFILES):
+	sed ../../$@ \
+	-e "s/strcat/yaffs_strcat/g" \
+	-e "s/strcpy/yaffs_strcpy/g" \
+	-e "s/strncpy/yaffs_strncpy/g" \
+	-e "s/strnlen/yaffs_strnlen/g" \
+	-e "s/strcmp/yaffs_strcmp/g" \
+	-e "s/strncmp/yaffs_strncmp/g" >$@
 
 $(YAFFSDIRECTSYMLINKS):
 	ln -s ../$@ $@
@@ -97,7 +103,7 @@ $(DIRECTEXTRASYMLINKS):
 	ln -s ../basic-test/$@ $@
 
 
-yaffs_test: $(SYMLINKS) $(YAFFSTESTOBJS)
+yaffs_test: $(COPIED_SOURCES) $(YAFFSTESTOBJS)
 	gcc $(CFLLAG) -o $@ $(YAFFSTESTOBJS)
 
 fuzzer: fuzzer.c
@@ -108,4 +114,4 @@ fuzzer: fuzzer.c
 
 
 clean:
-	rm -f yaffs_test fuzzer fuzzer.o $(ALLOBJS) core $(SYMLINKS)
+	rm -f yaffs_test fuzzer fuzzer.o $(ALLOBJS) core $(COPIED_SOURCES)

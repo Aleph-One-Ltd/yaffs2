@@ -37,6 +37,18 @@
 #define YUCHAR unsigned char
 #define _Y(x) x
 
+#define yaffs_strcat(a,b)    strcat(a,b)
+#define yaffs_strcpy(a,b)    strcpy(a,b)
+#define yaffs_strncpy(a,b,c) strncpy(a,b,c)
+#define yaffs_strnlen(s,m)           strnlen(s,m)
+#ifdef CONFIG_YAFFS_CASE_INSENSITIVE
+#define yaffs_strcmp(a,b) strcasecmp(a,b)
+#define yaffs_strncmp(a,b,c) strncasecmp(a,b,c)
+#else
+#define yaffs_strcmp(a,b) strcmp(a,b)
+#define yaffs_strncmp(a,b,c) strncmp(a,b,c)
+#endif
+
 #define hweight8(x)	yaffs_hweight8(x)
 #define hweight32(x)	yaffs_hweight32(x)
 
