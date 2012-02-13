@@ -60,6 +60,18 @@ static void yaffs_dump_tags2(const struct yaffs_ext_tags *t)
 
 }
 
+static int yaffs_check_tags_extra_packable(const struct yaffs_ext_tags *t)
+{
+	if(t->chunk_id != 0 || !t->extra_available)
+		return 0;
+
+	/* Check if the file size is too long to store */
+	if (t->extra_obj_type == YAFFS_OBJECT_TYPE_FILE &&
+	    (t->extra_file_size>> 31) != 0)
+		return 0;
+	return 1;
+}
+
 void yaffs_pack_tags2_tags_only(struct yaffs_packed_tags2_tags_only *ptt,
 				const struct yaffs_ext_tags *t)
 {
@@ -68,7 +80,11 @@ void yaffs_pack_tags2_tags_only(struct yaffs_packed_tags2_tags_only *ptt,
 	ptt->n_bytes = t->n_bytes;
 	ptt->obj_id = t->obj_id;
 
-	if (t->chunk_id == 0 && t->extra_available) {
+	/* Only store extra tags for object headers.
+	 * If it is a file then only store  if the file size is short\
+	 * enough to fit.
+	 */
+	if (yaffs_check_tags_extra_packable(t)) {
 		/* Store the extra header info instead */
 		/* We save the parent object in the chunk_id */
 		ptt->chunk_id = EXTRA_HEADER_INFO_FLAG | t->extra_parent_id;
@@ -83,7 +99,7 @@ void yaffs_pack_tags2_tags_only(struct yaffs_packed_tags2_tags_only *ptt,
 		if (t->extra_obj_type == YAFFS_OBJECT_TYPE_HARDLINK)
 			ptt->n_bytes = t->extra_equiv_id;
 		else if (t->extra_obj_type == YAFFS_OBJECT_TYPE_FILE)
-			ptt->n_bytes = t->extra_length;
+			ptt->n_bytes = (unsigned) t->extra_file_size;
 		else
 			ptt->n_bytes = 0;
 	}
@@ -135,7 +151,7 @@ void yaffs_unpack_tags2_tags_only(struct yaffs_ext_tags *t,
 		if (t->extra_obj_type == YAFFS_OBJECT_TYPE_HARDLINK)
 			t->extra_equiv_id = ptt->n_bytes;
 		else
-			t->extra_length = ptt->n_bytes;
+			t->extra_file_size = ptt->n_bytes;
 	}
 	yaffs_dump_packed_tags2_tags_only(ptt);
 	yaffs_dump_tags2(t);

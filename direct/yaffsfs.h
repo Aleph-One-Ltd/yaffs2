@@ -35,13 +35,13 @@
 #define NAME_MAX	256
 #endif
 
-#define YAFFS_MAX_FILE_SIZE (0x7FFFFFFF)
+#define YAFFS_MAX_FILE_SIZE (0x800000000LL - 1)
 
 
 struct yaffs_dirent{
     long d_ino;                 /* inode number */
     off_t d_off;                /* offset to this dirent */
-    unsigned short d_reclen;    /* length of this d_name */
+    unsigned short d_reclen;    /* length of this dirent */
     YUCHAR  d_type;	/* type of this record */
     YCHAR d_name [NAME_MAX+1];   /* file name (null-terminated) */
     unsigned d_dont_use;	/* debug pointer, not for public consumption */
@@ -55,14 +55,14 @@ typedef struct __opaque yaffs_DIR;
 
 
 struct yaffs_stat{
-    int		      st_dev;      /* device */
+    int		  st_dev;      /* device */
     int           st_ino;      /* inode */
     unsigned      st_mode;     /* protection */
     int           st_nlink;    /* number of hard links */
     int           st_uid;      /* user ID of owner */
     int           st_gid;      /* group ID of owner */
     unsigned      st_rdev;     /* device type (if inode device) */
-    off_t         st_size;     /* total size, in bytes */
+    loff_t         st_size;     /* total size, in bytes */
     unsigned long st_blksize;  /* blocksize for filesystem I/O */
     unsigned long st_blocks;   /* number of blocks allocated */
 #ifdef CONFIG_YAFFS_WINCE
@@ -71,7 +71,7 @@ struct yaffs_stat{
 	unsigned long yst_wince_mtime[2];
 	unsigned long yst_wince_ctime[2];
 #else
-	unsigned long yst_atime;    /* time of last access */
+    unsigned long yst_atime;    /* time of last access */
     unsigned long yst_mtime;    /* time of last modification */
     unsigned long yst_ctime;    /* time of last change */
 #endif
@@ -98,13 +98,13 @@ int yaffs_dup(int fd);
 int yaffs_read(int fd, void *buf, unsigned int nbyte) ;
 int yaffs_write(int fd, const void *buf, unsigned int nbyte) ;
 
-int yaffs_pread(int fd, void *buf, unsigned int nbyte, unsigned int offset);
-int yaffs_pwrite(int fd, const void *buf, unsigned int nbyte, unsigned int offset);
+int yaffs_pread(int fd, void *buf, unsigned int nbyte, loff_t offset);
+int yaffs_pwrite(int fd, const void *buf, unsigned int nbyte, loff_t offset);
 
-off_t yaffs_lseek(int fd, off_t offset, int whence) ;
+loff_t yaffs_lseek(int fd, loff_t offset, int whence) ;
 
-int yaffs_truncate(const YCHAR *path, off_t new_size);
-int yaffs_ftruncate(int fd, off_t new_size);
+int yaffs_truncate(const YCHAR *path, loff_t new_size);
+int yaffs_ftruncate(int fd, loff_t new_size);
 
 int yaffs_unlink(const YCHAR *path) ;
 int yaffs_rename(const YCHAR *oldPath, const YCHAR *newPath) ;
@@ -154,6 +154,8 @@ int yaffs_closedir(yaffs_DIR *dirp) ;
 
 int yaffs_mount(const YCHAR *path) ;
 int yaffs_mount2(const YCHAR *path, int read_only);
+int yaffs_mount_common(const YCHAR *path, int read_only, int skip_checkpt);
+
 int yaffs_unmount(const YCHAR *path) ;
 int yaffs_unmount2(const YCHAR *path, int force);
 int yaffs_remount(const YCHAR *path, int force, int read_only);

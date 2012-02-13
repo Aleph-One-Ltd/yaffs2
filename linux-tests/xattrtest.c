@@ -19,7 +19,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-
+#include <unistd.h>
+#include <sys/xattr.h>
 
 static void print_xattrib_val(const char *path, const char *name)
 {
@@ -66,8 +67,6 @@ void basic_xattr_test(const char *mountpt)
 	int h;
 	int result;
 	int val1;
-	int valread;
-
 	
 	strcpy(name,mountpt);
 	strcat(name,"/");
@@ -115,4 +114,5 @@ int simulate_power_failure;
 int main(int argc, char *argv[])
 {
 	basic_xattr_test("/mnt/");	
+	return 0;
 }

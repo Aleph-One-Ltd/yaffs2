@@ -836,7 +836,7 @@ int yaffs2_handle_hole(struct yaffs_obj *obj, loff_t new_size)
 	 * of hole marker.
 	 */
 	loff_t old_file_size;
-	int increase;
+	loff_t increase;
 	int small_hole;
 	int result = YAFFS_OK;
 	struct yaffs_dev *dev = NULL;
@@ -873,7 +873,7 @@ int yaffs2_handle_hole(struct yaffs_obj *obj, loff_t new_size)
 
 	if (local_buffer) {
 		/* fill hole with zero bytes */
-		int pos = old_file_size;
+		loff_t pos = old_file_size;
 		int this_write;
 		int written;
 		memset(local_buffer, 0, dev->data_bytes_per_chunk);
@@ -942,7 +942,7 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 	struct yaffs_obj *in;
 	struct yaffs_obj *parent;
 	int equiv_id;
-	int file_size;
+	loff_t file_size;
 	int is_shrink;
 	int is_unlinked;
 	struct yaffs_ext_tags tags;
@@ -1034,8 +1034,8 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 		dev->n_free_chunks++;
 	} else if (tags.chunk_id > 0) {
 		/* chunk_id > 0 so it is a data chunk... */
-		unsigned int endpos;
-		u32 chunk_base = (tags.chunk_id - 1) *
+		loff_t endpos;
+		loff_t chunk_base = (tags.chunk_id - 1) *
 					dev->data_bytes_per_chunk;
 
 		*found_chunks = 1;
@@ -1157,9 +1157,9 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 				 (tags.extra_available &&
 				  tags.extra_obj_type == YAFFS_OBJECT_TYPE_FILE)
 				)) {
-				u32 this_size = (oh) ?
-					oh->file_size :
-					tags.extra_length;
+				loff_t this_size = (oh) ?
+					yaffs_oh_to_size(oh) :
+					tags.extra_file_size;
 				u32 parent_obj_id = (oh) ?
 					oh->parent_obj_id :
 					tags.extra_parent_id;
@@ -1233,7 +1233,7 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 				parent = yaffs_find_or_create_by_number(dev,
 						oh->parent_obj_id,
 						YAFFS_OBJECT_TYPE_DIRECTORY);
-				file_size = oh->file_size;
+				file_size = yaffs_oh_to_size(oh);
 				is_shrink = oh->is_shrink;
 				equiv_id = oh->equiv_id;
 			} else {
@@ -1241,7 +1241,7 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 				parent = yaffs_find_or_create_by_number(dev,
 						tags.extra_parent_id,
 						YAFFS_OBJECT_TYPE_DIRECTORY);
-				file_size = tags.extra_length;
+				file_size = tags.extra_file_size;
 				is_shrink = tags.extra_is_shrink;
 				equiv_id = tags.extra_equiv_id;
 				in->lazy_loaded = 1;
