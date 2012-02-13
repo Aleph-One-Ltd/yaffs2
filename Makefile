@@ -17,6 +17,7 @@
 
 ifdef YAFFS_CURRENT
 	YAFFS_O := yaffs2.o
+	EXTRA_CFLAGS += -DYAFFS_CURRENT
 else
 	YAFFS_O := yaffs2multi.o
 endif

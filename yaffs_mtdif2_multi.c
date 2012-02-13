@@ -26,6 +26,12 @@
 
 #include "yaffs_linux.h"
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 2, 0))
+#define MTD_OPS_AUTO_OOB MTD_OOB_AUTO
+#endif
+
+
+
 /* NB For use with inband tags....
  * We assume that the data buffer is of size total_bytes_per_chunk so
  * that we can also use it to load the tags.
@@ -75,7 +81,7 @@ int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 	}
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
-	ops.mode = MTD_OOB_AUTO;
+	ops.mode = MTD_OPS_AUTO_OOB;
 	ops.ooblen = (dev->param.inband_tags) ? 0 : packed_tags_size;
 	ops.len = dev->param.total_bytes_per_chunk;
 	ops.ooboffs = 0;
@@ -139,7 +145,7 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 		retval = mtd->read(mtd, addr, dev->param.total_bytes_per_chunk,
 				   &dummy, data);
 	else if (tags) {
-		ops.mode = MTD_OOB_AUTO;
+		ops.mode = MTD_OPS_AUTO_OOB;
 		ops.ooblen = packed_tags_size;
 		ops.len = data ? dev->data_bytes_per_chunk : packed_tags_size;
 		ops.ooboffs = 0;

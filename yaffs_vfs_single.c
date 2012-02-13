@@ -42,7 +42,6 @@
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
-#include <linux/smp_lock.h>
 #include <linux/pagemap.h>
 #include <linux/mtd/mtd.h>
 #include <linux/interrupt.h>
@@ -307,7 +306,7 @@ static int yaffs_link(struct dentry *old_dentry, struct inode *dir,
 				   obj);
 
 	if (link) {
-		old_dentry->d_inode->i_nlink = yaffs_get_obj_link_count(obj);
+		set_nlink(old_dentry->d_inode, yaffs_get_obj_link_count(obj));
 		d_instantiate(dentry, old_dentry->d_inode);
 		atomic_inc(&old_dentry->d_inode->i_count);
 		yaffs_trace(YAFFS_TRACE_OS,
@@ -337,6 +336,14 @@ static int yaffs_symlink(struct inode *dir, struct dentry *dentry,
 	    (dir->i_mode & S_ISGID) ? dir->i_gid : current->cred->fsgid;
 
 	yaffs_trace(YAFFS_TRACE_OS, "yaffs_symlink");
+
+	if (strnlen(dentry->d_name.name, YAFFS_MAX_NAME_LENGTH + 1) >
+				YAFFS_MAX_NAME_LENGTH)
+		return -ENAMETOOLONG;
+
+	if (strnlen(symname, YAFFS_MAX_ALIAS_LENGTH + 1) >
+				YAFFS_MAX_ALIAS_LENGTH)
+		return -ENAMETOOLONG;
 
 	dev = yaffs_inode_to_obj(dir)->my_dev;
 	yaffs_gross_lock(dev);
@@ -419,10 +426,9 @@ static int yaffs_unlink(struct inode *dir, struct dentry *dentry)
 	ret_val = yaffs_unlinker(obj, dentry->d_name.name);
 
 	if (ret_val == YAFFS_OK) {
-		dentry->d_inode->i_nlink--;
+		inode_dec_link_count(dentry->d_inode);
 		dir->i_version++;
 		yaffs_gross_unlock(dev);
-		mark_inode_dirty(dentry->d_inode);
 		update_dir_time(dir);
 		return 0;
 	}
@@ -430,7 +436,7 @@ static int yaffs_unlink(struct inode *dir, struct dentry *dentry)
 	return -ENOTEMPTY;
 }
 
-static int yaffs_sync_object(struct file *file, int datasync)
+static int yaffs_sync_object(struct file *file, loff_t start, loff_t end, int datasync)
 {
 
 	struct yaffs_obj *obj;
@@ -486,10 +492,8 @@ static int yaffs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	yaffs_gross_unlock(dev);
 
 	if (ret_val == YAFFS_OK) {
-		if (target) {
-			new_dentry->d_inode->i_nlink--;
-			mark_inode_dirty(new_dentry->d_inode);
-		}
+		if (target)
+			inode_dec_link_count(new_dentry->d_inode);
 
 		update_dir_time(old_dir);
 		if (old_dir != new_dir)
@@ -1873,7 +1877,7 @@ static void yaffs_fill_inode_from_obj(struct inode *inode,
 	inode->i_ctime.tv_nsec = 0;
 	inode->i_size = yaffs_get_obj_length(obj);
 	inode->i_blocks = (inode->i_size + 511) >> 9;
-	inode->i_nlink = yaffs_get_obj_link_count(obj);
+	set_nlink(inode, yaffs_get_obj_link_count(obj));
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_fill_inode mode %x uid %d gid %d size %d count %d",
 		inode->i_mode, inode->i_uid, inode->i_gid,
@@ -2292,19 +2296,18 @@ static int yaffs_internal_read_super_mtd(struct super_block *sb, void *data,
 	return yaffs_internal_read_super(1, sb, data, silent) ? 0 : -EINVAL;
 }
 
-static int yaffs_read_super(struct file_system_type *fs,
+static struct dentry *yaffs_mount(struct file_system_type *fs,
 			    int flags, const char *dev_name,
-			    void *data, struct vfsmount *mnt)
+			    void *data)
 {
-
-	return get_sb_bdev(fs, flags, dev_name, data,
-			   yaffs_internal_read_super_mtd, mnt);
+	return mount_bdev(fs, flags, dev_name, data,
+			   yaffs_internal_read_super_mtd);
 }
 
 static struct file_system_type yaffs_fs_type = {
 	.owner = THIS_MODULE,
 	.name = "yaffs",
-	.get_sb = yaffs_read_super,
+	.mount = yaffs_mount,
 	.kill_sb = kill_block_super,
 	.fs_flags = FS_REQUIRES_DEV,
 };
@@ -2315,18 +2318,17 @@ static int yaffs2_internal_read_super_mtd(struct super_block *sb, void *data,
 	return yaffs_internal_read_super(2, sb, data, silent) ? 0 : -EINVAL;
 }
 
-static int yaffs2_read_super(struct file_system_type *fs,
-			     int flags, const char *dev_name, void *data,
-			     struct vfsmount *mnt)
+static struct dentry *yaffs2_mount(struct file_system_type *fs,
+			     int flags, const char *dev_name, void *data)
 {
-	return get_sb_bdev(fs, flags, dev_name, data,
-			   yaffs2_internal_read_super_mtd, mnt);
+	return mount_bdev(fs, flags, dev_name, data,
+			   yaffs2_internal_read_super_mtd);
 }
 
 static struct file_system_type yaffs2_fs_type = {
 	.owner = THIS_MODULE,
 	.name = "yaffs2",
-	.get_sb = yaffs2_read_super,
+	.mount = yaffs2_mount,
 	.kill_sb = kill_block_super,
 	.fs_flags = FS_REQUIRES_DEV,
 };

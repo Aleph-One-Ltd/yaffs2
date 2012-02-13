@@ -148,6 +148,12 @@
 #define YAFFS_USE_WRITE_BEGIN_END 0
 #endif
 
+
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 2, 0))
+#define set_nlink(inode, count)  do { (inode)->i_nlink = (count); } while(0)
+#endif
+
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 28))
 static uint32_t YCALCBLOCKS(uint64_t partition_size, uint32_t block_size)
 {
@@ -1330,7 +1336,7 @@ static void yaffs_fill_inode_from_obj(struct inode *inode,
 		inode->i_size = yaffs_get_obj_length(obj);
 		inode->i_blocks = (inode->i_size + 511) >> 9;
 
-		inode->i_nlink = yaffs_get_obj_link_count(obj);
+		set_nlink(inode, yaffs_get_obj_link_count(obj));
 
 		yaffs_trace(YAFFS_TRACE_OS,
 			"yaffs_fill_inode mode %x uid %d gid %d size %d count %d",
@@ -1744,10 +1750,9 @@ static int yaffs_unlink(struct inode *dir, struct dentry *dentry)
 	ret_val = yaffs_unlinker(obj, dentry->d_name.name);
 
 	if (ret_val == YAFFS_OK) {
-		dentry->d_inode->i_nlink--;
+		inode_dec_link_count(dentry->d_inode);
 		dir->i_version++;
 		yaffs_gross_unlock(dev);
-		mark_inode_dirty(dentry->d_inode);
 		update_dir_time(dir);
 		return 0;
 	}
@@ -1779,7 +1784,7 @@ static int yaffs_link(struct dentry *old_dentry, struct inode *dir,
 				   obj);
 
 	if (link) {
-		old_dentry->d_inode->i_nlink = yaffs_get_obj_link_count(obj);
+		set_nlink(old_dentry->d_inode, yaffs_get_obj_link_count(obj));
 		d_instantiate(dentry, old_dentry->d_inode);
 		atomic_inc(&old_dentry->d_inode->i_count);
 		yaffs_trace(YAFFS_TRACE_OS,
@@ -1808,6 +1813,14 @@ static int yaffs_symlink(struct inode *dir, struct dentry *dentry,
 	    (dir->i_mode & S_ISGID) ? dir->i_gid : YCRED(current)->fsgid;
 
 	yaffs_trace(YAFFS_TRACE_OS, "yaffs_symlink");
+
+	if (strnlen(dentry->d_name.name, YAFFS_MAX_NAME_LENGTH + 1) >
+				YAFFS_MAX_NAME_LENGTH)
+		return -ENAMETOOLONG;
+
+	if (strnlen(symname, YAFFS_MAX_ALIAS_LENGTH + 1) >
+				YAFFS_MAX_ALIAS_LENGTH)
+		return -ENAMETOOLONG;
 
 	dev = yaffs_inode_to_obj(dir)->my_dev;
 	yaffs_gross_lock(dev);
@@ -1897,10 +1910,8 @@ static int yaffs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	yaffs_gross_unlock(dev);
 
 	if (ret_val == YAFFS_OK) {
-		if (target) {
-			new_dentry->d_inode->i_nlink--;
-			mark_inode_dirty(new_dentry->d_inode);
-		}
+		if (target)
+			inode_dec_link_count(new_dentry->d_inode);
 
 		update_dir_time(old_dir);
 		if (old_dir != new_dir)
