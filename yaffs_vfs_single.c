@@ -1097,11 +1097,13 @@ static int yaffs_readpage_nolock(struct file *f, struct page *pg)
 	unsigned char *pg_buf;
 	int ret;
 	struct yaffs_dev *dev;
+	loff_t pos = ((loff_t) pg->index) << PAGE_CACHE_SHIFT;
 
 	yaffs_trace(YAFFS_TRACE_OS,
-		"yaffs_readpage_nolock at %08x, size %08x",
-		(unsigned)(pg->index << PAGE_CACHE_SHIFT),
+		"yaffs_readpage_nolock at %lld, size %08x",
+		(long long)pos,
 		(unsigned)PAGE_CACHE_SIZE);
+
 
 	obj = yaffs_dentry_to_obj(f->f_dentry);
 
@@ -1114,8 +1116,7 @@ static int yaffs_readpage_nolock(struct file *f, struct page *pg)
 
 	yaffs_gross_lock(dev);
 
-	ret = yaffs_file_rd(obj, pg_buf,
-			    pg->index << PAGE_CACHE_SHIFT, PAGE_CACHE_SIZE);
+	ret = yaffs_file_rd(obj, pg_buf, pos, PAGE_CACHE_SIZE);
 
 	yaffs_gross_unlock(dev);
 
@@ -1218,7 +1219,7 @@ static int yaffs_writepage(struct page *page, struct writeback_control *wbc)
 		(int)obj->variant.file_variant.file_size, (int)inode->i_size);
 
 	n_written = yaffs_wr_file(obj, buffer,
-				  page->index << PAGE_CACHE_SHIFT, n_bytes, 0);
+				  ((loff_t)page->index) << PAGE_CACHE_SHIFT, n_bytes, 0);
 
 	yaffs_touch_super(dev);
 
@@ -2257,6 +2258,12 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	if (!context->bg_thread)
 		param->defered_dir_update = 0;
 
+	sb->s_maxbytes = yaffs_max_file_size(dev);
+
+	yaffs_trace(YAFFS_TRACE_OS,
+		"yaffs_readpage_nolock at %lld, size %08x",
+		(long long)pos,
+		(unsigned)PAGE_CACHE_SIZE);
 	/* Release lock before yaffs_get_inode() */
 	yaffs_gross_unlock(dev);
 
@@ -2366,8 +2373,9 @@ static char *yaffs_dump_dev_part0(char *buf, struct yaffs_dev *dev)
 
 static char *yaffs_dump_dev_part1(char *buf, struct yaffs_dev *dev)
 {
-	buf +=
-	    sprintf(buf, "data_bytes_per_chunk.. %d\n",
+	buf += sprintf(buf, "max file size......... %lld\n",
+		    	(long long) yaffs_max_file_size(dev));
+	buf += sprintf(buf, "data_bytes_per_chunk.. %d\n",
 		    dev->data_bytes_per_chunk);
 	buf += sprintf(buf, "chunk_grp_bits........ %d\n", dev->chunk_grp_bits);
 	buf += sprintf(buf, "chunk_grp_size........ %d\n", dev->chunk_grp_size);

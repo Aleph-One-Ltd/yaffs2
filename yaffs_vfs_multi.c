@@ -977,7 +977,6 @@ static int yaffs_readpage_nolock(struct file *f, struct page *pg)
 	unsigned char *pg_buf;
 	int ret;
 	loff_t pos = ((loff_t) pg->index) << PAGE_CACHE_SHIFT;
-
 	struct yaffs_dev *dev;
 
 	yaffs_trace(YAFFS_TRACE_OS,
