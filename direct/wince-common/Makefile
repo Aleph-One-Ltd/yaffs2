@@ -47,7 +47,7 @@ YAFFSTESTOBJS  = $(COMMONTESTOBJS) yaffs_test.o
 
 ALLOBJS = $(sort $(YAFFSTESTOBJS))
 
-YAFFSSYMLINKS = devextras.h yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffsinterface.h yportenv.h yaffs_tagscompat.c yaffs_tagscompat.h \
+YAFFS_SOURCES = devextras.h yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffsinterface.h yportenv.h yaffs_tagscompat.c yaffs_tagscompat.h \
           yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h  yaffs_nandemul2k.h \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h yaffs_list.h \
           yaffs_tagsvalidity.c yaffs_tagsvalidity.h yaffs_checkptrw.h yaffs_checkptrw.c \
@@ -68,18 +68,20 @@ YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
 
 BASICTESTSYMLINKS = yramsim.c yramsim.h
 
-SYMLINKS = $(YAFFSSYMLINKS) $(YAFFSDIRECTSYMLINKS) $(BASICTESTSYMLINKS)
+ALL_SOURCES = $(YAFFS_SOURCES) $(YAFFSDIRECTSYMLINKS) $(BASICTESTSYMLINKS)
 
 
+symlinks: $(ALL_SOURCES)
 
 
-
-
-symlinks: $(SYMLINKS)
-
-
-$(YAFFSSYMLINKS):
-	ln -s ../../$@ $@
+$(YAFFS_SOURCES):
+	sed ../../$@ \
+	-e "s/strcat/yaffs_strcat/g" \
+	-e "s/strcpy/yaffs_strcpy/g" \
+	-e "s/strncpy/yaffs_strncpy/g" \
+	-e "s/strnlen/yaffs_strnlen/g" \
+	-e "s/strcmp/yaffs_strcmp/g" \
+	-e "s/strncmp/yaffs_strncmp/g" >$@
 
 $(YAFFSDIRECTSYMLINKS):
 	ln -s ../$@ $@
@@ -89,4 +91,4 @@ $(BASICTESTSYMLINKS):
 
 
 clean:
-	rm -f $(SYMLINKS)
+	rm -f $(ALL_SOURCES)
