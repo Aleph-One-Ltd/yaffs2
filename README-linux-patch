@@ -1,16 +1,26 @@
 To build YAFFS in the Linux kernel tree you need to run the patch-ker.sh
 script from the yaffs source directory, giving your choice as to whether
 you wish to copy (c) or link (l) the code and the path to your kernel
-sources, e.g:
+sources and whether you want to use the single-version or multi-version
+code. e.g:
 
-./patch-ker.sh c /usr/src/linux
+./patch-ker.sh c m /usr/src/linux
 
-This will copy the yaffs files into fs/yaffs2 and modify the Kconfig
+This will copy the yaffs files into /usr/src/linux/fs/yaffs2 and modify the Kconfig
 and Makefiles in the fs directory.
 
-./patch-ker.sh l /usr/src/linux
+./patch-ker.sh l m /usr/src/linux
 
-This does the same as the above but makes symbolic links instead.
+This does the same as the above but makes symbolic links instead. This can
+be handy if you are developing yaffs and want to interact with the yaffs git
+repository, make patches, or whatever.
+
+The single-version code is intended to track the current latest Linux kernel
+and does not attempt to support older versions of the kernel.
+
+The multi-version code supports more versions of the Linux kernel. It also
+supports some optional features that might be excluded from the
+single-version code.
 
 After you've run the script, go back to your normal kernel making procedure
 and configure the yaffs settings you want.
