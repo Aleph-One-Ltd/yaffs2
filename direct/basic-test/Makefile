@@ -51,7 +51,9 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
 #		 yaffs_checkptrwtest.o\
 
 
-YAFFS_SOURCES = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
+YAFFSDIRECTSYMLINKS = \
+          yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
+          yaffs_tagscompat.c yaffs_tagscompat.h \
           yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
           yaffs_checkptrw.h yaffs_checkptrw.c \
@@ -62,18 +64,14 @@ YAFFS_SOURCES = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscomp
           yaffs_yaffs2.c yaffs_yaffs2.h \
           yaffs_bitmap.c yaffs_bitmap.h \
           yaffs_verify.c yaffs_verify.h \
-          yaffs_summary.c yaffs_summary.h
+          yaffs_summary.c yaffs_summary.h \
+	  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
+          yaffsfs.h yaffs_osglue.h ydirectenv.h \
+          yaffs_flashif.c yaffscfg.h yaffs_list.h \
+          yaffs_qsort.c yportenv.h yaffs_attribs.c \
+          yaffs_nandif.c yaffs_nandif.h yaffs_nandemul2k.h \
+          yaffs_hweight.h yaffs_hweight.c \
 
-YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
-		       yaffsfs.h yaffs_osglue.h ydirectenv.h \
-		       yaffs_flashif.c yaffscfg.h yaffs_list.h \
-		       yaffs_qsort.c yportenv.h yaffs_attribs.c \
-		       yaffs_nandif.c yaffs_nandif.h yaffs_nandemul2k.h \
-		       yaffs_hweight.h yaffs_hweight.c \
-
-
-
-COPIED_SOURCES = $(YAFFS_SOURCES) $(YAFFSDIRECTSYMLINKS)
 
 
 DIRECTTESTOBJS = $(COMMONTESTOBJS) dtest.o
@@ -90,32 +88,20 @@ $(ALLOBJS): %.o: %.c
 	gcc -c $(CFLAGS) -o $@ $<
 
 
-$(YAFFS_SOURCES):
-	sed ../../$@ \
-	-e "s/strcat/yaffs_strcat/g" \
-	-e "s/strcpy/yaffs_strcpy/g" \
-	-e "s/strncpy/yaffs_strncpy/g" \
-	-e "s/strnlen/yaffs_strnlen/g" \
-	-e "s/strcmp/yaffs_strcmp/g" \
-	-e "s/strncmp/yaffs_strncmp/g" >$@
-                                                        
-$(YAFFSSYMLINKS):
-	ln -s ../../$@ $@
-
 $(YAFFSDIRECTSYMLINKS):
 	ln -s ../$@ $@
 
 
-directtest2k: $(COPIED_SOURCES) $(DIRECTTESTOBJS)
+directtest2k: $(YAFFSDIRECTSYMLINKS) $(DIRECTTESTOBJS)
 	gcc -o $@ $(DIRECTTESTOBJS)
 
-yaffs_test: $(COPIED_SOURCES) $(YAFFSTESTOBJS)
+yaffs_test: $(YAFFSDIRECTSYMLINKS) $(YAFFSTESTOBJS)
 	gcc -o $@ $(YAFFSTESTOBJS)
 
 
-boottest: $(COPIED_SOURCES) $(BOOTTESTOBJS)
+boottest: $(YAFFSDIRECTSYMLINKS) $(BOOTTESTOBJS)
 	gcc -o $@ $(BOOTTESTOBJS)
 
 
 clean:
-	rm -f $(TARGETS) $(ALLOBJS) core core $(COPIED_SOURCES)
+	rm -f $(TARGETS) $(ALLOBJS) core $(YAFFSDIRECTSYMLINKS)

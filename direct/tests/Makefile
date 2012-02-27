@@ -51,8 +51,18 @@ YAFFSTESTOBJS  = $(COMMONTESTOBJS) yaffs_test.o
 
 ALLOBJS = $(sort $(YAFFSTESTOBJS))
 
-YAFFSSOURCEFILES = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
-          yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h  \
+YAFFSDIRECTSYMLINKS =  \
+          yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
+          yaffsfs.h yaffs_osglue.h ydirectenv.h \
+          yaffs_flashif.c yaffscfg.h yaffs_qsort.c \
+          yaffs_nandemul2k.h yaffs_list.h \
+          yaffs_attribs.c \
+          yaffs_nandif.c yaffs_nandif.h yportenv.h \
+          yaffs_hweight.c yaffs_hweight.h \
+          yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
+          yaffs_tagscompat.c yaffs_tagscompat.h \
+          yaffs_packedtags1.c yaffs_packedtags1.h \
+          yaffs_packedtags2.c yaffs_packedtags2.h  \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
           yaffs_checkptrw.h yaffs_checkptrw.c \
           yaffs_nameval.c yaffs_nameval.h \
@@ -64,37 +74,19 @@ YAFFSSOURCEFILES = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagsc
           yaffs_verify.c yaffs_verify.h \
           yaffs_summary.c yaffs_summary.h
 
-YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
-		       yaffsfs.h yaffs_osglue.h ydirectenv.h \
-		       yaffs_flashif.c yaffscfg.h yaffs_qsort.c \
-		       yaffs_nandemul2k.h yaffs_list.h \
-		       yaffs_attribs.c \
-		       yaffs_nandif.c yaffs_nandif.h yportenv.h \
-		       yaffs_hweight.c yaffs_hweight.h
-
 
 DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
 			yaffs_fileem.c yaffs_norif1.c yaffs_norif1.h \
 			yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
 			ynorsim.h ynorsim.c yaffs_osglue.c
 
-COPIED_SOURCES = $(YAFFSSOURCEFILES) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
-#all: directtest2k boottest
+COPIED_SOURCES = $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
 
 all: yaffs_test fuzzer
 
 $(ALLOBJS): %.o: %.c
 	gcc -c $(CFLAGS) -o $@ $<
 
-
-$(YAFFSSOURCEFILES):
-	sed ../../$@ \
-	-e "s/strcat/yaffs_strcat/g" \
-	-e "s/strcpy/yaffs_strcpy/g" \
-	-e "s/strncpy/yaffs_strncpy/g" \
-	-e "s/strnlen/yaffs_strnlen/g" \
-	-e "s/strcmp/yaffs_strcmp/g" \
-	-e "s/strncmp/yaffs_strncmp/g" >$@
 
 $(YAFFSDIRECTSYMLINKS):
 	ln -s ../$@ $@
@@ -108,10 +100,6 @@ yaffs_test: $(COPIED_SOURCES) $(YAFFSTESTOBJS)
 
 fuzzer: fuzzer.c
 	gcc $(CFLAGS) -o $@ $<
-
-
-
-
 
 clean:
 	rm -f yaffs_test fuzzer fuzzer.o $(ALLOBJS) core $(COPIED_SOURCES)

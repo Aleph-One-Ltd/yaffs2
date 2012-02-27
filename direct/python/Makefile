@@ -50,7 +50,16 @@ YAFFSLIBOBJS  = $(COMMONTESTOBJS) yaffs_python_helper.o
 
 
 
-YAFFS_SOURCES = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
+          
+
+YAFFSDIRECTSYMLINKS =   \
+          yaffsfs.c yaffsfs.h yaffscfg.h yaffs_osglue.h  ydirectenv.h \
+          yaffs_flashif.c yaffs_flashif.h yaffs_flashif2.h yaffs_list.h \
+          yaffs_nandif.c yaffs_nandif.h yaffs_qsort.c yaffs_nandemul2k.h \
+          yportenv.h yaffs_attribs.c \
+          yaffs_hweight.c yaffs_hweight.h \
+          yaffs_error.c \
+          yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
           yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h  \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h  \
           yaffs_checkptrw.h yaffs_checkptrw.c \
@@ -62,14 +71,6 @@ YAFFS_SOURCES = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscomp
           yaffs_yaffs2.c yaffs_yaffs2.h \
           yaffs_bitmap.c yaffs_bitmap.h \
           yaffs_verify.c yaffs_verify.h
-          
-
-YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffsfs.h yaffscfg.h yaffs_osglue.h  ydirectenv.h \
-		       yaffs_flashif.c yaffs_flashif.h yaffs_flashif2.h yaffs_list.h \
-		       yaffs_nandif.c yaffs_nandif.h yaffs_qsort.c yaffs_nandemul2k.h \
-		       yportenv.h yaffs_attribs.c \
-		       yaffs_hweight.c yaffs_hweight.h \
-		       yaffs_error.c
 
 DIRECTEXTRASYMLINKS =   yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
                         yaffs_fileem.c yaffs_norif1.c yaffs_norif1.h \
@@ -77,7 +78,7 @@ DIRECTEXTRASYMLINKS =   yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
                         yaffsnewcfg.c yramsim.c yramsim.h \
                         ynorsim.h ynorsim.c yaffs_osglue.c
                                                                         
-ALL_SOURCES = $(YAFFS_SOURCES) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
+COPIED_SOURCES = $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
 
 all:  libyaffsfs.so
 
@@ -85,15 +86,6 @@ all:  libyaffsfs.so
 $(YAFFSLIBOBJS): %.o: %.c
 	gcc -c $(CFLAGS)   -o $@ $<
 
-$(YAFFS_SOURCES):
-	sed ../../$@ \
-	-e "s/strcat/yaffs_strcat/g" \
-	-e "s/strcpy/yaffs_strcpy/g" \
-	-e "s/strncpy/yaffs_strncpy/g" \
-	-e "s/strnlen/yaffs_strnlen/g" \
-	-e "s/strcmp/yaffs_strcmp/g" \
-	-e "s/strncmp/yaffs_strncmp/g" >$@
-							
 
 $(YAFFSDIRECTSYMLINKS):
 	ln -s ../$@ $@
@@ -102,13 +94,11 @@ $(DIRECTEXTRASYMLINKS):
 	ln -s ../basic-test/$@ $@
 
 
-libyaffsfs.so: $(ALL_SOURCES) $(YAFFSLIBOBJS)
+libyaffsfs.so: $(COPIED_SOURCES) $(YAFFSLIBOBJS)
 	gcc -shared $(YAFFSLIBOBJS) -o $@
 
 
-
-
 clean:
-	rm -f  $(YAFFSLIBOBJS)  core $(ALL_SOURCES)
+	rm -f  $(YAFFSLIBOBJS)  core $(COPIED_SOURCES)
 	rm -f libyaffsfs.so
 	rm -f *.pyc
