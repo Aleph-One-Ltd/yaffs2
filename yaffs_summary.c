@@ -214,7 +214,7 @@ int yaffs_summary_read(struct yaffs_dev *dev,
 			tags.obj_id != YAFFS_OBJECTID_SUMMARY ||
 			tags.chunk_used == 0 ||
 			tags.ecc_result > YAFFS_ECC_RESULT_FIXED ||
-			this_tx != tags.n_bytes)
+			tags.n_bytes != (this_tx + sizeof(hdr)))
 				result = YAFFS_FAIL;
 		if (result != YAFFS_OK)
 			break;
