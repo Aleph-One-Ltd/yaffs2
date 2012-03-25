@@ -3687,17 +3687,26 @@ int yaffs_wr_file(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 
 /* ---------------------- File resizing stuff ------------------ */
 
-static void yaffs_prune_chunks(struct yaffs_obj *in, int new_size)
+static void yaffs_prune_chunks(struct yaffs_obj *in, loff_t new_size)
 {
 
 	struct yaffs_dev *dev = in->my_dev;
-	int old_size = in->variant.file_variant.file_size;
+	loff_t old_size = in->variant.file_variant.file_size;
 	int i;
 	int chunk_id;
-	int last_del = 1 + (old_size - 1) / dev->data_bytes_per_chunk;
-	int start_del = 1 + (new_size + dev->data_bytes_per_chunk - 1) /
-	    dev->data_bytes_per_chunk;
+	u32 dummy;
+	int last_del;
+	int start_del;
 
+	if(old_size > 0)
+		yaffs_addr_to_chunk(dev, old_size - 1, &last_del, &dummy);
+	else
+		last_del = 0;
+
+	yaffs_addr_to_chunk(dev, new_size + dev->data_bytes_per_chunk - 1,
+				&start_del, &dummy);
+	last_del++;
+	start_del++;
 
 	/* Delete backwards so that we don't end up with holes if
 	 * power is lost part-way through the operation.

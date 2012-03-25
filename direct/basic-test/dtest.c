@@ -2976,8 +2976,11 @@ void verify_big_sparse_file(int h)
 
 void large_file_test(const char *mountpt)
 {
+	char xx_buffer[1000];
+	int i;
 	int handle;
 	char fullname[100];
+	loff_t file_end;
 
 	yaffs_trace_mask = 0;
 
@@ -3018,6 +3021,21 @@ void large_file_test(const char *mountpt)
 	printf("mounted with no checkpt\n");
         dumpDir(mountpt);
 	handle = yaffs_open(fullname, O_RDONLY, 0);
+	verify_big_sparse_file(handle);
+	yaffs_unmount(mountpt);
+
+	/* Check resize by adding to the end, resizing back and verifying. */
+	yaffs_mount_common(mountpt, 0, 1);
+	printf("checking resize\n");
+        dumpDir(mountpt);
+	handle = yaffs_open(fullname, O_RDWR, 0);
+
+	file_end = yaffs_lseek(handle, 0, SEEK_END);
+	printf("file_end %lld\n", file_end);
+	for(i = 0; i < 10000; i++)
+		yaffs_write(handle, xx_buffer, sizeof(xx_buffer));
+	yaffs_ftruncate(handle, file_end);
+
 	verify_big_sparse_file(handle);
 	yaffs_unmount(mountpt);
 
@@ -3092,10 +3110,10 @@ int main(int argc, char *argv[])
 	 //basic_utime_test("/yaffs2");
 
 	 //max_files_test("/yaffs2");
-	 
-	 start_twice("/yaffs2");
 
-	 //large_file_test("/yaffs2");
+	 //start_twice("/yaffs2");
+
+	 large_file_test("/yaffs2");
 
 	 //basic_utime_test("/yaffs2");
 	 //case_insensitive_test("/yaffs2");
