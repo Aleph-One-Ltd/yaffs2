@@ -242,7 +242,8 @@ static void object_header_little_to_big_endian(struct yaffs_obj_hdr* oh)
     oh->yst_mtime = SWAP32(oh->yst_mtime);
     oh->yst_ctime = SWAP32(oh->yst_ctime);
 
-    oh->file_size = SWAP32(oh->file_size); // Aiee. An int... signed, at that!
+    oh->file_size_low = SWAP32(oh->file_size_low); // Aiee. An int... signed, at that!
+    oh->file_size_high = SWAP32(oh->file_size_high); // Aiee. An int... signed, at that!
     oh->equiv_id = SWAP32(oh->equiv_id);
     // alias  - char array.
     oh->yst_rdev = SWAP32(oh->yst_rdev);
@@ -300,7 +301,8 @@ static int write_object_header(int id, enum yaffs_obj_type t, struct stat *s, in
 	
 	if(t == YAFFS_OBJECT_TYPE_FILE)
 	{
-		oh->file_size = s->st_size;
+		oh->file_size_low = s->st_size;
+		oh->file_size_high = (s->st_size >> 32);
 	}
 	
 	if(t == YAFFS_OBJECT_TYPE_HARDLINK)
