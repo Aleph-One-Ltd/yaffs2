@@ -29,8 +29,6 @@
 #include "yaffs_getblockinfo.h"
 #include "yaffs_bitmap.h"
 
-#define YAFFS_SUMMARY_VERSION 1
-
 /*
  * The summary is built up in an array of summary tags.
  * This gets written to the last one or two (maybe more) chunks in a block.
