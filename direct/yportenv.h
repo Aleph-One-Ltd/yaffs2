@@ -19,9 +19,11 @@
 
 
 /* Definition of types */
+#ifdef CONFIG_YAFFS_DEFINES_TYPES
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned u32;
+#endif
 
 
 #ifdef CONFIG_YAFFS_PROVIDE_DEFS

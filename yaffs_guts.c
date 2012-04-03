@@ -280,7 +280,8 @@ static void yaffs_handle_chunk_wr_error(struct yaffs_dev *dev, int nand_chunk,
 
 static inline int yaffs_hash_fn(int n)
 {
-	n = abs(n);
+	if(n < 0)
+		n = -n;
 	return n % YAFFS_NOBJECT_BUCKETS;
 }
 

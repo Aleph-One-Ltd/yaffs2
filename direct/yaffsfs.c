@@ -17,7 +17,7 @@
 #include "yportenv.h"
 #include "yaffs_trace.h"
 
-#include <string.h> /* for memset */
+#include "string.h"
 
 #define YAFFSFS_MAX_SYMLINK_DEREFERENCES 5
 
