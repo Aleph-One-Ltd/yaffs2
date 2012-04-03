@@ -1,6 +1,16 @@
 /* Yaffs commands.
  * Modified by Charles Manning by adding ydevconfig command.
  *
+ * Use ydevconfig to configure a mountpoint before use.
+ * For example:
+ *  # Configure mountpt xxx using nand device 0 using blocks 100-500
+ *  ydevconfig xxx 0 100 500
+ *  # Mount it
+ *  ymount xxx
+ *  # yls, yrdm etc
+ *  yls -l xxx
+ *  yrdm xxx/boot-image 82000000
+ *  ...
  */
 
 #include <common.h>
