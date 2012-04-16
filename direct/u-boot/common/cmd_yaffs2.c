@@ -24,6 +24,8 @@
 #define PRINTF(fmt,args...) do { } while(0)
 #endif
 
+extern void cmd_yaffs_dev_ls(void);
+extern void cmd_yaffs_tracemask(unsigned set, unsigned mask);
 extern void cmd_yaffs_devconfig(char *mp, int flash_dev, int start_block, int end_block);
 extern void cmd_yaffs_mount(char *mp);
 extern void cmd_yaffs_umount(char *mp);
@@ -40,6 +42,25 @@ extern void cmd_yaffs_mv(const char *oldPath, const char *newPath);
 extern int yaffs_dump_dev(const char *path);
 
 
+/* ytrace - show/set yaffs trace mask */
+int do_ytrace (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	if(argc > 1)
+		cmd_yaffs_tracemask(1, simple_strtol(argv[1], NULL, 16));
+	else
+		cmd_yaffs_tracemask(0, 0);
+
+    return(0);
+}
+
+/* ydevls - lists yaffs mount points. */
+int do_ydevls (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+    cmd_yaffs_dev_ls();
+
+    return(0);
+}
+
 /* ydevconfig mount_pt mtd_dev_num start_block end_block */
 int do_ydevconfig (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
@@ -52,15 +73,12 @@ int do_ydevconfig (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
     	printf("Bad arguments: ydevconfig mount_pt mtd_dev start_block end_block\n");
     	return -1;
     }
-    
+
     mtpoint = argv[1];
     mtd_dev = simple_strtol(argv[2], NULL, 16);
     start_block = simple_strtol(argv[3], NULL, 16);
     end_block = simple_strtol(argv[4], NULL, 16);
-    
-    printf("Configure yaffs2 mount point %s on nand device %d from block %x to block %x\n",
-    	mtpoint, mtd_dev, start_block, end_block);
-    
+
     cmd_yaffs_devconfig(mtpoint, mtd_dev, start_block, end_block);
 
     return(0);
@@ -69,15 +87,15 @@ int do_ydevconfig (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 int do_ymount (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
     char *mtpoint;
-    
+
     if(argc != 2) {
     	printf("Bad arguments: ymount mount_pt\n");
     	return -1;
     }
-    
+
     mtpoint = argv[1];
     printf("Mounting yaffs2 mount point %s\n",mtpoint);
-    
+
     cmd_yaffs_mount(mtpoint);
 
     return(0);
@@ -86,12 +104,12 @@ int do_ymount (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 int do_yumount (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
     char *mtpoint;
-    
+
     if(argc != 2) {
     	printf("Bad arguments: yumount mount_pt\n");
     	return -1;
     }
-    
+
     mtpoint = argv[1];
     printf("Unmounting yaffs2 mount point %s\n",mtpoint);
     cmd_yaffs_umount(mtpoint);
@@ -102,13 +120,13 @@ int do_yumount (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 int do_yls (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
     char *dirname;
-    
+
     if(argc < 2 || argc > 3 ||
        (argc == 3 && strcmp(argv[1],"-l"))) {
     	printf("Bad arguments: yls [-l] dir\n");
     	return -1;
     }
-    
+
     dirname = argv[argc-1];
 
     cmd_yaffs_ls(dirname, (argc>2)?1:0);
@@ -119,14 +137,14 @@ int do_yls (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 int do_yrd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
     char *filename;
-    
+
     if(argc != 2) {
     	printf("Bad arguments: yrd file_name\n");
     	return -1;
     }
-    
+
     filename = argv[1];
-    
+
     printf ("Reading file %s ", filename);
 
     cmd_yaffs_read_file(filename);
@@ -145,7 +163,7 @@ int do_ywr (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
     	printf("Bad arguments: ywr file_name value n_values\n");
     	return -1;
     }
-    
+
     filename = argv[1];
     value = simple_strtoul(argv[2], NULL, 16);
     numValues = simple_strtoul(argv[3], NULL, 16);
@@ -186,7 +204,7 @@ int do_ywrm (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
     	printf("Bad arguments: ywrm file_name addr size\n");
     	return -1;
     }
-    
+
     filename = argv[1];
     addr = simple_strtoul(argv[2], NULL, 16);
     size = simple_strtoul(argv[3], NULL, 16);
@@ -259,6 +277,18 @@ int do_ymv (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
     return(0);
 }
+
+U_BOOT_CMD(
+    ytrace, 2,  0,  do_ytrace,
+    "show/set yaffs trace mask",
+    "ytrace [new_mask]  show/set yaffs trace mask"
+);
+
+U_BOOT_CMD(
+    ydevls, 1,  0,  do_ydevls,
+    "list yaffs mount points",
+    "list yaffs mount points"
+);
 
 U_BOOT_CMD(
     ydevconfig, 5,  0,  do_ydevconfig,

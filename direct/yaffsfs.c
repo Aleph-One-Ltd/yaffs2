@@ -2768,8 +2768,27 @@ void yaffs_remove_device(struct yaffs_dev *dev)
 	list_del_init(&dev->dev_list);
 }
 
+/* Functions to iterate through devices. NB Use with extreme care! */
 
+static struct list_head *dev_iterator;
+void yaffs_dev_rewind(void)
+{
+	dev_iterator = yaffsfs_deviceList.next;
+}
 
+struct yaffs_dev *yaffs_next_dev(void)
+{
+	struct yaffs_dev *retval;
+
+	if(!dev_iterator)
+		return NULL;
+	if(dev_iterator == &yaffsfs_deviceList)
+		return NULL;
+
+	retval = list_entry(dev_iterator, struct yaffs_dev, dev_list);
+	dev_iterator = dev_iterator->next;
+	return retval;
+}
 
 /* Directory search stuff. */
 

@@ -28,9 +28,9 @@
 #include "yaffs_osglue.h"
 #include "yaffs_hweight.h"
 
-#include "assert.h"
-#define BUG() assert(0)
-//#define BUG() do { *((int *)0) =1;} while(0)
+void yaffs_bug_fn(const char *file_name, int line_no);
+
+#define BUG() do { yaffs_bug_fn(__FILE__, __LINE__); } while (0)
 
 
 #define YCHAR char

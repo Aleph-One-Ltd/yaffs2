@@ -180,12 +180,15 @@ int yaffs_n_handles(const YCHAR *path);
 #define YAFFS_SHARE_WRITE 2
 int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int shareMode) ;
 
-
 struct yaffs_dev;
 void yaffs_add_device(struct yaffs_dev *dev);
 
 int yaffs_start_up(void);
 int yaffsfs_GetLastError(void);
+
+/* Functions to iterate through devices. NB Use with extreme care! */
+void yaffs_dev_rewind(void);
+struct yaffs_dev *yaffs_next_dev(void);
 
 /* Function to get the last error */
 int yaffs_get_error(void);

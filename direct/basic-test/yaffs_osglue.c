@@ -19,7 +19,7 @@
 #include "yaffs_nandemul2k.h"
 #include "yaffs_norif1.h"
 #include "yaffs_trace.h"
-
+#include <assert.h>
 
 #include <errno.h>
 
@@ -108,3 +108,9 @@ void yaffsfs_OSInitialisation(void)
 }
 
 
+void yaffs_bug_fn(const char *file_name, int line_no)
+{
+	printf("yaffs bug detected %s:%d\n",
+		file_name, line_no);
+	assert(0);
+}
