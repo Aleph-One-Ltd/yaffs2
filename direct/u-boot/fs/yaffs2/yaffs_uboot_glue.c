@@ -183,6 +183,7 @@ void cmd_yaffs_devconfig(char *_mp, int flash_dev, int start_block, int end_bloc
 
 	if(flash_dev >= CONFIG_SYS_MAX_NAND_DEVICE) {
 		printf("Flash device invalid\n");
+		goto err;
 	}
 	
 	if(end_block == 0)
