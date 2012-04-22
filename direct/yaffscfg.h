@@ -25,7 +25,8 @@
 
 #include "yportenv.h"     
 
-#define YAFFSFS_N_HANDLES 100
+#define YAFFSFS_N_HANDLES	100
+#define YAFFSFS_N_DSC		20
 
 
 typedef struct yaffsfs_DeviceConfigurationStruct {

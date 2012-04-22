@@ -12,8 +12,6 @@
  */
 
 
-
-
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -3042,6 +3040,44 @@ void large_file_test(const char *mountpt)
 }
 
 
+void readdir_test(const char *mountpt)
+{
+	char xx_buffer[1000];
+	int i;
+	int handle;
+	char fullname[100];
+	
+	yaffs_DIR *dirs[100];
+	
+
+	yaffs_trace_mask = 0;
+
+	yaffs_start_up();
+
+	yaffs_mount(mountpt);
+	
+	for(i = 0; i < 100; i++) {
+	         dirs[i] = yaffs_opendir(mountpt);
+	         printf("%2d %p,", i, dirs[i]);
+	}
+	
+	printf("\n");
+	
+	for(i = 0; i < 100; i++) {
+	         if(dirs[i])
+	                  yaffs_closedir(dirs[i]);
+	}
+	
+	
+	for(i = 0; i < 100; i++) {
+	         dirs[i] = yaffs_opendir(mountpt);
+	         printf("%2d %p,", i, dirs[i]);
+	}
+	
+
+}
+
+
 int random_seed;
 int simulate_power_failure;
 
@@ -3113,7 +3149,8 @@ int main(int argc, char *argv[])
 
 	 //start_twice("/yaffs2");
 
-	 large_file_test("/yaffs2");
+	 //large_file_test("/yaffs2");
+	 readdir_test("/yaffs2");
 
 	 //basic_utime_test("/yaffs2");
 	 //case_insensitive_test("/yaffs2");

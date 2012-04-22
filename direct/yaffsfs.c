@@ -83,6 +83,20 @@ typedef struct {
 	short int useCount;
 } yaffsfs_Handle;
 
+
+typedef struct
+{
+	yaffs_dirent de;		/* directory entry being used by this dsc */
+	YCHAR name[NAME_MAX+1];		/* name of directory being searched */
+        struct yaffs_obj *dirObj;           /* ptr to directory being searched */
+        struct yaffs_obj *nextReturn;       /* obj to be returned by next readddir */
+        struct list_head others;
+        int offset:20;
+        unsigned inUse:1;
+} yaffsfs_DirectorySearchContext;
+
+
+static yaffsfs_DirectorySearchContext yaffsfs_dsc[YAFFSFS_N_DSC];
 static yaffsfs_Inode yaffsfs_inode[YAFFSFS_N_HANDLES];
 static yaffsfs_FileDes yaffsfs_fd[YAFFSFS_N_HANDLES];
 static yaffsfs_Handle yaffsfs_handle[YAFFSFS_N_HANDLES];
@@ -112,9 +126,10 @@ static void yaffsfs_InitHandles(void)
 	if(yaffsfs_handlesInitialised)
                 return;
 
-	memset(yaffsfs_inode,0,sizeof(yaffsfs_inode));
-	memset(yaffsfs_fd,0,sizeof(yaffsfs_fd));
-	memset(yaffsfs_handle,0,sizeof(yaffsfs_handle));
+	memset(yaffsfs_inode, 0, sizeof(yaffsfs_inode));
+	memset(yaffsfs_fd, 0, sizeof(yaffsfs_fd));
+	memset(yaffsfs_handle, 0, sizeof(yaffsfs_handle));
+	memset(yaffsfs_dsc, 0, sizeof(yaffsfs_dsc));
 
 	for(i = 0; i < YAFFSFS_N_HANDLES; i++)
 		yaffsfs_fd[i].inodeId = -1;
@@ -381,7 +396,7 @@ static void yaffsfs_BreakDeviceHandles(struct yaffs_dev *dev)
  *  Stuff to handle names.
  */
 #ifdef CONFIG_YAFFS_CASE_INSENSITIVE
- 
+
 static int yaffs_toupper(YCHAR a)
 {
 	if(a >= 'a' && a <= 'z')
@@ -2792,25 +2807,6 @@ struct yaffs_dev *yaffs_next_dev(void)
 
 /* Directory search stuff. */
 
-/*
- * Directory search context
- *
- * NB this is an opaque structure.
- */
-
-
-typedef struct
-{
-	u32 magic;
-	yaffs_dirent de;		/* directory entry being used by this dsc */
-	YCHAR name[NAME_MAX+1];		/* name of directory being searched */
-        struct yaffs_obj *dirObj;           /* ptr to directory being searched */
-        struct yaffs_obj *nextReturn;       /* obj to be returned by next readddir */
-        int offset;
-        struct list_head others;
-} yaffsfs_DirectorySearchContext;
-
-
 
 static struct list_head search_contexts;
 
@@ -2910,13 +2906,18 @@ yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
 	else if(obj->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
 		yaffsfs_SetError(-ENOTDIR);
 	else {
+		int i;
 
-		dsc = kmalloc(sizeof(yaffsfs_DirectorySearchContext), 0);
+		for(i = 0, dsc = NULL; i < YAFFSFS_N_DSC && !dsc; i++) {
+			if(!yaffsfs_dsc[i].inUse)
+				dsc = & yaffsfs_dsc[i];
+		}
+
 		dir = (yaffs_DIR *)dsc;
 
 		if(dsc){
 			memset(dsc,0,sizeof(yaffsfs_DirectorySearchContext));
-                        dsc->magic = YAFFS_MAGIC;
+                        dsc->inUse = 1;
                         dsc->dirObj = obj;
                         yaffs_strncpy(dsc->name,dirname,NAME_MAX);
                         INIT_LIST_HEAD(&dsc->others);
@@ -2942,7 +2943,7 @@ struct yaffs_dirent *yaffs_readdir(yaffs_DIR *dirp)
 
 	yaffsfs_Lock();
 
-	if(dsc && dsc->magic == YAFFS_MAGIC){
+	if(dsc && dsc->inUse){
 		yaffsfs_SetError(0);
 		if(dsc->nextReturn){
 			dsc->de.d_ino = yaffs_get_equivalent_obj(dsc->nextReturn)->obj_id;
@@ -2991,9 +2992,8 @@ int yaffs_closedir(yaffs_DIR *dirp)
 	}
 
         yaffsfs_Lock();
-        dsc->magic = 0;
+        dsc->inUse = 0;
         list_del(&dsc->others); /* unhook from list */
-        kfree(dsc);
         yaffsfs_Unlock();
         return 0;
 }
