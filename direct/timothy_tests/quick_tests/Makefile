@@ -18,7 +18,8 @@
 
 #EXTRA_COMPILE_FLAGS = -DYAFFS_IGNORE_TAGS_ECC
 
-CFLAGS =      -DCONFIG_YAFFS_DIRECT -DCONFIG_YAFFS_YAFFS2  
+CFLAGS =      -DCONFIG_YAFFS_DIRECT -DCONFIG_YAFFS_YAFFS2  -DCONFIG_YAFFS_DEFINES_TYPES
+
 CFLAGS +=     -DCONFIG_YAFFS_PROVIDE_DEFS -DCONFIG_YAFFSFS_PROVIDE_VALUES
 CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Wstrict-aliasing 
 #CFLAGS +=    -fno-strict-aliasing
@@ -44,7 +45,6 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
 		 yaffs_verify.o \
 		 yaffs_error.o \
 		 yaffs_summary.o
-#		 yaffs_checkptrwtest.o\
 
 TESTFILES = 	quick_tests.o lib.o \
 		test_yaffs_mount.o test_yaffs_mount_ENODEV.o test_yaffs_mount_ENAMETOOLONG.o test_yaffs_mount_EBUSY.o \
@@ -118,8 +118,19 @@ YAFFSTESTOBJS  = $(COMMONTESTOBJS) $(TESTFILES)
 
 ALLOBJS = $(sort $(YAFFSTESTOBJS))
 
-YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
-          yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h \
+YAFFSDIRECTSYMLINKS =  \
+          yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
+          yaffsfs.h yaffs_osglue.h ydirectenv.h \
+          yaffs_flashif.c yaffscfg.h yaffs_qsort.c \
+          yaffs_nandemul2k.h yaffs_list.h \
+          yaffs_attribs.c \
+          yaffs_error.c \
+          yaffs_nandif.c yaffs_nandif.h yportenv.h \
+          yaffs_hweight.c yaffs_hweight.h \
+          yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
+          yaffs_tagscompat.c yaffs_tagscompat.h \
+          yaffs_packedtags1.c yaffs_packedtags1.h \
+          yaffs_packedtags2.c yaffs_packedtags2.h  \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
           yaffs_checkptrw.h yaffs_checkptrw.c \
           yaffs_nameval.c yaffs_nameval.h \
@@ -131,14 +142,6 @@ YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscomp
           yaffs_verify.c yaffs_verify.h \
           yaffs_summary.c yaffs_summary.h
 
-YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
-		       yaffsfs.h ydirectenv.h \
-		       yaffs_flashif.c yaffscfg.h yaffs_qsort.c \
-		       yaffs_nandemul2k.h yaffs_list.h \
-		       yaffs_attribs.c yaffs_osglue.h \
-		       yaffs_nandif.c yaffs_nandif.h yportenv.h \
-		       yaffs_hweight.h yaffs_hweight.c \
-		       yaffs_error.c
 
 
 DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
@@ -157,8 +160,7 @@ $(ALLOBJS): %.o: %.c
 $(PYTONOSYMLINKS):
 	ln -s ../../python/$@ $@
 
-$(YAFFSSYMLINKS):
-	ln -s ../../../$@ $@
+
 
 $(YAFFSDIRECTSYMLINKS):
 	ln -s ../../$@ $@
