@@ -1473,7 +1473,7 @@ int yaffs2_scan_backwards(struct yaffs_dev *dev)
 
 		/* For each chunk in each block that needs scanning.... */
 		found_chunks = 0;
-		if(summary_available)
+		if (summary_available)
 			c = dev->chunks_per_summary - 1;
 		else
 			c = dev->param.chunks_per_block - 1;

@@ -1,5 +1,5 @@
 /*
- * YAFFS: Yet another Flash File System . A NAND-flash specific file system. 
+ * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
  * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
@@ -19,8 +19,7 @@
 
 #include "yaffs_guts.h"
 
-
-typedef struct {
+struct ynandif_Geometry {
 	unsigned start_block;
 	unsigned end_block;
 	unsigned dataSize;
@@ -34,16 +33,20 @@ typedef struct {
 	int (*deinitialise)(struct yaffs_dev *dev);
 
 	int (*readChunk) (struct yaffs_dev *dev,
-					  unsigned pageId, 
-					  unsigned char *data, unsigned dataLength,
-					  unsigned char *spare, unsigned spareLength,
+					  unsigned pageId,
+					  unsigned char *data,
+					  unsigned dataLength,
+					  unsigned char *spare,
+					  unsigned spareLength,
 					  int *eccStatus);
-// ECC status is set to 0 for OK, 1 for fixed, -1 for unfixed.
+	/* ECC status is set to 0 for OK, 1 for fixed, -1 for unfixed. */
 
 	int (*writeChunk)(struct yaffs_dev *dev,
-					  unsigned pageId, 
-					  const unsigned char *data, unsigned dataLength,
-					  const unsigned char *spare, unsigned spareLength);
+					  unsigned pageId,
+					  const unsigned char *data,
+					  unsigned dataLength,
+					  const unsigned char *spare,
+					  unsigned spareLength);
 
 	int (*eraseBlock)(struct yaffs_dev *dev, unsigned blockId);
 
@@ -52,22 +55,11 @@ typedef struct {
 
 	void *privateData;
 
-} ynandif_Geometry;
+};
 
-struct yaffs_dev * 
+struct yaffs_dev *
 	yaffs_add_dev_from_geometry(const YCHAR *name,
 					const ynandif_Geometry *geometry);
-
-#if 0
-
-int ynandif_WriteChunkWithTagsToNAND(struct yaffs_dev *dev,int nand_chunk,const u8 *data, const struct yaffs_ext_tags *tags);
-int ynandif_ReadChunkWithTagsFromNAND(struct yaffs_dev *dev,int nand_chunk, u8 *data, struct yaffs_ext_tags *tags);
-int ynandif_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber);
-int ynandif_InitialiseNAND(struct yaffs_dev *dev);
-int ynandif_MarkNANDBlockBad(struct yaffs_dev *dev,int blockNumber);
-int ynandif_QueryNANDBlock(struct yaffs_dev *dev, int block_no, enum yaffs_block_state *state, u32 *seq_number);
-int ynandif_GetGeometry(struct yaffs_dev *dev, ynandif_Geometry *geometry);
-#endif
 
 
 #endif

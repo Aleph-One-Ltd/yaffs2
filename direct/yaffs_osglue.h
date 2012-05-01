@@ -1,5 +1,5 @@
 /*
- * YAFFS: Yet another Flash File System . A NAND-flash specific file system. 
+ * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
  * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
@@ -36,7 +36,7 @@ void *yaffsfs_malloc(size_t size);
 void yaffsfs_free(void *ptr);
 
 void yaffsfs_OSInitialisation(void);
- 
+
 
 #endif
 

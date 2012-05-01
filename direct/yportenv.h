@@ -94,7 +94,7 @@ struct iattr {
 #ifdef CONFIG_YAFFSFS_PROVIDE_VALUES
 
 #ifndef O_RDONLY
-#define O_RDONLY        00
+#define O_RDONLY	00
 #endif
 
 #ifndef O_WRONLY
@@ -105,8 +105,8 @@ struct iattr {
 #define O_RDWR		02
 #endif
 
-#ifndef O_CREAT		
-#define O_CREAT 	0100
+#ifndef O_CREAT
+#define O_CREAT		0100
 #endif
 
 #ifndef O_EXCL
@@ -157,7 +157,7 @@ struct iattr {
 #define EACCES	13
 #endif
 
-#ifndef EXDEV	
+#ifndef EXDEV
 #define EXDEV	18
 #endif
 
@@ -214,7 +214,7 @@ struct iattr {
 #endif
 
 
-// Mode flags
+/* Mode flags */
 
 #ifndef S_IFMT
 #define S_IFMT		0170000
@@ -257,7 +257,7 @@ struct iattr {
 #define S_ISFIFO(m)	(((m) & S_IFMT) == S_IFIFO)
 
 
-#ifndef S_IREAD 
+#ifndef S_IREAD
 #define S_IREAD		0000400
 #endif
 

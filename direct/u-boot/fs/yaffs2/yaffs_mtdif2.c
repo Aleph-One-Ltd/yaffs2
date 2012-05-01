@@ -234,7 +234,7 @@ int nandmtd2_MarkNANDBlockBad(struct yaffs_dev *dev, int blockNo)
 }
 
 int nandmtd2_QueryNANDBlock(struct yaffs_dev *dev, int blockNo,
-			    enum yaffs_block_state * state, u32 *sequenceNumber)
+			    enum yaffs_block_state *state, u32 *sequenceNumber)
 {
 	struct mtd_info *mtd = (struct mtd_info *)(dev->driver_context);
 	int retval;
@@ -253,9 +253,9 @@ int nandmtd2_QueryNANDBlock(struct yaffs_dev *dev, int blockNo,
 	} else {
 		struct yaffs_ext_tags t;
 		nandmtd2_read_chunk_tags(dev,
-						   blockNo *
-						   dev->param.chunks_per_block, NULL,
-						   &t);
+					   blockNo *
+					   dev->param.chunks_per_block, NULL,
+					   &t);
 
 		if (t.chunk_used) {
 			*sequenceNumber = t.seq_number;
@@ -265,7 +265,8 @@ int nandmtd2_QueryNANDBlock(struct yaffs_dev *dev, int blockNo,
 			*state = YAFFS_BLOCK_STATE_EMPTY;
 		}
 	}
-	yaffs_trace(YAFFS_TRACE_MTD, "block is bad seq %d state %d", *sequenceNumber, *state);
+	yaffs_trace(YAFFS_TRACE_MTD, "block is bad seq %d state %d",
+			*sequenceNumber, *state);
 
 	if (retval == 0)
 		return YAFFS_OK;

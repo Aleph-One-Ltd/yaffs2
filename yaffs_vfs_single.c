@@ -436,7 +436,8 @@ static int yaffs_unlink(struct inode *dir, struct dentry *dentry)
 	return -ENOTEMPTY;
 }
 
-static int yaffs_sync_object(struct file *file, loff_t start, loff_t end, int datasync)
+static int yaffs_sync_object(struct file *file,
+				loff_t start, loff_t end, int datasync)
 {
 
 	struct yaffs_obj *obj;
@@ -1219,7 +1220,8 @@ static int yaffs_writepage(struct page *page, struct writeback_control *wbc)
 		(int)obj->variant.file_variant.file_size, (int)inode->i_size);
 
 	n_written = yaffs_wr_file(obj, buffer,
-				  ((loff_t)page->index) << PAGE_CACHE_SHIFT, n_bytes, 0);
+				  ((loff_t)page->index) << PAGE_CACHE_SHIFT,
+				  n_bytes, 0);
 
 	yaffs_touch_super(dev);
 
@@ -2374,9 +2376,9 @@ static char *yaffs_dump_dev_part0(char *buf, struct yaffs_dev *dev)
 static char *yaffs_dump_dev_part1(char *buf, struct yaffs_dev *dev)
 {
 	buf += sprintf(buf, "max file size......... %lld\n",
-		    	(long long) yaffs_max_file_size(dev));
+			(long long) yaffs_max_file_size(dev));
 	buf += sprintf(buf, "data_bytes_per_chunk.. %d\n",
-		    dev->data_bytes_per_chunk);
+			dev->data_bytes_per_chunk);
 	buf += sprintf(buf, "chunk_grp_bits........ %d\n", dev->chunk_grp_bits);
 	buf += sprintf(buf, "chunk_grp_size........ %d\n", dev->chunk_grp_size);
 	buf +=

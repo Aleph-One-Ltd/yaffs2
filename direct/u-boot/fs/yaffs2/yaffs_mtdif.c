@@ -14,9 +14,6 @@
 /* XXX U-BOOT XXX */
 #include <common.h>
 
-const char *yaffs_mtdif_c_version =
-    "$Id: yaffs_mtdif.c,v 1.19 2007/02/14 01:09:06 wookey Exp $";
-
 #include "yportenv.h"
 
 
@@ -27,7 +24,7 @@ const char *yaffs_mtdif_c_version =
 #include "linux/time.h"
 #include "linux/mtd/nand.h"
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18))
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 18))
 static struct nand_oobinfo yaffs_oobinfo = {
 	.useecc = 1,
 	.eccbytes = 6,
@@ -39,7 +36,7 @@ static struct nand_oobinfo yaffs_noeccinfo = {
 };
 #endif
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,17))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 static inline void translate_spare2oob(const struct yaffs_spare *spare, u8 *oob)
 {
 	oob[0] = spare->tb0;
@@ -48,8 +45,8 @@ static inline void translate_spare2oob(const struct yaffs_spare *spare, u8 *oob)
 	oob[3] = spare->tb3;
 	oob[4] = spare->tb4;
 	oob[5] = spare->tb5 & 0x3f;
-	oob[5] |= spare->block_status == 'Y' ? 0: 0x80;
-	oob[5] |= spare->page_status == 0 ? 0: 0x40;
+	oob[5] |= spare->block_status == 'Y' ? 0 : 0x80;
+	oob[5] |= spare->page_status == 0 ? 0 : 0x40;
 	oob[6] = spare->tb6;
 	oob[7] = spare->tb7;
 }
@@ -74,18 +71,18 @@ static inline void translate_oob2spare(struct yaffs_spare *spare, u8 *oob)
 }
 #endif
 
-int nandmtd_WriteChunkToNAND(struct yaffs_dev * dev, int chunkInNAND,
-			     const u8 * data, const struct yaffs_spare * spare)
+int nandmtd_WriteChunkToNAND(struct yaffs_dev *dev, int chunkInNAND,
+			     const u8 *data, const struct yaffs_spare *spare)
 {
 	struct mtd_info *mtd = (struct mtd_info *)(dev->driver_context);
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,17))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	struct mtd_oob_ops ops;
 #endif
 	size_t dummy;
 	int retval = 0;
 
 	loff_t addr = ((loff_t) chunkInNAND) * dev->data_bytes_per_chunk;
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,17))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	u8 spareAsBytes[8]; /* OOB */
 
 	if (data && !spare)
@@ -123,8 +120,8 @@ int nandmtd_WriteChunkToNAND(struct yaffs_dev * dev, int chunkInNAND,
 	} else {
 		if (data)
 			retval =
-			    mtd->write(mtd, addr, dev->data_bytes_per_chunk, &dummy,
-				       data);
+			    mtd->write(mtd, addr, dev->data_bytes_per_chunk,
+					&dummy, data);
 		if (spare)
 			retval =
 			    mtd->write_oob(mtd, addr, YAFFS_BYTES_PER_SPARE,
@@ -138,18 +135,18 @@ int nandmtd_WriteChunkToNAND(struct yaffs_dev * dev, int chunkInNAND,
 		return YAFFS_FAIL;
 }
 
-int nandmtd_ReadChunkFromNAND(struct yaffs_dev * dev, int chunkInNAND, u8 * data,
-			      struct yaffs_spare * spare)
+int nandmtd_ReadChunkFromNAND(struct yaffs_dev *dev, int chunkInNAND, u8 *data,
+			      struct yaffs_spare *spare)
 {
 	struct mtd_info *mtd = (struct mtd_info *)(dev->driver_context);
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,17))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	struct mtd_oob_ops ops;
 #endif
 	size_t dummy;
 	int retval = 0;
 
 	loff_t addr = ((loff_t) chunkInNAND) * dev->data_bytes_per_chunk;
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2,6,17))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	u8 spareAsBytes[8]; /* OOB */
 
 	if (data && !spare)
@@ -193,8 +190,8 @@ int nandmtd_ReadChunkFromNAND(struct yaffs_dev * dev, int chunkInNAND, u8 * data
 	} else {
 		if (data)
 			retval =
-			    mtd->read(mtd, addr, dev->data_bytes_per_chunk, &dummy,
-				      data);
+			    mtd->read(mtd, addr, dev->data_bytes_per_chunk,
+					&dummy, data);
 		if (spare)
 			retval =
 			    mtd->read_oob(mtd, addr, YAFFS_BYTES_PER_SPARE,
@@ -208,7 +205,7 @@ int nandmtd_ReadChunkFromNAND(struct yaffs_dev * dev, int chunkInNAND, u8 * data
 		return YAFFS_FAIL;
 }
 
-int nandmtd_EraseBlockInNAND(struct yaffs_dev * dev, int blockNumber)
+int nandmtd_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
 {
 	struct mtd_info *mtd = (struct mtd_info *)(dev->driver_context);
 	__u32 addr =
@@ -227,10 +224,6 @@ int nandmtd_EraseBlockInNAND(struct yaffs_dev * dev, int blockNumber)
 
 	/* Todo finish off the ei if required */
 
-/* XXX U-BOOT XXX */
-#if 0
-	sema_init(&dev->sem, 0);
-#endif
 
 	retval = mtd->erase(mtd, &ei);
 
@@ -240,7 +233,7 @@ int nandmtd_EraseBlockInNAND(struct yaffs_dev * dev, int blockNumber)
 		return YAFFS_FAIL;
 }
 
-int nandmtd_InitialiseNAND(struct yaffs_dev * dev)
+int nandmtd_InitialiseNAND(struct yaffs_dev *dev)
 {
 	return YAFFS_OK;
 }

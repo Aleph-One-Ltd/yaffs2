@@ -35,7 +35,7 @@
  * A summary header is written as the first part of each chunk of summary data.
  * The summary header must match or the summary is rejected.
  */
- 
+
 /* Summary tags don't need the sequence number because that is redundant. */
 struct yaffs_summary_tags {
 	unsigned obj_id;
@@ -54,7 +54,7 @@ struct yaffs_summary_header {
 
 static void yaffs_summary_clear(struct yaffs_dev *dev)
 {
-	if(!dev->sum_tags)
+	if (!dev->sum_tags)
 		return;
 	memset(dev->sum_tags, 0, dev->chunks_per_summary *
 		sizeof(struct yaffs_summary_tags));
@@ -80,7 +80,7 @@ int yaffs_summary_init(struct yaffs_dev *dev)
 			sizeof(struct yaffs_summary_tags);
 
 	chunks_used = (sum_bytes + dev->data_bytes_per_chunk - 1)/
-			(dev->data_bytes_per_chunk - 
+			(dev->data_bytes_per_chunk -
 				sizeof(struct yaffs_summary_header));
 
 	dev->chunks_per_summary = dev->param.chunks_per_block - chunks_used;
@@ -88,7 +88,7 @@ int yaffs_summary_init(struct yaffs_dev *dev)
 				dev->chunks_per_summary;
 	dev->sum_tags = kmalloc(sum_tags_bytes, GFP_NOFS);
 	dev->gc_sum_tags = kmalloc(sum_tags_bytes, GFP_NOFS);
-	if(!dev->sum_tags || !dev->gc_sum_tags) {
+	if (!dev->sum_tags || !dev->gc_sum_tags) {
 		yaffs_summary_deinit(dev);
 		return YAFFS_FAIL;
 	}
@@ -105,14 +105,14 @@ static unsigned yaffs_summary_sum(struct yaffs_dev *dev)
 	unsigned sum = 0;
 
 	i = sizeof(struct yaffs_summary_tags) *
-				dev->chunks_per_summary;;
-	while(i > 0){
+				dev->chunks_per_summary;
+	while (i > 0) {
 		sum += *sum_buffer;
 		sum_buffer++;
 		i--;
 	}
 
-	return sum;	
+	return sum;
 }
 
 static int yaffs_summary_write(struct yaffs_dev *dev, int blk)
@@ -137,12 +137,12 @@ static int yaffs_summary_write(struct yaffs_dev *dev, int blk)
 	tags.chunk_id = 1;
 	chunk_in_block = dev->chunks_per_summary;
 	chunk_in_nand = dev->alloc_block * dev->param.chunks_per_block +
-						dev-> chunks_per_summary;
+						dev->chunks_per_summary;
 	hdr.version = YAFFS_SUMMARY_VERSION;
 	hdr.block = blk;
 	hdr.seq = bi->seq_number;
 	hdr.sum = yaffs_summary_sum(dev);
-	
+
 	do {
 		this_tx = n_bytes;
 		if (this_tx > sum_bytes_per_chunk)
@@ -203,7 +203,7 @@ int yaffs_summary_read(struct yaffs_dev *dev,
 	chunk_id = 1;
 	do {
 		this_tx = n_bytes;
-		if(this_tx > sum_bytes_per_chunk)
+		if (this_tx > sum_bytes_per_chunk)
 			this_tx = sum_bytes_per_chunk;
 		result = yaffs_rd_chunk_tags_nand(dev, chunk_in_nand,
 						buffer, &tags);
@@ -232,15 +232,15 @@ int yaffs_summary_read(struct yaffs_dev *dev,
 	} while (result == YAFFS_OK && n_bytes > 0);
 	yaffs_release_temp_buffer(dev, buffer);
 
-	if(result == YAFFS_OK) {
-		/* Verify header */		
+	if (result == YAFFS_OK) {
+		/* Verify header */
 		if (hdr.version != YAFFS_SUMMARY_VERSION ||
 		    hdr.block != blk ||
 		    hdr.seq != bi->seq_number ||
 		    hdr.sum != yaffs_summary_sum(dev))
-		    result = YAFFS_FAIL;
+			result = YAFFS_FAIL;
 	}
-	
+
 	if (st == dev->sum_tags && result == YAFFS_OK)
 		bi->has_summary = 1;
 
@@ -256,17 +256,17 @@ int yaffs_summary_add(struct yaffs_dev *dev,
 	int block_in_nand = chunk_in_nand / dev->param.chunks_per_block;
 	int chunk_in_block = chunk_in_nand % dev->param.chunks_per_block;
 
-	if(!dev->sum_tags)
+	if (!dev->sum_tags)
 		return YAFFS_OK;
 
-	if(chunk_in_block >= 0 && chunk_in_block < dev->chunks_per_summary) {
+	if (chunk_in_block >= 0 && chunk_in_block < dev->chunks_per_summary) {
 		yaffs_pack_tags2_tags_only(&tags_only, tags);
 		sum_tags = &dev->sum_tags[chunk_in_block];
 		sum_tags->chunk_id = tags_only.chunk_id;
 		sum_tags->n_bytes = tags_only.n_bytes;
 		sum_tags->obj_id = tags_only.obj_id;
 
-		if(chunk_in_block == dev->chunks_per_summary - 1) {
+		if (chunk_in_block == dev->chunks_per_summary - 1) {
 			/* Time to write out the summary */
 			yaffs_summary_write(dev, block_in_nand);
 			yaffs_summary_clear(dev);
@@ -282,7 +282,7 @@ int yaffs_summary_fetch(struct yaffs_dev *dev,
 {
 	struct yaffs_packed_tags2_tags_only tags_only;
 	struct yaffs_summary_tags *sum_tags;
-	if(chunk_in_block >= 0 && chunk_in_block < dev->chunks_per_summary) {
+	if (chunk_in_block >= 0 && chunk_in_block < dev->chunks_per_summary) {
 		sum_tags = &dev->sum_tags[chunk_in_block];
 		tags_only.chunk_id = sum_tags->chunk_id;
 		tags_only.n_bytes = sum_tags->n_bytes;
@@ -301,12 +301,13 @@ void yaffs_summary_gc(struct yaffs_dev *dev, int blk)
 	if (!bi->has_summary)
 		return;
 
-	for (i = dev->chunks_per_summary; i < dev->param.chunks_per_block; i++) {
-		if( yaffs_check_chunk_bit(dev, blk, i)) {
+	for (i = dev->chunks_per_summary;
+	     i < dev->param.chunks_per_block;
+	     i++) {
+		if (yaffs_check_chunk_bit(dev, blk, i)) {
 			yaffs_clear_chunk_bit(dev, blk, i);
 			bi->pages_in_use--;
 			dev->n_free_chunks++;
 		}
 	}
-
 }
