@@ -62,12 +62,12 @@ static void yaffs_dump_tags2(const struct yaffs_ext_tags *t)
 
 static int yaffs_check_tags_extra_packable(const struct yaffs_ext_tags *t)
 {
-	if(t->chunk_id != 0 || !t->extra_available)
+	if (t->chunk_id != 0 || !t->extra_available)
 		return 0;
 
 	/* Check if the file size is too long to store */
 	if (t->extra_obj_type == YAFFS_OBJECT_TYPE_FILE &&
-	    (t->extra_file_size>> 31) != 0)
+	    (t->extra_file_size >> 31) != 0)
 		return 0;
 	return 1;
 }

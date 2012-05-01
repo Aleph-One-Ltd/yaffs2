@@ -10,10 +10,10 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
- 
- /* These functions have been renamed to hweightxx to match the
-  * equivaqlent functions in the Linux kernel.
-  */
+
+/* These functions have been renamed to hweightxx to match the
+ * equivaqlent functions in the Linux kernel.
+ */
 
 #include "yaffs_hweight.h"
 
@@ -45,7 +45,7 @@ int yaffs_hweight8(u8 x)
 
 int yaffs_hweight32(u32 x)
 {
-	return yaffs_hweight8(x & 0xff) + 
+	return yaffs_hweight8(x & 0xff) +
 		yaffs_hweight8((x >> 8) & 0xff) +
 		yaffs_hweight8((x >> 16) & 0xff) +
 		yaffs_hweight8((x >> 24) & 0xff);

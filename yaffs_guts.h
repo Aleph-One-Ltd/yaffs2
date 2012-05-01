@@ -536,7 +536,7 @@ struct yaffs_param {
 				 */
 	int use_nand_ecc;	/* Flag to decide whether or not to use
 				 * NAND driver ECC on data (yaffs1) */
-        int tags_9bytes;	/* Use 9 byte tags */
+	int tags_9bytes;	/* Use 9 byte tags */
 	int no_tags_ecc;	/* Flag to decide whether or not to do ECC
 				 * on packed tags (yaffs2) */
 

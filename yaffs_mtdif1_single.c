@@ -80,21 +80,21 @@ int nandmtd1_write_chunk_tags(struct yaffs_dev *dev,
 	 * that only zeroed-bits stick and set tag bytes to all-ones and
 	 * zero just the (not) deleted bit.
 	 */
-	 
-	if(dev->param.tags_9bytes) {
-        	((u8 *) &pt1)[8] = 0xff;
-        	if (etags->is_deleted) {
-		        memset(&pt1, 0xff, 8);
-		        /* zero page_status byte to indicate deleted */
-		        ((u8 *) &pt1)[8] = 0;
-                }
-        } else {
-        	if (etags->is_deleted) {
-	        	memset(&pt1, 0xff, 8);
-	        	/* clear delete status bit to indicate deleted */
-	        	pt1.deleted = 0;
-                }
-        }
+
+	if (dev->param.tags_9bytes) {
+		((u8 *) &pt1)[8] = 0xff;
+		if (etags->is_deleted) {
+			memset(&pt1, 0xff, 8);
+			/* zero page_status byte to indicate deleted */
+			((u8 *) &pt1)[8] = 0;
+		}
+	} else {
+		if (etags->is_deleted) {
+			memset(&pt1, 0xff, 8);
+			/* clear delete status bit to indicate deleted */
+			pt1.deleted = 0;
+		}
+	}
 
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OPS_AUTO_OOB;
@@ -259,7 +259,8 @@ int nandmtd1_mark_block_bad(struct yaffs_dev *dev, int block_no)
  *
  * Returns YAFFS_OK or YAFFS_FAIL.
  */
-static int nandmtd1_test_prerequists(struct yaffs_dev *dev, struct mtd_info *mtd)
+static int nandmtd1_test_prerequists(struct yaffs_dev *dev,
+					struct mtd_info *mtd)
 {
 	/* 2.6.18 has mtd->ecclayout->oobavail */
 	/* 2.6.21 has mtd->ecclayout->oobavail and mtd->oobavail */

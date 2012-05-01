@@ -119,7 +119,8 @@ static inline int list_empty(struct list_head *entry)
 
 #define list_for_each_safe(itervar, save_var, list) \
 	for (itervar = (list)->next, save_var = (list)->next->next; \
-		itervar != (list); itervar = save_var, save_var = save_var->next)
+		itervar != (list); \
+		itervar = save_var, save_var = save_var->next)
 
 
 #endif

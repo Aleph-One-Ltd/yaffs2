@@ -33,11 +33,11 @@
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
-#define swapcode(TYPE, parmi, parmj, n) do { 		\
-	long i = (n) / sizeof (TYPE); 			\
-	register TYPE *pi = (TYPE *) (parmi); 		\
-	register TYPE *pj = (TYPE *) (parmj); 		\
-	do { 						\
+#define swapcode(TYPE, parmi, parmj, n) do {		\
+	long i = (n) / sizeof(TYPE);			\
+	register TYPE *pi = (TYPE *) (parmi);		\
+	register TYPE *pj = (TYPE *) (parmj);		\
+	do {						\
 		register TYPE	t = *pi;		\
 		*pi++ = *pj;				\
 		*pj++ = t;				\
@@ -47,7 +47,7 @@
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
 	es % sizeof(long) ? 2 : es == sizeof(long) ? 0 : 1;
 
-static __inline void
+static inline void
 swapfunc(char *a, char *b, int n, int swaptype)
 {
 	if (swaptype <= 1)
@@ -65,9 +65,9 @@ swapfunc(char *a, char *b, int n, int swaptype)
 		swapfunc(a, b, es, swaptype);		\
 } while (0)
 
-#define vecswap(a, b, n) 	if ((n) > 0) swapfunc(a, b, n, swaptype)
+#define vecswap(a, b, n)	if ((n) > 0) swapfunc(a, b, n, swaptype)
 
-static __inline char *
+static inline char *
 med3(char *a, char *b, char *c, int (*cmp)(const void *, const void *))
 {
 	return cmp(a, b) < 0 ?

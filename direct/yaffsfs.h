@@ -26,11 +26,6 @@
 #include "yportenv.h"
 
 
-//typedef long off_t;
-//typedef long dev_t;
-//typedef unsigned long mode_t;
-
-
 #ifndef NAME_MAX
 #define NAME_MAX	256
 #endif
@@ -38,42 +33,39 @@
 #define YAFFS_MAX_FILE_SIZE (0x800000000LL - 1)
 
 
-struct yaffs_dirent{
-    long d_ino;                 /* inode number */
-    off_t d_off;                /* offset to this dirent */
-    unsigned short d_reclen;    /* length of this dirent */
-    YUCHAR  d_type;	/* type of this record */
-    YCHAR d_name [NAME_MAX+1];   /* file name (null-terminated) */
-    unsigned d_dont_use;	/* debug pointer, not for public consumption */
+struct yaffs_dirent {
+	long d_ino;			/* inode number */
+	off_t d_off;			/* offset to this dirent */
+	unsigned short d_reclen;	/* length of this dirent */
+	YUCHAR d_type;			/* type of this record */
+	YCHAR d_name[NAME_MAX+1];	/* file name (null-terminated) */
+	unsigned d_dont_use;		/* debug: not for public consumption */
 };
 
-typedef struct yaffs_dirent yaffs_dirent;
-
-
-typedef struct __opaque yaffs_DIR;
+typedef struct opaque_structure yaffs_DIR;
 
 
 
-struct yaffs_stat{
-    int		  st_dev;      /* device */
-    int           st_ino;      /* inode */
-    unsigned      st_mode;     /* protection */
-    int           st_nlink;    /* number of hard links */
-    int           st_uid;      /* user ID of owner */
-    int           st_gid;      /* group ID of owner */
-    unsigned      st_rdev;     /* device type (if inode device) */
-    loff_t         st_size;     /* total size, in bytes */
-    unsigned long st_blksize;  /* blocksize for filesystem I/O */
-    unsigned long st_blocks;   /* number of blocks allocated */
+struct yaffs_stat {
+	int		st_dev;		/* device */
+	int		st_ino;		/* inode */
+	unsigned	st_mode;	/* protection */
+	int		st_nlink;	/* number of hard links */
+	int		st_uid;		/* user ID of owner */
+	int		st_gid;		/* group ID of owner */
+	unsigned	st_rdev;	/* device type (if inode device) */
+	loff_t		st_size;	/* total size, in bytes */
+	unsigned long	st_blksize;	/* blocksize for filesystem I/O */
+	unsigned long	st_blocks;	/* number of blocks allocated */
 #ifdef CONFIG_YAFFS_WINCE
 	/* Special 64-bit times for WinCE */
-	unsigned long yst_wince_atime[2];
-	unsigned long yst_wince_mtime[2];
-	unsigned long yst_wince_ctime[2];
+	unsigned long	yst_wince_atime[2];
+	unsigned long	yst_wince_mtime[2];
+	unsigned long	yst_wince_ctime[2];
 #else
-    unsigned long yst_atime;    /* time of last access */
-    unsigned long yst_mtime;    /* time of last modification */
-    unsigned long yst_ctime;    /* time of last change */
+	unsigned long	yst_atime;	/* time of last access */
+	unsigned long	yst_mtime;	/* time of last modification */
+	unsigned long	yst_ctime;	/* time of last change */
 #endif
 };
 
@@ -117,13 +109,19 @@ int yaffs_utime(const YCHAR *path, const struct yaffs_utimbuf *buf);
 int yaffs_futime(int fd, const struct yaffs_utimbuf *buf);
 
 
-int yaffs_setxattr(const char *path, const char *name, const void *data, int size, int flags);
-int yaffs_lsetxattr(const char *path, const char *name, const void *data, int size, int flags);
-int yaffs_fsetxattr(int fd, const char *name, const void *data, int size, int flags);
+int yaffs_setxattr(const char *path, const char *name,
+			const void *data, int size, int flags);
+int yaffs_lsetxattr(const char *path, const char *name,
+			const void *data, int size, int flags);
+int yaffs_fsetxattr(int fd, const char *name,
+			const void *data, int size, int flags);
 
-int yaffs_getxattr(const char *path, const char *name, void *data, int size);
-int yaffs_lgetxattr(const char *path, const char *name, void *data, int size);
-int yaffs_fgetxattr(int fd, const char *name, void *data, int size);
+int yaffs_getxattr(const char *path, const char *name,
+			void *data, int size);
+int yaffs_lgetxattr(const char *path, const char *name,
+			void *data, int size);
+int yaffs_fgetxattr(int fd, const char *name,
+			void *data, int size);
 
 int yaffs_removexattr(const char *path, const char *name);
 int yaffs_lremovexattr(const char *path, const char *name);
@@ -136,8 +134,14 @@ int yaffs_flistxattr(int fd, char *list, int size);
 
 #ifdef CONFIG_YAFFS_WINCE
 
-int yaffs_set_wince_times(int fd, const unsigned *wctime, const unsigned *watime, const unsigned *wmtime);
-int yaffs_get_wince_times(int fd, unsigned *wctime, unsigned *watime, unsigned *wmtime);
+int yaffs_set_wince_times(int fd,
+			const unsigned *wctime,
+			const unsigned *watime,
+			const unsigned *wmtime);
+int yaffs_get_wince_times(int fd,
+			unsigned *wctime,
+			unsigned *watime,
+			unsigned *wmtime);
 
 #endif
 
@@ -178,7 +182,7 @@ int yaffs_n_handles(const YCHAR *path);
 
 #define YAFFS_SHARE_READ  1
 #define YAFFS_SHARE_WRITE 2
-int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int shareMode) ;
+int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int shareMode);
 
 struct yaffs_dev;
 void yaffs_add_device(struct yaffs_dev *dev);
@@ -192,10 +196,10 @@ struct yaffs_dev *yaffs_next_dev(void);
 
 /* Function to get the last error */
 int yaffs_get_error(void);
-const char * yaffs_error_to_str(int err);
+const char *yaffs_error_to_str(int err);
 
 /* Function only for debugging */
-void * yaffs_getdev(const YCHAR *path);
+void *yaffs_getdev(const YCHAR *path);
 int yaffs_dump_dev(const YCHAR *path);
 int yaffs_set_error(int error);
 

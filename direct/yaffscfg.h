@@ -1,5 +1,5 @@
 /*
- * YAFFS: Yet another Flash File System . A NAND-flash specific file system. 
+ * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
  * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
@@ -23,16 +23,16 @@
 #define __YAFFSCFG_H__
 
 
-#include "yportenv.h"     
+#include "yportenv.h"
 
 #define YAFFSFS_N_HANDLES	100
 #define YAFFSFS_N_DSC		20
 
 
-typedef struct yaffsfs_DeviceConfigurationStruct {
+struct yaffsfs_DeviceConfiguration {
 	const YCHAR *prefix;
 	struct yaffs_dev *dev;
-} yaffsfs_DeviceConfiguration;
+};
 
 
 #endif

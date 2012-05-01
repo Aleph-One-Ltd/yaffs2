@@ -38,8 +38,6 @@ unsigned yaffs_trace_mask = 0x0; /* Disable logging */
 static int yaffs_errno = 0;
 
 
-
-
 void yaffs_bug_fn(const char *fn, int n)
 {
 	printf("yaffs bug at %s:%d\n", fn, n);
@@ -57,7 +55,6 @@ void yaffsfs_free(void *x)
 
 void yaffsfs_SetError(int err)
 {
-	//Do whatever to set error
 	yaffs_errno = err;
 }
 
@@ -97,11 +94,11 @@ void yaffs_free(void *ptr)
 
 void yaffsfs_LocalInitialisation(void)
 {
-	// Define locking semaphore.
+	/* No locking used */
 }
 
 
-static const char * yaffs_file_type_str(struct yaffs_stat *stat)
+static const char *yaffs_file_type_str(struct yaffs_stat *stat)
 {
 	switch(stat->st_mode & S_IFMT) {
 		case S_IFREG: return "regular file";
@@ -111,7 +108,7 @@ static const char * yaffs_file_type_str(struct yaffs_stat *stat)
 	}
 }
 
-static const char * yaffs_error_str(void)
+static const char *yaffs_error_str(void)
 {
 	int error = yaffsfs_GetLastError();
 
@@ -162,7 +159,8 @@ static int yaffs_regions_overlap(int a, int b, int x, int y)
 		(x <= b && b <= y);
 }
 
-void cmd_yaffs_devconfig(char *_mp, int flash_dev, int start_block, int end_block)
+void cmd_yaffs_devconfig(char *_mp, int flash_dev,
+			int start_block, int end_block)
 {
 	struct mtd_info *mtd = NULL;
 	struct yaffs_dev *dev = NULL;
@@ -185,11 +183,11 @@ void cmd_yaffs_devconfig(char *_mp, int flash_dev, int start_block, int end_bloc
 		printf("Flash device invalid\n");
 		goto err;
 	}
-	
-	if(end_block == 0)
+
+	if (end_block == 0)
 		end_block = mtd->size / mtd->erasesize - 1;
 
-	if(end_block < start_block) {
+	if (end_block < start_block) {
 		printf("Bad start/end\n");
 		goto err;
 	}
@@ -198,7 +196,7 @@ void cmd_yaffs_devconfig(char *_mp, int flash_dev, int start_block, int end_bloc
 
 	/* Check for any conflicts */
 	yaffs_dev_rewind();
-	while(1) {
+	while (1) {
 		chk = yaffs_next_dev();
 		if(!chk)
 			break;
@@ -241,7 +239,7 @@ void cmd_yaffs_devconfig(char *_mp, int flash_dev, int start_block, int end_bloc
 	yaffs_add_device(dev);
 
 	printf("Configures yaffs mount %s: dev %d start block %d, end block %d %s\n",
-		mp, flash_dev, start_block, end_block, 
+		mp, flash_dev, start_block, end_block,
 		dev->param.inband_tags ? "using inband tags" : "");
 	return;
 
@@ -262,7 +260,8 @@ void cmd_yaffs_dev_ls(void)
 		dev = yaffs_next_dev();
 		if(!dev)
 			return;
-		flash_dev = ((unsigned) dev->driver_context - (unsigned) nand_info)/
+		flash_dev =
+			((unsigned) dev->driver_context - (unsigned) nand_info)/
 				sizeof(nand_info[0]);
 		printf("%-10s %5d 0x%05x 0x%05x %s",
 			dev->param.name, flash_dev,
@@ -284,9 +283,10 @@ void make_a_file(char *yaffsName,char bval,int sizeOfFile)
 	int i;
 	unsigned char buffer[100];
 
-	outh = yaffs_open(yaffsName, O_CREAT | O_RDWR | O_TRUNC, S_IREAD | S_IWRITE);
-	if (outh < 0)
-	{
+	outh = yaffs_open(yaffsName,
+				O_CREAT | O_RDWR | O_TRUNC,
+				S_IREAD | S_IWRITE);
+	if (outh < 0) {
 		printf("Error opening file: %d. %s\n", outh, yaffs_error_str());
 		return;
 	}

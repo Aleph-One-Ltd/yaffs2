@@ -1,5 +1,5 @@
 /*
- * YAFFS: Yet another Flash File System . A NAND-flash specific file system. 
+ * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
  * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
@@ -20,8 +20,6 @@
 #ifndef __YDIRECTENV_H__
 #define __YDIRECTENV_H__
 
-// Direct interface
-
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
@@ -37,26 +35,26 @@ void yaffs_bug_fn(const char *file_name, int line_no);
 #define YUCHAR unsigned char
 #define _Y(x) x
 
-#define yaffs_strcat(a,b)    strcat(a,b)
-#define yaffs_strcpy(a,b)    strcpy(a,b)
-#define yaffs_strncpy(a,b,c) strncpy(a,b,c)
-#define yaffs_strnlen(s,m)           strnlen(s,m)
+#define yaffs_strcat(a, b)	strcat(a, b)
+#define yaffs_strcpy(a, b)	strcpy(a, b)
+#define yaffs_strncpy(a, b, c)	strncpy(a, b, c)
+#define yaffs_strnlen(s, m)	strnlen(s, m)
 #ifdef CONFIG_YAFFS_CASE_INSENSITIVE
-#define yaffs_strcmp(a,b) strcasecmp(a,b)
-#define yaffs_strncmp(a,b,c) strncasecmp(a,b,c)
+#define yaffs_strcmp(a, b)	strcasecmp(a, b)
+#define yaffs_strncmp(a, b, c)	strncasecmp(a, b, c)
 #else
-#define yaffs_strcmp(a,b) strcmp(a,b)
-#define yaffs_strncmp(a,b,c) strncmp(a,b,c)
+#define yaffs_strcmp(a, b)	strcmp(a, b)
+#define yaffs_strncmp(a, b, c)	strncmp(a, b, c)
 #endif
 
 #define hweight8(x)	yaffs_hweight8(x)
 #define hweight32(x)	yaffs_hweight32(x)
 
 void yaffs_qsort(void *aa, size_t n, size_t es,
-        int (*cmp)(const void *, const void *));
+		int (*cmp)(const void *, const void *));
 
 #define sort(base, n, sz, cmp_fn, swp) yaffs_qsort(base, n, sz, cmp_fn)
-        
+
 #define YAFFS_PATH_DIVIDERS  "/"
 
 #ifdef NO_inline
@@ -65,17 +63,17 @@ void yaffs_qsort(void *aa, size_t n, size_t es,
 #define inline __inline__
 #endif
 
-#define kmalloc(x,flags) yaffsfs_malloc(x)
+#define kmalloc(x, flags) yaffsfs_malloc(x)
 #define kfree(x)   yaffsfs_free(x)
 #define vmalloc(x) yaffsfs_malloc(x)
 #define vfree(x) yaffsfs_free(x)
 
-#define cond_resched()  do {} while(0)
+#define cond_resched()  do {} while (0)
 
 #define yaffs_trace(msk, fmt, ...) do { \
-	if(yaffs_trace_mask & (msk)) \
+	if (yaffs_trace_mask & (msk)) \
 		printf("yaffs: " fmt "\n", ##__VA_ARGS__); \
-} while(0)
+} while (0)
 
 
 #define YAFFS_LOSTNFOUND_NAME		"lost+found"
@@ -86,7 +84,7 @@ void yaffs_qsort(void *aa, size_t n, size_t es,
 #define Y_CURRENT_TIME yaffsfs_CurrentTime()
 #define Y_TIME_CONVERT(x) x
 
-#define YAFFS_ROOT_MODE				0666
+#define YAFFS_ROOT_MODE			0666
 #define YAFFS_LOSTNFOUND_MODE		0666
 
 #include "yaffs_list.h"

@@ -14,8 +14,8 @@
 #include "yaffsfs.h"
 
 struct error_entry {
-  int code;
-  char * text;  
+	int code;
+	const char *text;
 };
 
 static const struct error_entry error_list[] = {
@@ -31,7 +31,7 @@ static const struct error_entry error_list[] = {
 	{ ERANGE , "ERANGE"},
 	{ ENODATA, "ENODATA"},
 	{ ENOTEMPTY, "ENOTEMPTY"},
-	{ ENAMETOOLONG,"ENAMETOOLONG"},
+	{ ENAMETOOLONG, "ENAMETOOLONG"},
 	{ ENOMEM , "ENOMEM"},
 	{ EEXIST , "EEXIST"},
 	{ ENOTDIR , "ENOTDIR"},
@@ -42,15 +42,15 @@ static const struct error_entry error_list[] = {
 	{ 0, NULL }
 };
 
-const char * yaffs_error_to_str(int err)
+const char *yaffs_error_to_str(int err)
 {
 	const struct error_entry *e = error_list;
 
-	if (err < 0) 
+	if (err < 0)
 		err = -err;
 
-	while(e->code && e->text){
-		if(err == e->code)
+	while (e->code && e->text) {
+		if (err == e->code)
 			return e->text;
 		e++;
 	}
