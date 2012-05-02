@@ -178,7 +178,7 @@ static void UpdateCounter(const char *name, unsigned *val,  int initialise)
 static void dump_directory_tree_worker(const char *dname,int recursive)
 {
 	yaffs_DIR *d;
-	yaffs_dirent *de;
+	struct yaffs_dirent *de;
 	struct yaffs_stat s;
 	char str[1000];
 	int error_line = 0;

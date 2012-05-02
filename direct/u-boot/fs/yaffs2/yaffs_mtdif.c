@@ -24,19 +24,7 @@
 #include "linux/time.h"
 #include "linux/mtd/nand.h"
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 18))
-static struct nand_oobinfo yaffs_oobinfo = {
-	.useecc = 1,
-	.eccbytes = 6,
-	.eccpos = {8, 9, 10, 13, 14, 15}
-};
 
-static struct nand_oobinfo yaffs_noeccinfo = {
-	.useecc = 0,
-};
-#endif
-
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 static inline void translate_spare2oob(const struct yaffs_spare *spare, u8 *oob)
 {
 	oob[0] = spare->tb0;
@@ -69,20 +57,16 @@ static inline void translate_oob2spare(struct yaffs_spare *spare, u8 *oob)
 
 	nspare->eccres1 = nspare->eccres2 = 0; /* FIXME */
 }
-#endif
+
 
 int nandmtd_WriteChunkToNAND(struct yaffs_dev *dev, int chunkInNAND,
 			     const u8 *data, const struct yaffs_spare *spare)
 {
 	struct mtd_info *mtd = (struct mtd_info *)(dev->driver_context);
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	struct mtd_oob_ops ops;
-#endif
 	size_t dummy;
 	int retval = 0;
-
 	loff_t addr = ((loff_t) chunkInNAND) * dev->data_bytes_per_chunk;
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	u8 spareAsBytes[8]; /* OOB */
 
 	if (data && !spare)
@@ -103,31 +87,6 @@ int nandmtd_WriteChunkToNAND(struct yaffs_dev *dev, int chunkInNAND,
 		ops.oobbuf = spareAsBytes;
 		retval = mtd->write_oob(mtd, addr, &ops);
 	}
-#else
-	u8 *spareAsBytes = (u8 *) spare;
-
-	if (data && spare) {
-		if (dev->param.use_nand_ecc)
-			retval =
-			    mtd->write_ecc(mtd, addr, dev->data_bytes_per_chunk,
-					   &dummy, data, spareAsBytes,
-					   &yaffs_oobinfo);
-		else
-			retval =
-			    mtd->write_ecc(mtd, addr, dev->data_bytes_per_chunk,
-					   &dummy, data, spareAsBytes,
-					   &yaffs_noeccinfo);
-	} else {
-		if (data)
-			retval =
-			    mtd->write(mtd, addr, dev->data_bytes_per_chunk,
-					&dummy, data);
-		if (spare)
-			retval =
-			    mtd->write_oob(mtd, addr, YAFFS_BYTES_PER_SPARE,
-					   &dummy, spareAsBytes);
-	}
-#endif
 
 	if (retval == 0)
 		return YAFFS_OK;
@@ -139,14 +98,11 @@ int nandmtd_ReadChunkFromNAND(struct yaffs_dev *dev, int chunkInNAND, u8 *data,
 			      struct yaffs_spare *spare)
 {
 	struct mtd_info *mtd = (struct mtd_info *)(dev->driver_context);
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	struct mtd_oob_ops ops;
-#endif
 	size_t dummy;
 	int retval = 0;
 
 	loff_t addr = ((loff_t) chunkInNAND) * dev->data_bytes_per_chunk;
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	u8 spareAsBytes[8]; /* OOB */
 
 	if (data && !spare)
@@ -168,36 +124,6 @@ int nandmtd_ReadChunkFromNAND(struct yaffs_dev *dev, int chunkInNAND, u8 *data,
 		if (dev->param.use_nand_ecc)
 			translate_oob2spare(spare, spareAsBytes);
 	}
-#else
-	u8 *spareAsBytes = (u8 *) spare;
-
-	if (data && spare) {
-		if (dev->param.use_nand_ecc) {
-			/* Careful, this call adds 2 ints */
-			/* to the end of the spare data.  Calling function */
-			/* should allocate enough memory for spare, */
-			/* i.e. [YAFFS_BYTES_PER_SPARE+2*sizeof(int)]. */
-			retval =
-			    mtd->read_ecc(mtd, addr, dev->data_bytes_per_chunk,
-					  &dummy, data, spareAsBytes,
-					  &yaffs_oobinfo);
-		} else {
-			retval =
-			    mtd->read_ecc(mtd, addr, dev->data_bytes_per_chunk,
-					  &dummy, data, spareAsBytes,
-					  &yaffs_noeccinfo);
-		}
-	} else {
-		if (data)
-			retval =
-			    mtd->read(mtd, addr, dev->data_bytes_per_chunk,
-					&dummy, data);
-		if (spare)
-			retval =
-			    mtd->read_oob(mtd, addr, YAFFS_BYTES_PER_SPARE,
-					  &dummy, spareAsBytes);
-	}
-#endif
 
 	if (retval == 0)
 		return YAFFS_OK;

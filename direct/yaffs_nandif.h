@@ -59,7 +59,7 @@ struct ynandif_Geometry {
 
 struct yaffs_dev *
 	yaffs_add_dev_from_geometry(const YCHAR *name,
-					const ynandif_Geometry *geometry);
+					const struct ynandif_Geometry *geometry);
 
 
 #endif

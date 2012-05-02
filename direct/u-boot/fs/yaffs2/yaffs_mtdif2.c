@@ -43,11 +43,8 @@ int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 			      const struct yaffs_ext_tags *tags)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	struct mtd_oob_ops ops;
-#else
-	size_t dummy;
-#endif
+
 	int retval = 0;
 
 	loff_t addr;
@@ -83,7 +80,6 @@ int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 		yaffs_pack_tags2(&pt, tags, !dev->param.no_tags_ecc);
 	}
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	ops.mode = MTD_OOB_AUTO;
 	ops.ooblen = (dev->param.inband_tags) ? 0 : packed_tags_size;
 	ops.len = dev->param.total_bytes_per_chunk;
@@ -91,18 +87,6 @@ int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 	ops.datbuf = (u8 *) data;
 	ops.oobbuf = (dev->param.inband_tags) ? NULL : packed_tags_ptr;
 	retval = mtd->write_oob(mtd, addr, &ops);
-
-#else
-	if (!dev->param.inband_tags) {
-		retval =
-		    mtd->write_ecc(mtd, addr, dev->data_bytes_per_chunk,
-				   &dummy, data, (u8 *) packed_tags_ptr, NULL);
-	} else {
-		retval =
-		    mtd->write(mtd, addr, dev->param.total_bytes_per_chunk,
-			       &dummy, data);
-	}
-#endif
 
 	if (retval == 0)
 		return YAFFS_OK;
@@ -114,20 +98,13 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 			     u8 *data, struct yaffs_ext_tags *tags)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
-
 	u8 local_spare[128];
-
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	struct mtd_oob_ops ops;
-#endif
 	size_t dummy;
 	int retval = 0;
 	int local_data = 0;
-
-	loff_t addr = ((loff_t) nand_chunk) * dev->param.total_bytes_per_chunk;
-
 	struct yaffs_packed_tags2 pt;
-
+	loff_t addr = ((loff_t) nand_chunk) * dev->param.total_bytes_per_chunk;
 	int packed_tags_size =
 	    dev->param.no_tags_ecc ? sizeof(pt.t) : sizeof(pt);
 	void *packed_tags_ptr =
@@ -146,7 +123,6 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 
 	}
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 	if (dev->param.inband_tags || (data && !tags))
 		retval = mtd->read(mtd, addr, dev->param.total_bytes_per_chunk,
 				   &dummy, data);
@@ -159,22 +135,6 @@ int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
 		ops.oobbuf = local_spare;
 		retval = mtd->read_oob(mtd, addr, &ops);
 	}
-#else
-	if (!dev->param.inband_tags && data && tags) {
-
-		retval = mtd->read_ecc(mtd, addr, dev->data_bytes_per_chunk,
-				       &dummy, data, dev->spare_buffer, NULL);
-	} else {
-		if (data)
-			retval =
-			    mtd->read(mtd, addr, dev->data_bytes_per_chunk,
-				      &dummy, data);
-		if (!dev->param.inband_tags && tags)
-			retval =
-			    mtd->read_oob(mtd, addr, mtd->oobsize, &dummy,
-					  dev->spare_buffer);
-	}
-#endif
 
 	if (dev->param.inband_tags) {
 		if (tags) {

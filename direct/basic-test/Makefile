@@ -67,7 +67,7 @@ YAFFSDIRECTSYMLINKS = \
           yaffs_summary.c yaffs_summary.h \
 	  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
           yaffsfs.h yaffs_osglue.h ydirectenv.h \
-          yaffs_flashif.c yaffscfg.h yaffs_list.h \
+          yaffscfg.h yaffs_list.h \
           yaffs_qsort.c yportenv.h yaffs_attribs.c \
           yaffs_nandif.c yaffs_nandif.h yaffs_nandemul2k.h \
           yaffs_hweight.h yaffs_hweight.c \

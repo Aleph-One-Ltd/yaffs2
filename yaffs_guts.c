@@ -4374,7 +4374,7 @@ struct yaffs_obj *yaffs_find_by_name(struct yaffs_obj *directory,
 			 */
 			yaffs_get_obj_name(l, buffer,
 				YAFFS_MAX_NAME_LENGTH + 1);
-			if (strncmp(name, buffer, YAFFS_MAX_NAME_LENGTH) == 0)
+			if (!strncmp(name, buffer, YAFFS_MAX_NAME_LENGTH))
 				return l;
 		}
 	}

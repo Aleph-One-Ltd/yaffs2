@@ -54,7 +54,7 @@ YAFFSLIBOBJS  = $(COMMONTESTOBJS) yaffs_python_helper.o
 
 YAFFSDIRECTSYMLINKS =   \
           yaffsfs.c yaffsfs.h yaffscfg.h yaffs_osglue.h  ydirectenv.h \
-          yaffs_flashif.c yaffs_flashif.h yaffs_flashif2.h yaffs_list.h \
+          yaffs_flashif.h yaffs_flashif2.h yaffs_list.h \
           yaffs_nandif.c yaffs_nandif.h yaffs_qsort.c yaffs_nandemul2k.h \
           yportenv.h yaffs_attribs.c \
           yaffs_hweight.c yaffs_hweight.h \

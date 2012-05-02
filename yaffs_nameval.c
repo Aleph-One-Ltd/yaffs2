@@ -37,7 +37,8 @@ static int nval_find(const char *xb, int xb_size, const YCHAR *name,
 
 	memcpy(&size, xb, sizeof(int));
 	while (size > 0 && (size < xb_size) && (pos + size < xb_size)) {
-		if (!strncmp((YCHAR *) (xb + pos + sizeof(int)), name, size)) {
+		if (!strncmp((YCHAR *) (xb + pos + sizeof(int)),
+				name, size)) {
 			if (exist_size)
 				*exist_size = size;
 			return pos;

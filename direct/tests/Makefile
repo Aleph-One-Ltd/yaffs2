@@ -54,7 +54,7 @@ ALLOBJS = $(sort $(YAFFSTESTOBJS))
 YAFFSDIRECTSYMLINKS =  \
           yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
           yaffsfs.h yaffs_osglue.h ydirectenv.h \
-          yaffs_flashif.c yaffscfg.h yaffs_qsort.c \
+          yaffscfg.h yaffs_qsort.c \
           yaffs_nandemul2k.h yaffs_list.h \
           yaffs_attribs.c \
           yaffs_nandif.c yaffs_nandif.h yportenv.h \

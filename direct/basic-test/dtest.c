@@ -512,7 +512,7 @@ void leave_unlinked_file(const char *path,int maxIterations,int siz)
 void dumpDirFollow(const char *dname)
 {
 	yaffs_DIR *d;
-	yaffs_dirent *de;
+	struct yaffs_dirent *de;
 	struct yaffs_stat s;
 	char str[100];
 
@@ -559,7 +559,7 @@ void dumpDirFollow(const char *dname)
 void dump_directory_tree_worker(const char *dname,int recursive)
 {
 	yaffs_DIR *d;
-	yaffs_dirent *de;
+	struct yaffs_dirent *de;
 	struct yaffs_stat s;
 	char str[1000];
 
@@ -895,7 +895,7 @@ int huge_directory_test_on_path(char *path)
 {
 
 	yaffs_DIR *d;
-	yaffs_dirent *de;
+	struct yaffs_dirent *de;
 	struct yaffs_stat s;
 
 	int f;
@@ -1544,7 +1544,7 @@ void lookup_test(const char *mountpt)
 
 
 	yaffs_DIR *d;
-	yaffs_dirent *de;
+	struct yaffs_dirent *de;
 
 	yaffs_start_up();
 

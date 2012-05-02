@@ -43,7 +43,8 @@ SimData *simDevs[N_RAM_SIM_DEVS];
 
 static SimData *DevToSim(struct yaffs_dev *dev)
 {
-	ynandif_Geometry *geom = (ynandif_Geometry *)(dev->driver_context);
+	struct ynandif_Geometry *geom = 
+		(struct ynandif_Geometry *)(dev->driver_context);
 	SimData * sim = (SimData*)(geom->privateData);
 	return sim;
 }
@@ -256,11 +257,11 @@ struct yaffs_dev *yramsim_CreateRamSim(const YCHAR *name,
 				u32 start_block, u32 end_block)
 {
 	SimData *sim;
-	ynandif_Geometry *g;
+	struct ynandif_Geometry *g;
 
 	sim = yramsim_alloc_sim_data(devId, nBlocks);
 
-	g = malloc(sizeof(ynandif_Geometry));
+	g = malloc(sizeof(*g));
 
 	if(!sim || !g){
 		if(g)
@@ -273,7 +274,7 @@ struct yaffs_dev *yramsim_CreateRamSim(const YCHAR *name,
 	if(end_block == 0 || end_block >= sim->nBlocks)
 		end_block = sim->nBlocks - 1;
 
-	memset(g,0,sizeof(ynandif_Geometry));
+	memset(g,0,sizeof(*g));
 	g->start_block = start_block;
 	g->end_block = end_block;
 	g->dataSize = DATA_SIZE;
