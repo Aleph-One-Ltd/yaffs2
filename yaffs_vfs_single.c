@@ -2262,10 +2262,6 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	sb->s_maxbytes = yaffs_max_file_size(dev);
 
-	yaffs_trace(YAFFS_TRACE_OS,
-		"yaffs_readpage_nolock at %lld, size %08x",
-		(long long)pos,
-		(unsigned)PAGE_CACHE_SIZE);
 	/* Release lock before yaffs_get_inode() */
 	yaffs_gross_unlock(dev);
 
