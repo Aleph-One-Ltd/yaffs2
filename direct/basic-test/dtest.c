@@ -3046,34 +3046,36 @@ void readdir_test(const char *mountpt)
 	int i;
 	int handle;
 	char fullname[100];
-	
+
 	yaffs_DIR *dirs[100];
-	
+
 
 	yaffs_trace_mask = 0;
 
 	yaffs_start_up();
 
 	yaffs_mount(mountpt);
-	
+
 	for(i = 0; i < 100; i++) {
 	         dirs[i] = yaffs_opendir(mountpt);
 	         printf("%2d %p,", i, dirs[i]);
 	}
-	
+
 	printf("\n");
-	
+
 	for(i = 0; i < 100; i++) {
 	         if(dirs[i])
 	                  yaffs_closedir(dirs[i]);
 	}
-	
-	
+
+
 	for(i = 0; i < 100; i++) {
 	         dirs[i] = yaffs_opendir(mountpt);
 	         printf("%2d %p,", i, dirs[i]);
 	}
-	
+
+	yaffs_unmount(mountpt);
+
 
 }
 

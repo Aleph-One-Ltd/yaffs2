@@ -108,25 +108,32 @@ static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 		     i++) {
 			int chunk = i * dev->param.chunks_per_block;
 			int realigned_chunk = chunk - dev->chunk_offset;
+			enum yaffs_block_state state;
+			u32 seq;
 
 			dev->param.read_chunk_tags_fn(dev, realigned_chunk,
 						      NULL, &tags);
 			yaffs_trace(YAFFS_TRACE_CHECKPOINT,
-				"find next checkpt block: search: block %d oid %d seq %d eccr %d",
-				i, tags.obj_id, tags.seq_number,
+				"find next checkpt block: search: block %d state %d oid %d seq %d eccr %d",
+				i, (int) state,
+				tags.obj_id, tags.seq_number,
 				tags.ecc_result);
 
-			if (tags.seq_number == YAFFS_SEQUENCE_CHECKPOINT_DATA) {
-				/* Right kind of block */
-				dev->checkpt_next_block = tags.obj_id;
-				dev->checkpt_cur_block = i;
-				dev->checkpt_block_list[dev->
-							blocks_in_checkpt] = i;
-				dev->blocks_in_checkpt++;
-				yaffs_trace(YAFFS_TRACE_CHECKPOINT,
-					"found checkpt block %d", i);
-				return;
-			}
+			if (tags.seq_number != YAFFS_SEQUENCE_CHECKPOINT_DATA)
+				continue;
+
+			dev->param.query_block_fn(dev, i, &state, &seq);
+			if (state == YAFFS_BLOCK_STATE_DEAD)
+				continue;
+
+			/* Right kind of block */
+			dev->checkpt_next_block = tags.obj_id;
+			dev->checkpt_cur_block = i;
+			dev->checkpt_block_list[dev->blocks_in_checkpt] = i;
+			dev->blocks_in_checkpt++;
+			yaffs_trace(YAFFS_TRACE_CHECKPOINT,
+				"found checkpt block %d", i);
+			return;
 		}
 
 	yaffs_trace(YAFFS_TRACE_CHECKPOINT, "found no more checkpt blocks");
