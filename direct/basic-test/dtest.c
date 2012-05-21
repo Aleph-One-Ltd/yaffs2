@@ -2791,7 +2791,9 @@ void max_files_test(const char *mountpt)
 		result = yaffs_close(h);
 	}
 
-	h =yaffs_open(hn,O_RDWR,0);
+	yaffs_unmount(mountpt);
+
+	//h =yaffs_open(hn,O_RDWR,0);
 
 }
 void case_insensitive_test(const char *mountpt)
@@ -3147,12 +3149,12 @@ int main(int argc, char *argv[])
 	 // link_follow_test("/yaffs2");
 	 //basic_utime_test("/yaffs2");
 
-	 //max_files_test("/yaffs2");
+	max_files_test("/yaffs2");
 
 	 //start_twice("/yaffs2");
 
 	 //large_file_test("/yaffs2");
-	 readdir_test("/yaffs2");
+	 //readdir_test("/yaffs2");
 
 	 //basic_utime_test("/yaffs2");
 	 //case_insensitive_test("/yaffs2");

@@ -77,7 +77,7 @@
 
 /* Binary data version stamps */
 #define YAFFS_SUMMARY_VERSION		1
-#define YAFFS_CHECKPOINT_VERSION	6
+#define YAFFS_CHECKPOINT_VERSION	7
 
 #ifdef CONFIG_YAFFS_UNICODE
 #define YAFFS_MAX_NAME_LENGTH		127
