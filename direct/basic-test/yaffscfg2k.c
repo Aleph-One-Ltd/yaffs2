@@ -97,6 +97,7 @@ int yaffs_start_up(void)
 	m18_1Dev.param.end_block = 31; // Last block
 	m18_1Dev.param.use_nand_ecc = 0; // use YAFFS's ECC
 	m18_1Dev.param.n_caches = 10; // Use caches
+	m18_1Dev.param.disable_soft_del = 1;
 	m18_1Dev.driver_context = (void *) 1;	// Used to identify the device in fstat.
 	m18_1Dev.param.write_chunk_fn = ynorif1_WriteChunkToNAND;
 	m18_1Dev.param.read_chunk_fn = ynorif1_ReadChunkFromNAND;
