@@ -186,31 +186,6 @@ void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer)
 }
 
 /*
- * Determine if we have a managed buffer.
- */
-int yaffs_is_managed_tmp_buffer(struct yaffs_dev *dev, const u8 *buffer)
-{
-	int i;
-
-	for (i = 0; i < YAFFS_N_TEMP_BUFFERS; i++) {
-		if (dev->temp_buffer[i].buffer == buffer)
-			return 1;
-	}
-
-	for (i = 0; i < dev->param.n_caches; i++) {
-		if (dev->cache[i].data == buffer)
-			return 1;
-	}
-
-	if (buffer == dev->checkpt_buffer)
-		return 1;
-
-	yaffs_trace(YAFFS_TRACE_ALWAYS,
-	  "yaffs: unmaged buffer detected.");
-	return 0;
-}
-
-/*
  * Functions for robustisizing TODO
  *
  */
@@ -739,7 +714,7 @@ static void yaffs_deinit_tnodes_and_objs(struct yaffs_dev *dev)
 	dev->n_tnodes = 0;
 }
 
-void yaffs_load_tnode_0(struct yaffs_dev *dev, struct yaffs_tnode *tn,
+static void yaffs_load_tnode_0(struct yaffs_dev *dev, struct yaffs_tnode *tn,
 			unsigned pos, unsigned val)
 {
 	u32 *map = (u32 *) tn;
@@ -1926,7 +1901,7 @@ struct yaffs_obj *yaffs_find_by_number(struct yaffs_dev *dev, u32 number)
 	return NULL;
 }
 
-struct yaffs_obj *yaffs_new_obj(struct yaffs_dev *dev, int number,
+static struct yaffs_obj *yaffs_new_obj(struct yaffs_dev *dev, int number,
 				enum yaffs_obj_type type)
 {
 	struct yaffs_obj *the_obj = NULL;
@@ -3860,7 +3835,7 @@ static int yaffs_unlink_file_if_needed(struct yaffs_obj *in)
 	return ret_val;
 }
 
-int yaffs_del_file(struct yaffs_obj *in)
+static int yaffs_del_file(struct yaffs_obj *in)
 {
 	int ret_val = YAFFS_OK;
 	int deleted;	/* Need to cache value on stack if in is freed */

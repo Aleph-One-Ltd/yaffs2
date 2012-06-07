@@ -394,19 +394,19 @@ static int yaffs_toupper(YCHAR a)
 		return a;
 }
 
-int yaffsfs_Match(YCHAR a, YCHAR b)
+static int yaffsfs_Match(YCHAR a, YCHAR b)
 {
 	return (yaffs_toupper(a) == yaffs_toupper(b));
 }
 #else
-int yaffsfs_Match(YCHAR a, YCHAR b)
+static int yaffsfs_Match(YCHAR a, YCHAR b)
 {
 	/* case sensitive */
 	return (a == b);
 }
 #endif
 
-int yaffsfs_IsPathDivider(YCHAR ch)
+static int yaffsfs_IsPathDivider(YCHAR ch)
 {
 	const YCHAR *str = YAFFS_PATH_DIVIDERS;
 
@@ -419,7 +419,7 @@ int yaffsfs_IsPathDivider(YCHAR ch)
 	return 0;
 }
 
-int yaffsfs_CheckNameLength(const char *name)
+static int yaffsfs_CheckNameLength(const char *name)
 {
 	int retVal = 0;
 
@@ -1000,7 +1000,7 @@ int yaffs_open(const YCHAR *path, int oflag, int mode)
 				  YAFFS_SHARE_READ | YAFFS_SHARE_WRITE);
 }
 
-int yaffs_Dofsync(int handle, int datasync)
+static int yaffs_Dofsync(int handle, int datasync)
 {
 	int retVal = -1;
 	struct yaffs_obj *obj;
@@ -1063,7 +1063,7 @@ int yaffs_close(int handle)
 	return retVal;
 }
 
-int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
+static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 		    int isPread, loff_t offset)
 {
 	struct yaffsfs_FileDes *fd = NULL;
@@ -1185,7 +1185,7 @@ int yaffs_pread(int handle, void *buf, unsigned int nbyte, loff_t offset)
 	return yaffsfs_do_read(handle, buf, nbyte, 1, offset);
 }
 
-int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
+static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 		     int isPwrite, loff_t offset)
 {
 	struct yaffsfs_FileDes *fd = NULL;
@@ -1416,7 +1416,7 @@ loff_t yaffs_lseek(int handle, loff_t offset, int whence)
 	return pos;
 }
 
-int yaffsfs_DoUnlink(const YCHAR *path, int isDirectory)
+static int yaffsfs_DoUnlink(const YCHAR *path, int isDirectory)
 {
 	struct yaffs_obj *dir = NULL;
 	struct yaffs_obj *obj = NULL;

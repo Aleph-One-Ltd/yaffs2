@@ -22,7 +22,7 @@ static void yaffs_handle_rd_data_error(struct yaffs_dev *dev, int nand_chunk);
 
 /********** Tags ECC calculations  *********/
 
-void yaffs_calc_ecc(const u8 *data, struct yaffs_spare *spare)
+static void yaffs_calc_ecc(const u8 *data, struct yaffs_spare *spare)
 {
 	yaffs_ecc_calc(data, spare->ecc1);
 	yaffs_ecc_calc(&data[256], spare->ecc2);
