@@ -3137,9 +3137,9 @@ int yaffs_link(const YCHAR *oldpath, const YCHAR *linkpath)
 
 int yaffs_mknod(const YCHAR *pathname, mode_t mode, dev_t dev)
 {
-	pathname = pathname;
-	mode = mode;
-	dev = dev;
+	(void) pathname;
+	(void) mode;
+	(void) dev;
 
 	yaffsfs_SetError(-EINVAL);
 	return -1;
@@ -3189,7 +3189,7 @@ int yaffs_set_error(int error)
 int yaffs_dump_dev(const YCHAR *path)
 {
 #if 1
-	path = path;
+	(void) path;
 #else
 	YCHAR *rest;
 

@@ -194,18 +194,18 @@ static void yaffs_handle_chunk_wr_ok(struct yaffs_dev *dev, int nand_chunk,
 				     const u8 *data,
 				     const struct yaffs_ext_tags *tags)
 {
-	dev = dev;
-	nand_chunk = nand_chunk;
-	data = data;
-	tags = tags;
+	(void) dev;
+	(void) nand_chunk;
+	(void) data;
+	(void) tags;
 }
 
 static void yaffs_handle_chunk_update(struct yaffs_dev *dev, int nand_chunk,
 				      const struct yaffs_ext_tags *tags)
 {
-	dev = dev;
-	nand_chunk = nand_chunk;
-	tags = tags;
+	(void) dev;
+	(void) nand_chunk;
+	(void) tags;
 }
 
 void yaffs_handle_chunk_error(struct yaffs_dev *dev,
@@ -791,7 +791,7 @@ struct yaffs_tnode *yaffs_find_tnode_0(struct yaffs_dev *dev,
 	int required_depth;
 	int level = file_struct->top_level;
 
-	dev = dev;
+	(void) dev;
 
 	/* Check sane level and chunk Id */
 	if (level < 0 || level > YAFFS_TNODES_MAX_LEVEL)
@@ -3198,7 +3198,7 @@ static void yaffs_load_name_from_oh(struct yaffs_dev *dev, YCHAR *name,
 		}
 	} else {
 #else
-	dev = dev;
+	(void) dev;
 	{
 #endif
 		strncpy(name, oh_name, buff_size - 1);
