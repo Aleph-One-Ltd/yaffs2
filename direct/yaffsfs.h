@@ -30,7 +30,8 @@
 #define NAME_MAX	256
 #endif
 
-#define YAFFS_MAX_FILE_SIZE (0x800000000LL - 1)
+#define YAFFS_MAX_FILE_SIZE \
+	( (sizeof(loff_t) < 8) ? YAFFS_MAX_FILE_SIZE_32 : (0x800000000LL - 1) )
 
 
 struct yaffs_dirent {

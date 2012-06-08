@@ -54,6 +54,8 @@
 					YAFFS_TNODES_MAX_LEVEL)
 #define YAFFS_MAX_CHUNK_ID		((1 << YAFFS_TNODES_MAX_BITS) - 1)
 
+#define YAFFS_MAX_FILE_SIZE_32		0x7fffffff
+
 /* Constants for YAFFS1 mode */
 #define YAFFS_BYTES_PER_SPARE		16
 #define YAFFS_BYTES_PER_CHUNK		512
