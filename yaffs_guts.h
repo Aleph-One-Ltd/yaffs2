@@ -520,7 +520,7 @@ struct yaffs_param {
 	/*
 	 * Entry parameters set up way early. Yaffs sets up the rest.
 	 * The structure should be zeroed out before use so that unused
-	 * and defualt values are zero.
+	 * and default values are zero.
 	 */
 
 	int inband_tags;	/* Use unband tags */
@@ -536,6 +536,10 @@ struct yaffs_param {
 	int n_caches;		/* If <= 0, then short op caching is disabled,
 				 * else the number of short op caches.
 				 */
+	int cache_bypass_aligned; /* If non-zero then bypass the cache for
+				   * aligned writes.
+				   */
+
 	int use_nand_ecc;	/* Flag to decide whether or not to use
 				 * NAND driver ECC on data (yaffs1) */
 	int tags_9bytes;	/* Use 9 byte tags */

@@ -3559,9 +3559,11 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 		}
 
 		if (n_copy != dev->data_bytes_per_chunk ||
+		    !dev->param.cache_bypass_aligned ||
 		    dev->param.inband_tags) {
 			/* An incomplete start or end chunk (or maybe both
 			 * start and end chunk), or we're using inband tags,
+			 * or we're forcing writes through the cache,
 			 * so we want to use the cache buffers.
 			 */
 			if (dev->param.n_caches > 0) {
