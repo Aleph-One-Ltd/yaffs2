@@ -793,7 +793,7 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0)< 0) {
+	if (yaffsfs_CheckMemRegion(path, 0, 0)< 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1077,7 +1077,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 	Y_LOFF_T maxRead;
 	u8 *buf = (u8 *) vbuf;
 
-	if(yaffsfs_CheckMemRegion(vbuf, nbyte, 1) < 0){
+	if (yaffsfs_CheckMemRegion(vbuf, nbyte, 1) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1199,7 +1199,7 @@ static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 	int nToWrite = 0;
 	const u8 *buf = (const u8 *)vbuf;
 
-	if(yaffsfs_CheckMemRegion(vbuf, nbyte, 0) < 0){
+	if (yaffsfs_CheckMemRegion(vbuf, nbyte, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1310,7 +1310,7 @@ int yaffs_truncate(const YCHAR *path, Y_LOFF_T new_size)
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1425,7 +1425,7 @@ static int yaffsfs_DoUnlink(const YCHAR *path, int isDirectory)
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1494,8 +1494,8 @@ int yaffs_rename(const YCHAR *oldPath, const YCHAR *newPath)
 
 	YCHAR *alt_newpath = NULL;
 
-	if(yaffsfs_CheckMemRegion(oldPath, 0, 0) < 0 || 
-	   yaffsfs_CheckMemRegion(newPath, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(oldPath, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(newPath, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1634,8 +1634,8 @@ static int yaffsfs_DoStatOrLStat(const YCHAR *path,
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(buf, sizeof(*buf), 1) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(buf, sizeof(*buf), 1) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1683,7 +1683,7 @@ int yaffs_fstat(int fd, struct yaffs_stat *buf)
 
 	int retVal = -1;
 
-	if(yaffsfs_CheckMemRegion(buf, sizeof(*buf), 1) < 0){
+	if (yaffsfs_CheckMemRegion(buf, sizeof(*buf), 1) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1804,9 +1804,9 @@ static int yaffs_do_setxattr(const YCHAR *path, const char *name,
 
 	int retVal = -1;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(name, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(data, size, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(name, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(data, size, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1862,8 +1862,8 @@ int yaffs_fsetxattr(int fd, const char *name,
 
 	int retVal = -1;
 
-	if(yaffsfs_CheckMemRegion(name, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(data, size, 0) < 0){
+	if (yaffsfs_CheckMemRegion(name, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(data, size, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1895,9 +1895,9 @@ static int yaffs_do_getxattr(const YCHAR *path, const char *name,
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(name, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(data, size, 1) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(name, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(data, size, 1) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1949,8 +1949,8 @@ int yaffs_fgetxattr(int fd, const char *name, void *data, int size)
 
 	int retVal = -1;
 
-	if(yaffsfs_CheckMemRegion(name, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(data, size, 1) < 0){
+	if (yaffsfs_CheckMemRegion(name, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(data, size, 1) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -1982,8 +1982,8 @@ static int yaffs_do_listxattr(const YCHAR *path, char *data,
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(data, size, 1) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(data, size, 1) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2036,7 +2036,7 @@ int yaffs_flistxattr(int fd, char *data, int size)
 
 	int retVal = -1;
 
-	if(yaffsfs_CheckMemRegion(data, size, 1) < 0){
+	if (yaffsfs_CheckMemRegion(data, size, 1) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2068,8 +2068,8 @@ static int yaffs_do_removexattr(const YCHAR *path, const char *name,
 	int loop = 0;
 	int retVal = -1;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(name, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(name, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2122,7 +2122,7 @@ int yaffs_fremovexattr(int fd, const char *name)
 
 	int retVal = -1;
 
-	if(yaffsfs_CheckMemRegion(name, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(name, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2246,7 +2246,7 @@ int yaffs_access(const YCHAR *path, int amode)
 	int loop = 0;
 	int retval = -1;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2304,7 +2304,7 @@ int yaffs_chmod(const YCHAR *path, mode_t mode)
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2376,7 +2376,7 @@ int yaffs_mkdir(const YCHAR *path, mode_t mode)
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2430,7 +2430,7 @@ int yaffs_rmdir(const YCHAR *path)
 	int result;
 	YCHAR *alt_path;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2467,7 +2467,7 @@ int yaffs_mount_common(const YCHAR *path, int read_only, int skip_checkpt)
 	int result = YAFFS_FAIL;
 	struct yaffs_dev *dev = NULL;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2526,7 +2526,7 @@ int yaffs_sync(const YCHAR *path)
 	struct yaffs_dev *dev = NULL;
 	YCHAR *dummy;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2575,7 +2575,7 @@ int yaffs_remount(const YCHAR *path, int force, int read_only)
 	int retVal = -1;
 	struct yaffs_dev *dev = NULL;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2615,7 +2615,7 @@ int yaffs_unmount2(const YCHAR *path, int force)
 	int retVal = -1;
 	struct yaffs_dev *dev = NULL;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2664,7 +2664,7 @@ Y_LOFF_T yaffs_freespace(const YCHAR *path)
 	struct yaffs_dev *dev = NULL;
 	YCHAR *dummy;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2693,7 +2693,7 @@ Y_LOFF_T yaffs_totalspace(const YCHAR *path)
 	struct yaffs_dev *dev = NULL;
 	YCHAR *dummy;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2724,7 +2724,7 @@ int yaffs_inodecount(const YCHAR *path)
 	struct yaffs_dev *dev = NULL;
 	YCHAR *dummy;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -2876,7 +2876,7 @@ yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(dirname, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(dirname, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return NULL;
 	}
@@ -2970,7 +2970,7 @@ void yaffs_rewinddir(yaffs_DIR *dirp)
 
 	dsc = (struct yaffsfs_DirSearchContxt *) dirp;
 
-	if(yaffsfs_CheckMemRegion(dirp, sizeof(*dsc), 0) < 0)
+	if (yaffsfs_CheckMemRegion(dirp, sizeof(*dsc), 0) < 0)
 		return;
 
 	yaffsfs_Lock();
@@ -2986,7 +2986,7 @@ int yaffs_closedir(yaffs_DIR *dirp)
 
 	dsc = (struct yaffsfs_DirSearchContxt *) dirp;
 
-	if(yaffsfs_CheckMemRegion(dirp, sizeof(*dsc), 0) < 0){
+	if (yaffsfs_CheckMemRegion(dirp, sizeof(*dsc), 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -3010,8 +3010,8 @@ int yaffs_symlink(const YCHAR *oldpath, const YCHAR *newpath)
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(oldpath, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(newpath, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(oldpath, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(newpath, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -3058,8 +3058,8 @@ int yaffs_readlink(const YCHAR *path, YCHAR *buf, int bufsiz)
 	int notDir = 0;
 	int loop = 0;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(buf, bufsiz, 1) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(buf, bufsiz, 1) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -3100,8 +3100,8 @@ int yaffs_link(const YCHAR *oldpath, const YCHAR *linkpath)
 	int lnkLoop = 0;
 	YCHAR *newname;
 
-	if(yaffsfs_CheckMemRegion(oldpath, 0, 0) < 0 ||
-	   yaffsfs_CheckMemRegion(linkpath, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(oldpath, 0, 0) < 0 ||
+	    yaffsfs_CheckMemRegion(linkpath, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
@@ -3173,7 +3173,7 @@ int yaffs_n_handles(const YCHAR *path)
 {
 	struct yaffs_obj *obj;
 
-	if(yaffsfs_CheckMemRegion(path, 0, 0) < 0){
+	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
