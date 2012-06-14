@@ -26,7 +26,9 @@ if [ "$1" = "copy" ] ; then
 		-e "s/strncpy/yaffs_strncpy/g" \
 		-e "s/strnlen/yaffs_strnlen/g" \
 		-e "s/strcmp/yaffs_strcmp/g" \
-		-e "s/strncmp/yaffs_strncmp/g" >$i
+		-e "s/strncmp/yaffs_strncmp/g"\
+		-e "s/loff_t/Y_LOFF_T/g" \
+		 >$i
 	done
 elif [ "$1" = "clean" ] ; then 
 	for i in $YAFFS_COMMON_SOURCES ; do

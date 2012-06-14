@@ -74,7 +74,7 @@ struct yaffsfs_FileDes {
 	u8 shareWrite:1;
 	int inodeId:12;		/* Index to corresponding yaffsfs_Inode */
 	int handleCount:10;	/* Number of handles for this fd */
-	loff_t position;	/* current position in file */
+	Y_LOFF_T position;	/* current position in file */
 };
 
 struct yaffsfs_Handle {
@@ -1064,17 +1064,17 @@ int yaffs_close(int handle)
 }
 
 int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
-		    int isPread, loff_t offset)
+		    int isPread, Y_LOFF_T offset)
 {
 	struct yaffsfs_FileDes *fd = NULL;
 	struct yaffs_obj *obj = NULL;
-	loff_t pos = 0;
-	loff_t startPos = 0;
-	loff_t endPos = 0;
+	Y_LOFF_T pos = 0;
+	Y_LOFF_T startPos = 0;
+	Y_LOFF_T endPos = 0;
 	int nRead = 0;
 	int nToRead = 0;
 	int totalRead = 0;
-	loff_t maxRead;
+	Y_LOFF_T maxRead;
 	u8 *buf = (u8 *) vbuf;
 
 	if (!vbuf) {
@@ -1180,19 +1180,19 @@ int yaffs_read(int handle, void *buf, unsigned int nbyte)
 	return yaffsfs_do_read(handle, buf, nbyte, 0, 0);
 }
 
-int yaffs_pread(int handle, void *buf, unsigned int nbyte, loff_t offset)
+int yaffs_pread(int handle, void *buf, unsigned int nbyte, Y_LOFF_T offset)
 {
 	return yaffsfs_do_read(handle, buf, nbyte, 1, offset);
 }
 
 int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
-		     int isPwrite, loff_t offset)
+		     int isPwrite, Y_LOFF_T offset)
 {
 	struct yaffsfs_FileDes *fd = NULL;
 	struct yaffs_obj *obj = NULL;
-	loff_t pos = 0;
-	loff_t startPos = 0;
-	loff_t endPos;
+	Y_LOFF_T pos = 0;
+	Y_LOFF_T startPos = 0;
+	Y_LOFF_T endPos;
 	int nWritten = 0;
 	int totalWritten = 0;
 	int write_trhrough = 0;
@@ -1297,12 +1297,12 @@ int yaffs_write(int fd, const void *buf, unsigned int nbyte)
 	return yaffsfs_do_write(fd, buf, nbyte, 0, 0);
 }
 
-int yaffs_pwrite(int fd, const void *buf, unsigned int nbyte, loff_t offset)
+int yaffs_pwrite(int fd, const void *buf, unsigned int nbyte, Y_LOFF_T offset)
 {
 	return yaffsfs_do_write(fd, buf, nbyte, 1, offset);
 }
 
-int yaffs_truncate(const YCHAR *path, loff_t new_size)
+int yaffs_truncate(const YCHAR *path, Y_LOFF_T new_size)
 {
 	struct yaffs_obj *obj = NULL;
 	struct yaffs_obj *dir = NULL;
@@ -1347,7 +1347,7 @@ int yaffs_truncate(const YCHAR *path, loff_t new_size)
 	return (result) ? 0 : -1;
 }
 
-int yaffs_ftruncate(int handle, loff_t new_size)
+int yaffs_ftruncate(int handle, Y_LOFF_T new_size)
 {
 	struct yaffsfs_FileDes *fd = NULL;
 	struct yaffs_obj *obj = NULL;
@@ -1375,12 +1375,12 @@ int yaffs_ftruncate(int handle, loff_t new_size)
 
 }
 
-loff_t yaffs_lseek(int handle, loff_t offset, int whence)
+Y_LOFF_T yaffs_lseek(int handle, Y_LOFF_T offset, int whence)
 {
 	struct yaffsfs_FileDes *fd = NULL;
 	struct yaffs_obj *obj = NULL;
-	loff_t pos = -1;
-	loff_t fSize = -1;
+	Y_LOFF_T pos = -1;
+	Y_LOFF_T fSize = -1;
 
 	yaffsfs_Lock();
 	fd = yaffsfs_HandleToFileDes(handle);
@@ -2648,9 +2648,9 @@ int yaffs_unmount(const YCHAR *path)
 	return yaffs_unmount2(path, 0);
 }
 
-loff_t yaffs_freespace(const YCHAR *path)
+Y_LOFF_T yaffs_freespace(const YCHAR *path)
 {
-	loff_t retVal = -1;
+	Y_LOFF_T retVal = -1;
 	struct yaffs_dev *dev = NULL;
 	YCHAR *dummy;
 
@@ -2677,9 +2677,9 @@ loff_t yaffs_freespace(const YCHAR *path)
 	return retVal;
 }
 
-loff_t yaffs_totalspace(const YCHAR *path)
+Y_LOFF_T yaffs_totalspace(const YCHAR *path)
 {
-	loff_t retVal = -1;
+	Y_LOFF_T retVal = -1;
 	struct yaffs_dev *dev = NULL;
 	YCHAR *dummy;
 
@@ -2710,7 +2710,7 @@ loff_t yaffs_totalspace(const YCHAR *path)
 
 int yaffs_inodecount(const YCHAR *path)
 {
-	loff_t retVal = -1;
+	Y_LOFF_T retVal = -1;
 	struct yaffs_dev *dev = NULL;
 	YCHAR *dummy;
 
