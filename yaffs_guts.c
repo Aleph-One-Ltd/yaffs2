@@ -675,7 +675,10 @@ void yaffs_set_obj_name_from_oh(struct yaffs_obj *obj,
 
 loff_t yaffs_max_file_size(struct yaffs_dev *dev)
 {
-	return ((loff_t) YAFFS_MAX_CHUNK_ID) * dev->data_bytes_per_chunk;
+	if(sizeof(loff_t) < 8)
+		return YAFFS_MAX_FILE_SIZE_32;
+	else
+		return ((loff_t) YAFFS_MAX_CHUNK_ID) * dev->data_bytes_per_chunk;
 }
 
 /*-------------------- TNODES -------------------
@@ -4983,8 +4986,8 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev)
 	return n_free;
 }
 
-/*\
- * Marshalling functions to get loff_t file sizes into aand out of
+/*
+ * Marshalling functions to get loff_t file sizes into and out of
  * object headers.
  */
 void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize)
@@ -4997,7 +5000,7 @@ loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh)
 {
 	loff_t retval;
 
-	if (~(oh->file_size_high))
+	if (sizeof(loff_t) >= 8 && ~(oh->file_size_high))
 		retval = (((loff_t) oh->file_size_high) << 32) |
 			(((loff_t) oh->file_size_low) & 0xFFFFFFFF);
 	else
