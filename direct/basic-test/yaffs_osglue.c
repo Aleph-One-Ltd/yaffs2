@@ -37,6 +37,13 @@ int yaffsfs_GetLastError(void)
 	return yaffsfs_lastError;
 }
 
+int yaffsfs_CheckMemRegion(const void *addr, size_t size, int writeable)
+{
+	if(!addr)
+		return -1;
+	return 0;
+}
+
 
 #ifdef CONFIG_YAFFS_USE_PTHREADS
 #include <pthread.h>

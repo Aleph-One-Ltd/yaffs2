@@ -35,6 +35,8 @@ void yaffsfs_SetError(int err);
 void *yaffsfs_malloc(size_t size);
 void yaffsfs_free(void *ptr);
 
+int yaffsfs_CheckMemRegion(const void *addr, size_t size, int writeable);
+
 void yaffsfs_OSInitialisation(void);
 
 
