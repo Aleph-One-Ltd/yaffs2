@@ -34,6 +34,12 @@
 	( (sizeof(Y_LOFF_T) < 8) ? YAFFS_MAX_FILE_SIZE_32 : (0x800000000LL - 1) )
 
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
 struct yaffs_dirent {
 	long d_ino;			/* inode number */
 	off_t d_off;			/* offset to this dirent */
@@ -207,4 +213,11 @@ int yaffs_set_error(int error);
 /* Trace control functions */
 unsigned  yaffs_set_trace(unsigned tm);
 unsigned  yaffs_get_trace(void);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
 #endif
