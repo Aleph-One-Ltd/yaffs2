@@ -21,6 +21,17 @@ struct yaffs_checkpt_chunk_hdr {
 	u32 xor;
 } ;
 
+
+static int apply_chunk_offset(struct yaffs_dev *dev, int chunk)
+{
+	return chunk - dev->chunk_offset;
+}
+
+static int apply_block_offset(struct yaffs_dev *dev, int block)
+{
+	return block - dev->block_offset;
+}
+
 static void yaffs2_checkpt_init_chunk_hdr(struct yaffs_dev *dev)
 {
 	struct yaffs_checkpt_chunk_hdr hdr;
@@ -71,21 +82,23 @@ static int yaffs_checkpt_erase(struct yaffs_dev *dev)
 
 	for (i = dev->internal_start_block; i <= dev->internal_end_block; i++) {
 		struct yaffs_block_info *bi = yaffs_get_block_info(dev, i);
+		int offset_i = apply_block_offset(dev, i);
+		int result;
+
 		if (bi->block_state == YAFFS_BLOCK_STATE_CHECKPOINT) {
 			yaffs_trace(YAFFS_TRACE_CHECKPOINT,
 			"erasing checkpt block %d", i);
 
 			dev->n_erasures++;
 
-			if (dev->param.
-			    erase_fn(dev,
-				     i - dev->block_offset /* realign */)) {
+			result = dev->param.erase_fn(dev, offset_i);
+			if(result) {
 				bi->block_state = YAFFS_BLOCK_STATE_EMPTY;
 				dev->n_erased_blocks++;
 				dev->n_free_chunks +=
 				    dev->param.chunks_per_block;
 			} else {
-				dev->param.bad_block_fn(dev, i);
+				dev->param.bad_block_fn(dev, offset_i);
 				bi->block_state = YAFFS_BLOCK_STATE_DEAD;
 			}
 		}
@@ -112,8 +125,9 @@ static void yaffs2_checkpt_find_erased_block(struct yaffs_dev *dev)
 
 		for (i = dev->checkpt_next_block; i <= dev->internal_end_block;
 		     i++) {
-			struct yaffs_block_info *bi =
-			    yaffs_get_block_info(dev, i);
+			struct yaffs_block_info *bi;
+
+			bi = yaffs_get_block_info(dev, i);
 			if (bi->block_state == YAFFS_BLOCK_STATE_EMPTY) {
 				dev->checkpt_next_block = i + 1;
 				dev->checkpt_cur_block = i;
@@ -142,12 +156,12 @@ static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 		for (i = dev->checkpt_next_block; i <= dev->internal_end_block;
 		     i++) {
 			int chunk = i * dev->param.chunks_per_block;
-			int realigned_chunk = chunk - dev->chunk_offset;
 			enum yaffs_block_state state;
 			u32 seq;
 
-			dev->param.read_chunk_tags_fn(dev, realigned_chunk,
-						      NULL, &tags);
+			dev->param.read_chunk_tags_fn(dev,
+					apply_chunk_offset(dev, chunk),
+					NULL, &tags);
 			yaffs_trace(YAFFS_TRACE_CHECKPOINT,
 				"find next checkpt block: search: block %d state %d oid %d seq %d eccr %d",
 				i, (int) state,
@@ -157,7 +171,9 @@ static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 			if (tags.seq_number != YAFFS_SEQUENCE_CHECKPOINT_DATA)
 				continue;
 
-			dev->param.query_block_fn(dev, i, &state, &seq);
+			dev->param.query_block_fn(dev,
+						apply_block_offset(dev, i),
+						&state, &seq);
 			if (state == YAFFS_BLOCK_STATE_DEAD)
 				continue;
 
@@ -244,7 +260,7 @@ int yaffs2_get_checkpt_sum(struct yaffs_dev *dev, u32 * sum)
 static int yaffs2_checkpt_flush_buffer(struct yaffs_dev *dev)
 {
 	int chunk;
-	int realigned_chunk;
+	int offset_chunk;
 	struct yaffs_ext_tags tags;
 
 	if (dev->checkpt_cur_block < 0) {
@@ -278,11 +294,11 @@ static int yaffs2_checkpt_flush_buffer(struct yaffs_dev *dev)
 		chunk, dev->checkpt_cur_block, dev->checkpt_cur_chunk,
 		tags.obj_id, tags.chunk_id);
 
-	realigned_chunk = chunk - dev->chunk_offset;
+	offset_chunk = apply_chunk_offset(dev, chunk);
 
 	dev->n_page_writes++;
 
-	dev->param.write_chunk_tags_fn(dev, realigned_chunk,
+	dev->param.write_chunk_tags_fn(dev, offset_chunk,
 				       dev->checkpt_buffer, &tags);
 	dev->checkpt_page_seq++;
 	dev->checkpt_cur_chunk++;
@@ -334,7 +350,7 @@ int yaffs2_checkpt_rd(struct yaffs_dev *dev, void *data, int n_bytes)
 	int ok = 1;
 	struct yaffs_ext_tags tags;
 	int chunk;
-	int realigned_chunk;
+	int offset_chunk;
 	u8 *data_bytes = (u8 *) data;
 
 	if (!dev->checkpt_buffer)
@@ -362,12 +378,12 @@ int yaffs2_checkpt_rd(struct yaffs_dev *dev, void *data, int n_bytes)
 			    dev->param.chunks_per_block +
 			    dev->checkpt_cur_chunk;
 
-			realigned_chunk = chunk - dev->chunk_offset;
+			offset_chunk = apply_chunk_offset(dev, chunk);
 			dev->n_page_reads++;
 
 			/* read in the next chunk */
 			dev->param.read_chunk_tags_fn(dev,
-						realigned_chunk,
+						offset_chunk,
 						dev->checkpt_buffer,
 						&tags);
 
