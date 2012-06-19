@@ -74,7 +74,7 @@ static int yaffs_checkpt_erase(struct yaffs_dev *dev)
 {
 	int i;
 
-	if (!dev->param.erase_fn)
+	if (!dev->param.drv_erase_fn)
 		return 0;
 	yaffs_trace(YAFFS_TRACE_CHECKPOINT,
 		"checking blocks %d to %d",
@@ -91,14 +91,14 @@ static int yaffs_checkpt_erase(struct yaffs_dev *dev)
 
 			dev->n_erasures++;
 
-			result = dev->param.erase_fn(dev, offset_i);
+			result = dev->param.drv_erase_fn(dev, offset_i);
 			if(result) {
 				bi->block_state = YAFFS_BLOCK_STATE_EMPTY;
 				dev->n_erased_blocks++;
 				dev->n_free_chunks +=
 				    dev->param.chunks_per_block;
 			} else {
-				dev->param.bad_block_fn(dev, offset_i);
+				dev->param.drv_bad_block_fn(dev, offset_i);
 				bi->block_state = YAFFS_BLOCK_STATE_DEAD;
 			}
 		}
@@ -202,7 +202,8 @@ int yaffs2_checkpt_open(struct yaffs_dev *dev, int writing)
 	/* Got the functions we need? */
 	if (!dev->param.write_chunk_tags_fn ||
 	    !dev->param.read_chunk_tags_fn ||
-	    !dev->param.erase_fn || !dev->param.bad_block_fn)
+	    !dev->param.drv_erase_fn ||
+	    !dev->param.drv_mark_bad_fn)
 		return 0;
 
 	if (writing && !yaffs2_checkpt_space_ok(dev))

@@ -127,6 +127,10 @@ static int yaffs_wr_nand(struct yaffs_dev *dev,
 			 int nand_chunk, const u8 *data,
 			 struct yaffs_spare *spare)
 {
+	int data_size;
+	int spare_size;
+	u8 spare_buffer[100];
+
 	if (nand_chunk < dev->param.start_block * dev->param.chunks_per_block) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
 			"**>> yaffs chunk %d is not valid",
@@ -134,7 +138,11 @@ static int yaffs_wr_nand(struct yaffs_dev *dev,
 		return YAFFS_FAIL;
 	}
 
-	return dev->param.write_chunk_fn(dev, nand_chunk, data, spare);
+	/* Format up the spare */
+
+	return dev->param.drv_write_chunk_fn(dev, nand_chunk,
+				data, data_size,
+				spare_buffer, spare_size);
 }
 
 static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
@@ -146,6 +154,8 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 {
 	int ret_val;
 	struct yaffs_spare local_spare;
+	int data_size;
+	int spare_size;
 
 	if (!spare) {
 		/* If we don't have a real spare, then we use a local one. */
@@ -155,7 +165,10 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 
 	if (!dev->param.use_nand_ecc) {
 		ret_val =
-		    dev->param.read_chunk_fn(dev, nand_chunk, data, spare);
+		    dev->param.drv_read_chunk_fn(dev, nand_chunk,
+						 data, data_size,
+						 (u8 *)spare, spare_size,
+					ecc_result);
 		if (data && correct_errors) {
 			/* Do ECC correction */
 			/* Todo handle any errors */
@@ -213,9 +226,10 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 
 		memset(&nspare, 0, sizeof(nspare));
 
-		ret_val = dev->param.read_chunk_fn(dev, nand_chunk, data,
-						   (struct yaffs_spare *)
-						   &nspare);
+		ret_val = dev->param.drv_read_chunk_fn(dev, nand_chunk,
+						data, data_size,
+						(u8 *) &nspare, sizeof(nspare),
+						NULL);
 		memcpy(spare, &nspare, sizeof(struct yaffs_spare));
 		if (data && correct_errors) {
 			if (nspare.eccres1 > 0) {
@@ -277,7 +291,7 @@ static void yaffs_handle_rd_data_error(struct yaffs_dev *dev, int nand_chunk)
 	 */
 }
 
-int yaffs_tags_compat_wr(struct yaffs_dev *dev,
+static int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 			 int nand_chunk,
 			 const u8 *data, const struct yaffs_ext_tags *ext_tags)
 {
@@ -309,7 +323,7 @@ int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 	return yaffs_wr_nand(dev, nand_chunk, data, &spare);
 }
 
-int yaffs_tags_compat_rd(struct yaffs_dev *dev,
+static int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 			 int nand_chunk,
 			 u8 *data, struct yaffs_ext_tags *ext_tags)
 {
@@ -358,7 +372,7 @@ int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 	return YAFFS_OK;
 }
 
-int yaffs_tags_compat_mark_bad(struct yaffs_dev *dev, int flash_block)
+static int yaffs_tags_compat_mark_bad(struct yaffs_dev *dev, int flash_block)
 {
 	struct yaffs_spare spare;
 
@@ -374,7 +388,7 @@ int yaffs_tags_compat_mark_bad(struct yaffs_dev *dev, int flash_block)
 	return YAFFS_OK;
 }
 
-int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
+static int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 				  int block_no,
 				  enum yaffs_block_state *state,
 				  u32 *seq_number)
@@ -404,4 +418,18 @@ int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 		*state = YAFFS_BLOCK_STATE_NEEDS_SCAN;
 
 	return YAFFS_OK;
+}
+
+void yaffs_tags_compat_install(struct yaffs_dev *dev)
+{
+	if(dev->param.is_yaffs2)
+		return;
+	if(!dev->param.write_chunk_tags_fn)
+		dev->param.write_chunk_tags_fn = yaffs_tags_compat_wr;
+	if(!dev->param.read_chunk_tags_fn)
+		dev->param.read_chunk_tags_fn = yaffs_tags_compat_rd;
+	if(!dev->param.read_chunk_tags_fn)
+		dev->param.query_block_fn = yaffs_tags_compat_query_block;
+	if(!dev->param.mark_bad_fn)
+		dev->param.mark_bad_fn = yaffs_tags_compat_mark_bad;
 }

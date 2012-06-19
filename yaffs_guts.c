@@ -17,6 +17,7 @@
 #include "yaffs_guts.h"
 #include "yaffs_getblockinfo.h"
 #include "yaffs_tagscompat.h"
+#include "yaffs_tagsmarshall.h"
 #include "yaffs_nand.h"
 #include "yaffs_yaffs1.h"
 #include "yaffs_yaffs2.h"
@@ -4531,30 +4532,30 @@ YCHAR *yaffs_get_symlink_alias(struct yaffs_obj *obj)
 
 /*--------------------------- Initialisation code -------------------------- */
 
-static int yaffs_check_dev_fns(const struct yaffs_dev *dev)
+static int yaffs_check_dev_fns(struct yaffs_dev *dev)
 {
+	struct yaffs_param *param = &dev->param;
+
 	/* Common functions, gotta have */
-	if (!dev->param.erase_fn || !dev->param.initialise_flash_fn)
+	if (!param->drv_initialise_fn ||
+	    !param->drv_read_chunk_fn ||
+	    !param->drv_write_chunk_fn ||
+	    !param->drv_erase_fn ||
+	    !param->drv_initialise_fn)
 		return 0;
 
-	/* Can use the "with tags" style interface for yaffs1 or yaffs2 */
-	if (dev->param.write_chunk_tags_fn &&
-	    dev->param.read_chunk_tags_fn &&
-	    !dev->param.write_chunk_fn &&
-	    !dev->param.read_chunk_fn &&
-	    dev->param.bad_block_fn && dev->param.query_block_fn)
-		return 1;
+	/* Install the default tags marshalling functions if needed. */
+	yaffs_tags_compat_install(dev);
+	yaffs_tags_marshall_install(dev);
 
-	/* Can use the "spare" style interface for yaffs1 */
-	if (!dev->param.is_yaffs2 &&
-	    !dev->param.write_chunk_tags_fn &&
-	    !dev->param.read_chunk_tags_fn &&
-	    dev->param.write_chunk_fn &&
-	    dev->param.read_chunk_fn &&
-	    !dev->param.bad_block_fn && !dev->param.query_block_fn)
-		return 1;
+	/* Check we now have the marshalling functions required. */
+	if (!param->write_chunk_tags_fn ||
+	    !param->read_chunk_tags_fn ||
+	    !param->query_block_fn ||
+	    !param->mark_bad_fn)
+		return 0;
 
-	return 0;		/* bad */
+	return 1;
 }
 
 static int yaffs_create_initial_dir(struct yaffs_dev *dev)
@@ -4924,8 +4925,8 @@ void yaffs_deinitialise(struct yaffs_dev *dev)
 
 		dev->is_mounted = 0;
 
-		if (dev->param.deinitialise_flash_fn)
-			dev->param.deinitialise_flash_fn(dev);
+		if (dev->param.drv_deinitialise_fn)
+			dev->param.drv_deinitialise_fn(dev);
 	}
 }
 

@@ -558,29 +558,43 @@ struct yaffs_param {
 
 	int enable_xattr;	/* Enable xattribs */
 
-	/* NAND access functions (Must be set before calling YAFFS) */
-
-	int (*write_chunk_fn) (struct yaffs_dev *dev,
-			       int nand_chunk, const u8 *data,
-			       const struct yaffs_spare *spare);
-	int (*read_chunk_fn) (struct yaffs_dev *dev,
-			      int nand_chunk, u8 *data,
-			      struct yaffs_spare *spare);
-	int (*erase_fn) (struct yaffs_dev *dev, int flash_block);
-	int (*initialise_flash_fn) (struct yaffs_dev *dev);
-	int (*deinitialise_flash_fn) (struct yaffs_dev *dev);
-
-	/* yaffs2 mode functions */
+	/* Tags marshalling functions.
+	 * If these are not set then defaults will be assigned.
+	 */
 	int (*write_chunk_tags_fn) (struct yaffs_dev *dev,
 				    int nand_chunk, const u8 *data,
 				    const struct yaffs_ext_tags *tags);
 	int (*read_chunk_tags_fn) (struct yaffs_dev *dev,
 				   int nand_chunk, u8 *data,
 				   struct yaffs_ext_tags *tags);
-	int (*bad_block_fn) (struct yaffs_dev *dev, int block_no);
+
 	int (*query_block_fn) (struct yaffs_dev *dev, int block_no,
 			       enum yaffs_block_state *state,
 			       u32 *seq_number);
+	int (*mark_bad_fn) (struct yaffs_dev *dev, int block_no);
+
+	/* NAND driver access functions All required except
+	 * the deinitialise function which is optional.
+	 */
+
+	int (*drv_write_chunk_fn) (struct yaffs_dev *dev, int nand_chunk,
+				   const u8 *data, int data_len,
+				   const u8 *oob, int oob_len);
+	int (*drv_read_chunk_fn) (struct yaffs_dev *dev, int nand_chunk,
+				   u8 *data, int data_len,
+				   u8 *oob, int oob_len,
+				   enum yaffs_ecc_result *ecc_result);
+	int (*drv_erase_fn) (struct yaffs_dev *dev, int block_no);
+	int (*drv_mark_bad_fn) (struct yaffs_dev *dev, int block_no);
+	int (*drv_check_bad_fn) (struct yaffs_dev *dev, int block_no);
+	int (*drv_initialise_fn) (struct yaffs_dev *dev);
+	int (*drv_deinitialise_fn) (struct yaffs_dev *dev);
+
+
+	int max_objects;	/*
+				 * Set to limit the number of objects created.
+				 * 0 = no limit.
+				*/
 
 	/* The remove_obj_fn function must be supplied by OS flavours that
 	 * need it.
@@ -612,10 +626,6 @@ struct yaffs_param {
 
 	int disable_summary;
 
-	int max_objects;	/*
-				 * Set to limit the number of objects created.
-				 * 0 = no limit.
-				*/
 };
 
 struct yaffs_dev {
@@ -766,6 +776,7 @@ struct yaffs_dev {
 	u32 n_page_writes;
 	u32 n_page_reads;
 	u32 n_erasures;
+	u32 n_bad_markings;
 	u32 n_erase_failures;
 	u32 n_gc_copies;
 	u32 all_gcs;
