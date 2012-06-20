@@ -20,6 +20,7 @@ YAFFS_COMMON_SOURCES="\
 
 
 if [ "$1" = "copy" ] ; then
+set -e -x
 	for i in $YAFFS_COMMON_SOURCES ; do
 		sed ../$i \
 		-e "s/strcat/yaffs_strcat/g" \

@@ -16,8 +16,6 @@
  */
 
 
-const char *yaffs_ramem2k_c_version = "$Id: yaffs_ramem2k.c,v 1.8 2010-02-18 01:18:04 charles Exp $";
-
 #ifndef __KERNEL__
 #define CONFIG_YAFFS_RAM_ENABLED
 #else

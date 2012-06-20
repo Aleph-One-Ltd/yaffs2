@@ -35,8 +35,6 @@
  *
  */
 
-const char *yaffs_norif1_c_version = "$Id: yaffs_norif1.c,v 1.6 2010-02-18 01:18:04 charles Exp $";
-
 #include "yaffs_norif1.h"
 
 #include "yportenv.h"
@@ -147,9 +145,7 @@ static void ynorif1_AndBytes(u8*target, const u8   *src, int nbytes)
                 nbytes--;
         }
 }
-	int (*drv_write_chunk_fn) (struct yaffs_dev *dev, int nand_chunk,
-				   const u8 *data, int data_len,
-				   const u8 *oob, int oob_len);
+
 static int ynorif1_WriteChunkToNAND(struct yaffs_dev *dev,int nand_chunk,
 				    const u8 *data, int data_len,
 				    const u8 *oob, int oob_len)
