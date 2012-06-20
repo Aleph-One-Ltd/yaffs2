@@ -501,6 +501,9 @@ static struct yaffs_dev *yaffsfs_FindDevice(const YCHAR *path,
 		thisMatchLength = 0;
 		matching = 1;
 
+		if(!p)
+			continue;
+
 		while (matching && *p && *leftOver) {
 			/* Skip over any /s */
 			while (yaffsfs_IsPathDivider(*p))

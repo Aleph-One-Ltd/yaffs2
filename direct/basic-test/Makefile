@@ -37,7 +37,8 @@ CFLAGS+=   -DCONFIG_YAFFS_USE_PTHREADS -lpthread
 COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
 		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
 		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
-		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_nand.o \
+		 yaffs_tagscompat.o yaffs_tagsmarshall.o \
+		 yaffs_packedtags2.o yaffs_nand.o \
 		 yaffs_checkptrw.o  yaffs_qsort.o\
 		 yaffs_nameval.o yaffs_attribs.o \
 		 yaffs_norif1.o  ynorsim.o \
@@ -54,6 +55,7 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
 YAFFSDIRECTSYMLINKS = \
           yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
           yaffs_tagscompat.c yaffs_tagscompat.h \
+          yaffs_tagsmarshall.c yaffs_tagsmarshall.h \
           yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
           yaffs_checkptrw.h yaffs_checkptrw.c \

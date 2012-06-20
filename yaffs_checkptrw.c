@@ -98,7 +98,7 @@ static int yaffs_checkpt_erase(struct yaffs_dev *dev)
 				dev->n_free_chunks +=
 				    dev->param.chunks_per_block;
 			} else {
-				dev->param.drv_bad_block_fn(dev, offset_i);
+				dev->param.drv_mark_bad_fn(dev, offset_i);
 				bi->block_state = YAFFS_BLOCK_STATE_DEAD;
 			}
 		}

@@ -4540,8 +4540,7 @@ static int yaffs_check_dev_fns(struct yaffs_dev *dev)
 	if (!param->drv_initialise_fn ||
 	    !param->drv_read_chunk_fn ||
 	    !param->drv_write_chunk_fn ||
-	    !param->drv_erase_fn ||
-	    !param->drv_initialise_fn)
+	    !param->drv_erase_fn)
 		return 0;
 
 	/* Install the default tags marshalling functions if needed. */

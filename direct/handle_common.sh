@@ -3,6 +3,7 @@
 YAFFS_COMMON_SOURCES="\
           yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
           yaffs_tagscompat.c yaffs_tagscompat.h \
+          yaffs_tagsmarshall.c yaffs_tagsmarshall.h \
           yaffs_packedtags1.c yaffs_packedtags1.h \
           yaffs_packedtags2.c yaffs_packedtags2.h \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
