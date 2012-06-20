@@ -350,7 +350,7 @@ static int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 
 	*seq_number = 0;
 
-	yaffs_rd_chunk_nand(dev, block_no * dev->param.chunks_per_block + 1,
+	yaffs_rd_chunk_nand(dev, block_no * dev->param.chunks_per_block,
 			    NULL, &spare0, &dummy, 0);
 	yaffs_rd_chunk_nand(dev, block_no * dev->param.chunks_per_block + 1,
 			    NULL, &spare1, &dummy, 0);
