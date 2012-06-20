@@ -88,7 +88,7 @@ static 	int yaffs_mtd_write(struct yaffs_dev *dev, int nand_chunk,
 static int yaffs_mtd_read(struct yaffs_dev *dev, int nand_chunk,
 				   u8 *data, int data_len,
 				   u8 *oob, int oob_len,
-				   int *ecc_result)
+				   enum yaffs_ecc_result *ecc_result)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
 	loff_t addr;
