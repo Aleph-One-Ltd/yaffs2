@@ -109,3 +109,10 @@ int yaffs_init_nand(struct yaffs_dev *dev)
 		return dev->param.drv_initialise_fn(dev);
 	return YAFFS_OK;
 }
+
+int yaffs_deinit_nand(struct yaffs_dev *dev)
+{
+	if (dev->param.drv_deinitialise_fn)
+		return dev->param.drv_deinitialise_fn(dev);
+	return YAFFS_OK;
+}

@@ -29,8 +29,6 @@ struct yaffs_linux_context {
 				 * at compile time so we have to allocate it.
 				 */
 	struct list_head search_contexts;
-	void (*put_super_fn) (struct super_block *sb);
-
 	struct task_struct *readdir_process;
 	unsigned mount_id;
 };

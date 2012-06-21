@@ -607,7 +607,7 @@ struct yaffs_param {
 	void (*sb_dirty_fn) (struct yaffs_dev *dev);
 
 	/*  Callback to control garbage collection. */
-	unsigned (*gc_control) (struct yaffs_dev *dev);
+	unsigned (*gc_control_fn) (struct yaffs_dev *dev);
 
 	/* Debug control flags. Don't use unless you know what you're doing */
 	int use_header_file_size;	/* Flag to determine if we should use

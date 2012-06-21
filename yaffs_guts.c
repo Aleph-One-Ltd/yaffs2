@@ -2798,7 +2798,8 @@ static int yaffs_check_gc(struct yaffs_dev *dev, int background)
 	int erased_chunks;
 	int checkpt_block_adjust;
 
-	if (dev->param.gc_control && (dev->param.gc_control(dev) & 1) == 0)
+	if (dev->param.gc_control_fn &&
+		(dev->param.gc_control_fn(dev) & 1) == 0)
 		return YAFFS_OK;
 
 	if (dev->gc_disable)
@@ -4537,10 +4538,13 @@ static int yaffs_check_dev_fns(struct yaffs_dev *dev)
 	struct yaffs_param *param = &dev->param;
 
 	/* Common functions, gotta have */
-	if (!param->drv_initialise_fn ||
-	    !param->drv_read_chunk_fn ||
+	if (!param->drv_read_chunk_fn ||
 	    !param->drv_write_chunk_fn ||
 	    !param->drv_erase_fn)
+		return 0;
+
+	if (param->is_yaffs2 &&
+	     (!param->drv_mark_bad_fn  || !param->drv_check_bad_fn))
 		return 0;
 
 	/* Install the default tags marshalling functions if needed. */
@@ -4924,8 +4928,7 @@ void yaffs_deinitialise(struct yaffs_dev *dev)
 
 		dev->is_mounted = 0;
 
-		if (dev->param.drv_deinitialise_fn)
-			dev->param.drv_deinitialise_fn(dev);
+		yaffs_deinit_nand(dev);
 	}
 }
 
