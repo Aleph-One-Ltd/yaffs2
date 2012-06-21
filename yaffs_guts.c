@@ -609,10 +609,10 @@ static void yaffs_retire_block(struct yaffs_dev *dev, int flash_block)
 			memset(buffer, 0xff, dev->data_bytes_per_chunk);
 			memset(&tags, 0, sizeof(tags));
 			tags.seq_number = YAFFS_SEQUENCE_BAD_BLOCK;
-			if (dev->param.write_chunk_tags_fn(dev, chunk_id -
-							   dev->chunk_offset,
-							   buffer,
-							   &tags) != YAFFS_OK)
+			if (dev->th.write_chunk_tags_fn(dev, chunk_id -
+							dev->chunk_offset,
+							buffer,
+							&tags) != YAFFS_OK)
 				yaffs_trace(YAFFS_TRACE_ALWAYS,
 					"yaffs: Failed to write bad block marker to block %d",
 					flash_block);
@@ -4535,16 +4535,17 @@ YCHAR *yaffs_get_symlink_alias(struct yaffs_obj *obj)
 
 static int yaffs_check_dev_fns(struct yaffs_dev *dev)
 {
-	struct yaffs_param *param = &dev->param;
+	struct yaffs_driver *drv = &dev->drv;
+	struct yaffs_tags_handler *th = &dev->th;
 
 	/* Common functions, gotta have */
-	if (!param->drv_read_chunk_fn ||
-	    !param->drv_write_chunk_fn ||
-	    !param->drv_erase_fn)
+	if (!drv->drv_read_chunk_fn ||
+	    !drv->drv_write_chunk_fn ||
+	    !drv->drv_erase_fn)
 		return 0;
 
-	if (param->is_yaffs2 &&
-	     (!param->drv_mark_bad_fn  || !param->drv_check_bad_fn))
+	if (dev->param.is_yaffs2 &&
+	     (!drv->drv_mark_bad_fn  || !drv->drv_check_bad_fn))
 		return 0;
 
 	/* Install the default tags marshalling functions if needed. */
@@ -4552,10 +4553,10 @@ static int yaffs_check_dev_fns(struct yaffs_dev *dev)
 	yaffs_tags_marshall_install(dev);
 
 	/* Check we now have the marshalling functions required. */
-	if (!param->write_chunk_tags_fn ||
-	    !param->read_chunk_tags_fn ||
-	    !param->query_block_fn ||
-	    !param->mark_bad_fn)
+	if (!th->write_chunk_tags_fn ||
+	    !th->read_chunk_tags_fn ||
+	    !th->query_block_fn ||
+	    !th->mark_bad_fn)
 		return 0;
 
 	return 1;

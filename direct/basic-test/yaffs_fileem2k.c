@@ -322,13 +322,14 @@ static int yflash2_Initialise(struct yaffs_dev *dev)
 void yflash2_install_drv(struct yaffs_dev *dev)
 {
 	struct yaffs_param *param = &dev->param;
+	struct yaffs_driver *drv = &dev->drv;
 
-	param->drv_write_chunk_fn = yflash2_WriteChunk;
-	param->drv_read_chunk_fn = yflash2_ReadChunk;
-	param->drv_erase_fn = yflash2_EraseBlock;
-	param->drv_mark_bad_fn = yflash2_MarkBad;
-	param->drv_check_bad_fn = yflash2_CheckBad;
-	param->drv_initialise_fn = yflash2_Initialise;
+	drv->drv_write_chunk_fn = yflash2_WriteChunk;
+	drv->drv_read_chunk_fn = yflash2_ReadChunk;
+	drv->drv_erase_fn = yflash2_EraseBlock;
+	drv->drv_mark_bad_fn = yflash2_MarkBad;
+	drv->drv_check_bad_fn = yflash2_CheckBad;
+	drv->drv_initialise_fn = yflash2_Initialise;
 
 
 	param->total_bytes_per_chunk = 2048;

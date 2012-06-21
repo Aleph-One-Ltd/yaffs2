@@ -48,7 +48,7 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 		yaffs_pack_tags2(&pt, tags, !dev->param.no_tags_ecc);
 	}
 
-	retval = dev->param.drv_write_chunk_fn(dev, nand_chunk,
+	retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
 			data, dev->param.total_bytes_per_chunk,
 			(dev->param.inband_tags) ? NULL : packed_tags_ptr,
 			(dev->param.inband_tags) ? 0 : packed_tags_size);
@@ -84,12 +84,12 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 	}
 
 	if (dev->param.inband_tags || (data && !tags))
-		retval = dev->param.drv_read_chunk_fn(dev, nand_chunk,
+		retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 					data, dev->param.total_bytes_per_chunk,
 					NULL, 0,
 					&ecc_result);
 	else if (tags)
-		retval = dev->param.drv_read_chunk_fn(dev, nand_chunk,
+		retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 					data, dev->param.total_bytes_per_chunk,
 					spare_buffer, packed_tags_size,
 					&ecc_result);
@@ -139,7 +139,7 @@ static int yaffs_tags_marshall_query_block(struct yaffs_dev *dev, int block_no,
 	yaffs_trace(YAFFS_TRACE_MTD, "yaffs_tags_marshall_query_block %d",
 			block_no);
 
-	retval = dev->param.drv_check_bad_fn(dev, block_no);
+	retval = dev->drv.drv_check_bad_fn(dev, block_no);
 
 	if (retval== YAFFS_FAIL) {
 		yaffs_trace(YAFFS_TRACE_MTD, "block is bad");
@@ -174,7 +174,7 @@ static int yaffs_tags_marshall_query_block(struct yaffs_dev *dev, int block_no,
 
 static int yaffs_tags_marshall_mark_bad(struct yaffs_dev *dev, int block_no)
 {
-	return dev->param.drv_mark_bad_fn(dev, block_no);
+	return dev->drv.drv_mark_bad_fn(dev, block_no);
 
 }
 
@@ -184,16 +184,16 @@ void yaffs_tags_marshall_install(struct yaffs_dev *dev)
 	if (!dev->param.is_yaffs2)
 		return;
 
-	if (!dev->param.write_chunk_tags_fn)
-		dev->param.write_chunk_tags_fn = yaffs_tags_marshall_write;
+	if (!dev->th.write_chunk_tags_fn)
+		dev->th.write_chunk_tags_fn = yaffs_tags_marshall_write;
 
-	if (!dev->param.read_chunk_tags_fn)
-		dev->param.read_chunk_tags_fn = yaffs_tags_marshall_read;
+	if (!dev->th.read_chunk_tags_fn)
+		dev->th.read_chunk_tags_fn = yaffs_tags_marshall_read;
 
-	if (!dev->param.query_block_fn)
-		dev->param.query_block_fn = yaffs_tags_marshall_query_block;
+	if (!dev->th.query_block_fn)
+		dev->th.query_block_fn = yaffs_tags_marshall_query_block;
 
-	if (!dev->param.mark_bad_fn)
-		dev->param.mark_bad_fn = yaffs_tags_marshall_mark_bad;
+	if (!dev->th.mark_bad_fn)
+		dev->th.mark_bad_fn = yaffs_tags_marshall_mark_bad;
 
 }

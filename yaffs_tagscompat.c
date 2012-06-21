@@ -124,7 +124,7 @@ static int yaffs_wr_nand(struct yaffs_dev *dev,
 {
 	int data_size = dev->data_bytes_per_chunk;
 
-	return dev->param.drv_write_chunk_fn(dev, nand_chunk,
+	return dev->drv.drv_write_chunk_fn(dev, nand_chunk,
 				data, data_size,
 				(u8 *) spare, sizeof(*spare));
 }
@@ -152,7 +152,7 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 	spare_size = sizeof(struct yaffs_spare);
 
 	if (dev->param.use_nand_ecc)
-		return dev->param.drv_read_chunk_fn(dev, nand_chunk,
+		return dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 						data, data_size,
 						(u8 *) spare, spare_size,
 						ecc_result);
@@ -160,7 +160,7 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 
 	/* Handle the ECC at this level. */
 
-	ret_val = dev->param.drv_read_chunk_fn(dev, nand_chunk,
+	ret_val = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 						 data, data_size,
 						 (u8 *)spare, spare_size,
 						NULL);
@@ -369,12 +369,12 @@ void yaffs_tags_compat_install(struct yaffs_dev *dev)
 {
 	if(dev->param.is_yaffs2)
 		return;
-	if(!dev->param.write_chunk_tags_fn)
-		dev->param.write_chunk_tags_fn = yaffs_tags_compat_wr;
-	if(!dev->param.read_chunk_tags_fn)
-		dev->param.read_chunk_tags_fn = yaffs_tags_compat_rd;
-	if(!dev->param.query_block_fn)
-		dev->param.query_block_fn = yaffs_tags_compat_query_block;
-	if(!dev->param.mark_bad_fn)
-		dev->param.mark_bad_fn = yaffs_tags_compat_mark_bad;
+	if(!dev->th.write_chunk_tags_fn)
+		dev->th.write_chunk_tags_fn = yaffs_tags_compat_wr;
+	if(!dev->th.read_chunk_tags_fn)
+		dev->th.read_chunk_tags_fn = yaffs_tags_compat_rd;
+	if(!dev->th.query_block_fn)
+		dev->th.query_block_fn = yaffs_tags_compat_query_block;
+	if(!dev->th.mark_bad_fn)
+		dev->th.mark_bad_fn = yaffs_tags_compat_mark_bad;
 }

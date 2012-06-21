@@ -35,7 +35,7 @@ int yaffs_rd_chunk_tags_nand(struct yaffs_dev *dev, int nand_chunk,
 	if (!tags)
 		tags = &local_tags;
 
-	result = dev->param.read_chunk_tags_fn(dev, flash_chunk, buffer, tags);
+	result = dev->th.read_chunk_tags_fn(dev, flash_chunk, buffer, tags);
 	if (tags && tags->ecc_result > YAFFS_ECC_RESULT_NO_ERROR) {
 
 		struct yaffs_block_info *bi;
@@ -68,7 +68,7 @@ int yaffs_wr_chunk_tags_nand(struct yaffs_dev *dev,
 		"Writing chunk %d tags %d %d",
 		nand_chunk, tags->obj_id, tags->chunk_id);
 
-	result = dev->param.write_chunk_tags_fn(dev, flash_chunk,
+	result = dev->th.write_chunk_tags_fn(dev, flash_chunk,
 							buffer, tags);
 
 	yaffs_summary_add(dev, tags, nand_chunk);
@@ -80,7 +80,7 @@ int yaffs_mark_bad(struct yaffs_dev *dev, int block_no)
 {
 	block_no -= dev->block_offset;
 	dev->n_bad_markings++;
-	return dev->param.mark_bad_fn(dev, block_no);
+	return dev->th.mark_bad_fn(dev, block_no);
 }
 
 
@@ -90,7 +90,7 @@ int yaffs_query_init_block_state(struct yaffs_dev *dev,
 				 u32 *seq_number)
 {
 	block_no -= dev->block_offset;
-	return dev->param.query_block_fn(dev, block_no, state, seq_number);
+	return dev->th.query_block_fn(dev, block_no, state, seq_number);
 }
 
 int yaffs_erase_block(struct yaffs_dev *dev, int block_no)
@@ -99,20 +99,20 @@ int yaffs_erase_block(struct yaffs_dev *dev, int block_no)
 
 	block_no -= dev->block_offset;
 	dev->n_erasures++;
-	result = dev->param.drv_erase_fn(dev, block_no);
+	result = dev->drv.drv_erase_fn(dev, block_no);
 	return result;
 }
 
 int yaffs_init_nand(struct yaffs_dev *dev)
 {
-	if (dev->param.drv_initialise_fn)
-		return dev->param.drv_initialise_fn(dev);
+	if (dev->drv.drv_initialise_fn)
+		return dev->drv.drv_initialise_fn(dev);
 	return YAFFS_OK;
 }
 
 int yaffs_deinit_nand(struct yaffs_dev *dev)
 {
-	if (dev->param.drv_deinitialise_fn)
-		return dev->param.drv_deinitialise_fn(dev);
+	if (dev->drv.drv_deinitialise_fn)
+		return dev->drv.drv_deinitialise_fn(dev);
 	return YAFFS_OK;
 }

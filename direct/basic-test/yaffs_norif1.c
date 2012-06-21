@@ -322,6 +322,7 @@ static int ynorif1_Deinitialise_flash_fn(struct yaffs_dev *dev)
 void ynorif1_install_drv(struct yaffs_dev *dev)
 {
 	struct yaffs_param *param = &dev->param;
+	struct yaffs_driver *drv = &dev->drv;
 
 	param->total_bytes_per_chunk = 1024;
 	param->chunks_per_block =248;
@@ -329,10 +330,10 @@ void ynorif1_install_drv(struct yaffs_dev *dev)
 	param->start_block = 0; // Can use block 0
 	param->end_block = 31; // Last block
 	param->use_nand_ecc = 0; // use YAFFS's ECC
-	param->drv_write_chunk_fn = ynorif1_WriteChunkToNAND;
-	param->drv_read_chunk_fn = ynorif1_ReadChunkFromNAND;
-	param->drv_erase_fn = ynorif1_EraseBlockInNAND;
-	param->drv_initialise_fn = ynorif1_InitialiseNAND;
-	param->drv_deinitialise_fn = ynorif1_Deinitialise_flash_fn;
+	drv->drv_write_chunk_fn = ynorif1_WriteChunkToNAND;
+	drv->drv_read_chunk_fn = ynorif1_ReadChunkFromNAND;
+	drv->drv_erase_fn = ynorif1_EraseBlockInNAND;
+	drv->drv_initialise_fn = ynorif1_InitialiseNAND;
+	drv->drv_deinitialise_fn = ynorif1_Deinitialise_flash_fn;
 }
 

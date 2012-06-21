@@ -211,13 +211,13 @@ static int yaffs_mtd_deinitialise(struct yaffs_dev *dev)
 
 void yaffs_mtd_drv_install(struct yaffs_dev *dev)
 {
-	struct yaffs_param *param = &dev->param;
+	struct yaffs_driver *drv = &dev->drv;
 
-	param->drv_write_chunk_fn = yaffs_mtd_write;
-	param->drv_read_chunk_fn = yaffs_mtd_read;
-	param->drv_erase_fn = yaffs_mtd_erase;
-	param->drv_mark_bad_fn = yaffs_mtd_mark_bad;
-	param->drv_check_bad_fn = yaffs_mtd_check_bad;
-	param->drv_initialise_fn = yaffs_mtd_initialise;
-	param->drv_deinitialise_fn = yaffs_mtd_deinitialise;
+	drv->drv_write_chunk_fn = yaffs_mtd_write;
+	drv->drv_read_chunk_fn = yaffs_mtd_read;
+	drv->drv_erase_fn = yaffs_mtd_erase;
+	drv->drv_mark_bad_fn = yaffs_mtd_mark_bad;
+	drv->drv_check_bad_fn = yaffs_mtd_check_bad;
+	drv->drv_initialise_fn = yaffs_mtd_initialise;
+	drv->drv_deinitialise_fn = yaffs_mtd_deinitialise;
 }
