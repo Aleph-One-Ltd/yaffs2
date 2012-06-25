@@ -23,7 +23,6 @@
 #include "yaffsfs.h"
 #include "yaffs_fileem2k.h"
 #include "yaffs_nandemul2k.h"
-#include "yaffs_norif1.h"
 #include "yaffs_trace.h"
 #include "yaffs_osglue.h"
 
@@ -47,10 +46,8 @@ unsigned yaffs_trace_mask =
 
 // Configuration
 
-#include "yaffs_ramdisk.h"
-#include "yaffs_flashif.h"
 #include "yaffs_flashif2.h"
-#include "yaffs_nandemul2k.h"
+#include "yaffs_m18_drv.h"
 
 struct yaffs_dev ram1Dev;
 struct yaffs_dev flashDev;
@@ -68,37 +65,11 @@ int yaffs_start_up(void)
 	// Stuff to initialise anything special (eg lock semaphore).
 	yaffsfs_OSInitialisation();
 
-	// Set up devices
 
-	// /M18-1 yaffs1 on M18 nor sim
-	memset(&m18_1Dev,0,sizeof(m18_1Dev));
-	ynorif1_install_drv(&m18_1Dev);
-	m18_1Dev.param.name = "M18-1";
-	m18_1Dev.param.n_caches = 10; // Use caches
-	m18_1Dev.param.disable_soft_del = 1;
-	m18_1Dev.driver_context = (void *) 1;	// Used to identify the device in fstat.
-
-
-//	m18_1Dev.param.disable_soft_del = 1;
-
-	yaffs_add_device(&m18_1Dev);
+	yaffs_m18_install_drv("M18-1");
 
 	// /yaffs2  yaffs2 file emulation
-	// 2kpage/64chunk per block
-	//
-	memset(&flashDev,0,sizeof(flashDev));
-	yflash2_install_drv(&flashDev);
-	flashDev.param.name = "yaffs2";
-
-	flashDev.param.n_reserved_blocks = 5;
-	flashDev.param.wide_tnodes_disabled=0;
-	flashDev.param.refresh_period = 1000;
-	flashDev.param.n_caches = 10; // Use caches
-	flashDev.driver_context = (void *) 2;	// Used to identify the device in fstat.
-
-	flashDev.param.enable_xattr = 1;
-
-	yaffs_add_device(&flashDev);
+	yflash2_install_drv("yaffs2");
 
 	return 0;
 }

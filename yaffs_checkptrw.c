@@ -159,7 +159,7 @@ static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 			enum yaffs_block_state state;
 			u32 seq;
 
-			dev->th.read_chunk_tags_fn(dev,
+			dev->tagger.read_chunk_tags_fn(dev,
 					apply_chunk_offset(dev, chunk),
 					NULL, &tags);
 			yaffs_trace(YAFFS_TRACE_CHECKPOINT,
@@ -171,7 +171,7 @@ static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 			if (tags.seq_number != YAFFS_SEQUENCE_CHECKPOINT_DATA)
 				continue;
 
-			dev->th.query_block_fn(dev,
+			dev->tagger.query_block_fn(dev,
 						apply_block_offset(dev, i),
 						&state, &seq);
 			if (state == YAFFS_BLOCK_STATE_DEAD)
@@ -200,8 +200,8 @@ int yaffs2_checkpt_open(struct yaffs_dev *dev, int writing)
 	dev->checkpt_open_write = writing;
 
 	/* Got the functions we need? */
-	if (!dev->th.write_chunk_tags_fn ||
-	    !dev->th.read_chunk_tags_fn ||
+	if (!dev->tagger.write_chunk_tags_fn ||
+	    !dev->tagger.read_chunk_tags_fn ||
 	    !dev->drv.drv_erase_fn ||
 	    !dev->drv.drv_mark_bad_fn)
 		return 0;
@@ -299,7 +299,7 @@ static int yaffs2_checkpt_flush_buffer(struct yaffs_dev *dev)
 
 	dev->n_page_writes++;
 
-	dev->th.write_chunk_tags_fn(dev, offset_chunk,
+	dev->tagger.write_chunk_tags_fn(dev, offset_chunk,
 				       dev->checkpt_buffer, &tags);
 	dev->checkpt_page_seq++;
 	dev->checkpt_cur_chunk++;
@@ -383,7 +383,7 @@ int yaffs2_checkpt_rd(struct yaffs_dev *dev, void *data, int n_bytes)
 			dev->n_page_reads++;
 
 			/* read in the next chunk */
-			dev->th.read_chunk_tags_fn(dev,
+			dev->tagger.read_chunk_tags_fn(dev,
 						offset_chunk,
 						dev->checkpt_buffer,
 						&tags);

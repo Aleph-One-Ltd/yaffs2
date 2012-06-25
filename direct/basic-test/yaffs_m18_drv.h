@@ -14,11 +14,11 @@
  */
 
 
-#ifndef __YAFFS_NOR_IF1_H__
-#define __YAFFS_NOR_IF1_H__
+#ifndef __YAFFS_M18_DRV_H__
+#define __YAFFS_M18_DRV_H__
 
 struct yaffs_dev;
-void ynorif1_install_drv(struct yaffs_dev *dev);
+struct yaffs_dev *yaffs_m18_install_drv(const char *name);
 
 #endif
 

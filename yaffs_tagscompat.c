@@ -350,6 +350,7 @@ static int yaffs_tags_compat_query_block(struct yaffs_dev *dev,
 
 	*seq_number = 0;
 
+	/* Look for bad block markers in the first two chunks */
 	yaffs_rd_chunk_nand(dev, block_no * dev->param.chunks_per_block,
 			    NULL, &spare0, &dummy, 0);
 	yaffs_rd_chunk_nand(dev, block_no * dev->param.chunks_per_block + 1,
@@ -369,12 +370,12 @@ void yaffs_tags_compat_install(struct yaffs_dev *dev)
 {
 	if(dev->param.is_yaffs2)
 		return;
-	if(!dev->th.write_chunk_tags_fn)
-		dev->th.write_chunk_tags_fn = yaffs_tags_compat_wr;
-	if(!dev->th.read_chunk_tags_fn)
-		dev->th.read_chunk_tags_fn = yaffs_tags_compat_rd;
-	if(!dev->th.query_block_fn)
-		dev->th.query_block_fn = yaffs_tags_compat_query_block;
-	if(!dev->th.mark_bad_fn)
-		dev->th.mark_bad_fn = yaffs_tags_compat_mark_bad;
+	if(!dev->tagger.write_chunk_tags_fn)
+		dev->tagger.write_chunk_tags_fn = yaffs_tags_compat_wr;
+	if(!dev->tagger.read_chunk_tags_fn)
+		dev->tagger.read_chunk_tags_fn = yaffs_tags_compat_rd;
+	if(!dev->tagger.query_block_fn)
+		dev->tagger.query_block_fn = yaffs_tags_compat_query_block;
+	if(!dev->tagger.mark_bad_fn)
+		dev->tagger.mark_bad_fn = yaffs_tags_compat_mark_bad;
 }

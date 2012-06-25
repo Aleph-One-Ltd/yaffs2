@@ -184,16 +184,16 @@ void yaffs_tags_marshall_install(struct yaffs_dev *dev)
 	if (!dev->param.is_yaffs2)
 		return;
 
-	if (!dev->th.write_chunk_tags_fn)
-		dev->th.write_chunk_tags_fn = yaffs_tags_marshall_write;
+	if (!dev->tagger.write_chunk_tags_fn)
+		dev->tagger.write_chunk_tags_fn = yaffs_tags_marshall_write;
 
-	if (!dev->th.read_chunk_tags_fn)
-		dev->th.read_chunk_tags_fn = yaffs_tags_marshall_read;
+	if (!dev->tagger.read_chunk_tags_fn)
+		dev->tagger.read_chunk_tags_fn = yaffs_tags_marshall_read;
 
-	if (!dev->th.query_block_fn)
-		dev->th.query_block_fn = yaffs_tags_marshall_query_block;
+	if (!dev->tagger.query_block_fn)
+		dev->tagger.query_block_fn = yaffs_tags_marshall_query_block;
 
-	if (!dev->th.mark_bad_fn)
-		dev->th.mark_bad_fn = yaffs_tags_marshall_mark_bad;
+	if (!dev->tagger.mark_bad_fn)
+		dev->tagger.mark_bad_fn = yaffs_tags_marshall_mark_bad;
 
 }

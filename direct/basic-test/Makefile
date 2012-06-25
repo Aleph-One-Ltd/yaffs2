@@ -40,7 +40,7 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o \
 		 yaffs_packedtags2.o yaffs_nand.o \
 		 yaffs_checkptrw.o  yaffs_qsort.o\
 		 yaffs_nameval.o yaffs_attribs.o \
-		 yaffs_norif1.o  ynorsim.o \
+		 yaffs_m18_drv.o  ynorsim.o \
 		 yaffs_allocator.o \
 		 yaffs_bitmap.o \
 		 yaffs_yaffs1.o \

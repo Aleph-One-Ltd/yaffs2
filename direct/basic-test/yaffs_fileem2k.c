@@ -30,6 +30,34 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#if 1
+
+#define SIZE_IN_MB 32
+/* #define SIZE_IN_MB 128 */
+
+#define PAGE_DATA_SIZE (2048)
+#define PAGE_SPARE_SIZE  (64)
+#define PAGE_SIZE  (PAGE_DATA_SIZE + PAGE_SPARE_SIZE)
+#define PAGES_PER_BLOCK (64)
+#define BLOCK_DATA_SIZE (PAGE_DATA_SIZE * PAGES_PER_BLOCK)
+#define BLOCK_SIZE (PAGES_PER_BLOCK * (PAGE_SIZE))
+#define BLOCKS_PER_MB ((1024*1024)/BLOCK_DATA_SIZE)
+#define SIZE_IN_BLOCKS (BLOCKS_PER_MB * SIZE_IN_MB)
+
+#else
+
+#define SIZE_IN_MB 128
+#define PAGE_DATA_SIZE (512)
+#define SPARE_SIZE  (16)
+#define PAGE_SIZE  (PAGE_DATA_SIZE + SPARE_SIZE)
+#define PAGES_PER_BLOCK (32)
+#define BLOCK_DATA_SIZE (PAGE_SIZE * PAGES_PER_BLOCK)
+#define BLOCK_SIZE (PAGES_PER_BLOCK * (PAGE_SIZE))
+#define BLOCKS_PER_MB ((1024*1024)/BLOCK_DATA_SIZE)
+#define SIZE_IN_BLOCKS (BLOCKS_PER_MB * SIZE_IN_MB)
+
+#endif
+
 #define REPORT_ERROR 0
 
 typedef struct
@@ -319,10 +347,27 @@ static int yflash2_Initialise(struct yaffs_dev *dev)
 	return YAFFS_OK;
 }
 
-void yflash2_install_drv(struct yaffs_dev *dev)
+struct yaffs_dev *yflash2_install_drv(const char *name)
 {
-	struct yaffs_param *param = &dev->param;
-	struct yaffs_driver *drv = &dev->drv;
+	struct yaffs_dev *dev = NULL;
+	struct yaffs_param *param;
+	struct yaffs_driver *drv;
+
+	dev = malloc(sizeof(*dev));
+
+	if(!dev)
+		return NULL;
+
+	memset(dev, 0, sizeof(*dev));
+
+	dev->param.name = strdup(name);
+
+	if(!dev->param.name) {
+		free(dev);
+		return NULL;
+	}
+
+	drv = &dev->drv;
 
 	drv->drv_write_chunk_fn = yflash2_WriteChunk;
 	drv->drv_read_chunk_fn = yflash2_ReadChunk;
@@ -331,6 +376,7 @@ void yflash2_install_drv(struct yaffs_dev *dev)
 	drv->drv_check_bad_fn = yflash2_CheckBad;
 	drv->drv_initialise_fn = yflash2_Initialise;
 
+	param = &dev->param;
 
 	param->total_bytes_per_chunk = 2048;
 	param->chunks_per_block = 64;
@@ -338,4 +384,17 @@ void yflash2_install_drv(struct yaffs_dev *dev)
 	param->end_block = yflash2_GetNumberOfBlocks()-1;
 	param->is_yaffs2 = 1;
 	param->use_nand_ecc=1;
+
+	param->n_reserved_blocks = 5;
+	param->wide_tnodes_disabled=0;
+	param->refresh_period = 1000;
+	param->n_caches = 10; // Use caches
+
+	param->enable_xattr = 1;
+
+	/* dev->driver_context is not used by this simulator */
+
+	yaffs_add_device(dev);
+
+	return dev;
 }

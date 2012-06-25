@@ -627,7 +627,7 @@ struct yaffs_tags_handler {
 struct yaffs_dev {
 	struct yaffs_param param;
 	struct yaffs_driver drv;
-	struct yaffs_tags_handler th;
+	struct yaffs_tags_handler tagger;
 
 	/* Context storage. Holds extra OS specific data for this device */
 

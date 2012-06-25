@@ -35,7 +35,7 @@
  *
  */
 
-#include "yaffs_norif1.h"
+#include "yaffs_m18_drv.h"
 
 #include "yportenv.h"
 #include "yaffs_trace.h"
@@ -50,7 +50,8 @@
 #define CHUNKS_PER_BLOCK	248
 #define SPARE_AREA_OFFSET	(CHUNKS_PER_BLOCK * PROG_REGION_SIZE)
 
-#define FORMAT_OFFSET		(SPARE_AREA_OFFSET + CHUNKS_PER_BLOCK * (SPARE_BYTES_PER_CHUNK + M18_SKIP))
+#define FORMAT_OFFSET		(SPARE_AREA_OFFSET + CHUNKS_PER_BLOCK * \
+				(SPARE_BYTES_PER_CHUNK + M18_SKIP))
 
 #define FORMAT_VALUE		0x1234
 
@@ -66,21 +67,21 @@
 
 /* Compile this for a simulation */
 #include "ynorsim.h"
-#define ynorif1_FlashInit() ynorsim_initialise()
-#define ynorif1_FlashDeinit() ynorsim_shutdown()
-#define ynorif1_FlashWrite32(addr,buf,nwords) ynorsim_wr32(addr,buf,nwords)
-#define ynorif1_FlashRead32(addr,buf,nwords) ynorsim_rd32(addr,buf,nwords)
-#define ynorif1_FlashEraseBlock(addr) ynorsim_erase(addr)
+#define m18_drv_FlashInit() ynorsim_initialise()
+#define m18_drv_FlashDeinit() ynorsim_shutdown()
+#define m18_drv_FlashWrite32(addr,buf,nwords) ynorsim_wr32(addr,buf,nwords)
+#define m18_drv_FlashRead32(addr,buf,nwords) ynorsim_rd32(addr,buf,nwords)
+#define m18_drv_FlashEraseBlock(addr) ynorsim_erase(addr)
 #define DEVICE_BASE     ynorsim_get_base()
 #else
 
-/* Compile this for running on blob, hacked for yaffs access */
+/* Compile this to hook up to read hardware */
 #include "../blob/yflashrw.h"
-#define ynorif1_FlashInit()  do{} while(0)
-#define ynorif1_FlashDeinit() do {} while(0)
-#define ynorif1_FlashWrite32(addr,buf,nwords) Y_FlashWrite(addr,buf,nwords)
-#define ynorif1_FlashRead32(addr,buf,nwords)  Y_FlashRead(addr,buf,nwords)
-#define ynorif1_FlashEraseBlock(addr)         Y_FlashErase(addr,BLOCK_SIZE_IN_BYTES)
+#define m18_drv_FlashInit()  do{} while(0)
+#define m18_drv_FlashDeinit() do {} while(0)
+#define m18_drv_FlashWrite32(addr,buf,nwords) Y_FlashWrite(addr,buf,nwords)
+#define m18_drv_FlashRead32(addr,buf,nwords)  Y_FlashRead(addr,buf,nwords)
+#define m18_drv_FlashEraseBlock(addr)         Y_FlashErase(addr,BLOCK_SIZE_IN_BYTES)
 #define DEVICE_BASE     (32 * 1024 * 1024)
 #endif
 
@@ -136,7 +137,7 @@ static u32 *Chunk2SpareAddr(struct yaffs_dev *dev,int chunk_id)
 }
 
 
-static void ynorif1_AndBytes(u8*target, const u8   *src, int nbytes)
+static void m18_drv_AndBytes(u8*target, const u8   *src, int nbytes)
 {
         while(nbytes > 0){
                 *target &= *src;
@@ -146,7 +147,7 @@ static void ynorif1_AndBytes(u8*target, const u8   *src, int nbytes)
         }
 }
 
-static int ynorif1_WriteChunkToNAND(struct yaffs_dev *dev,int nand_chunk,
+static int m18_drv_WriteChunkToNAND(struct yaffs_dev *dev,int nand_chunk,
 				    const u8 *data, int data_len,
 				    const u8 *oob, int oob_len)
 {
@@ -174,30 +175,30 @@ static int ynorif1_WriteChunkToNAND(struct yaffs_dev *dev,int nand_chunk,
                 /* Write a pre-marker */
                 memset(&tmpSpare,0xff,sizeof(tmpSpare));
                 tmpSpare.page_status = YNOR_PREMARKER;
-                ynorif1_FlashWrite32(spareAddr,(u32 *)&tmpSpare,sizeof(struct yaffs_spare)/4);
+                m18_drv_FlashWrite32(spareAddr,(u32 *)&tmpSpare,sizeof(struct yaffs_spare)/4);
 
                 /* Write the data */
-                ynorif1_FlashWrite32(dataAddr,(u32 *)data, data_len/ 4);
+                m18_drv_FlashWrite32(dataAddr,(u32 *)data, data_len/ 4);
 
 
                 memcpy(&tmpSpare,spare,sizeof(struct yaffs_spare));
 
                 /* Write the real tags, but override the premarker*/
                 tmpSpare.page_status = YNOR_PREMARKER;
-                ynorif1_FlashWrite32(spareAddr,(u32 *)&tmpSpare,sizeof(struct yaffs_spare)/4);
+                m18_drv_FlashWrite32(spareAddr,(u32 *)&tmpSpare,sizeof(struct yaffs_spare)/4);
 
                 /* Write a post-marker */
                 tmpSpare.page_status = YNOR_POSTMARKER;
-                ynorif1_FlashWrite32(spareAddr,(u32 *)&tmpSpare,sizeof(tmpSpare)/4);
+                m18_drv_FlashWrite32(spareAddr,(u32 *)&tmpSpare,sizeof(tmpSpare)/4);
 
         } else if(spare){
                 /* This has to be a read-modify-write operation to handle NOR-ness */
 
-                ynorif1_FlashRead32(spareAddr,(u32 *)&tmpSpare,16/ 4);
+                m18_drv_FlashRead32(spareAddr,(u32 *)&tmpSpare,16/ 4);
 
-                ynorif1_AndBytes((u8 *)&tmpSpare,(u8 *)spare,sizeof(struct yaffs_spare));
+                m18_drv_AndBytes((u8 *)&tmpSpare,(u8 *)spare,sizeof(struct yaffs_spare));
 
-                ynorif1_FlashWrite32(spareAddr,(u32 *)&tmpSpare,16/ 4);
+                m18_drv_FlashWrite32(spareAddr,(u32 *)&tmpSpare,16/ 4);
         }
         else {
                 BUG();
@@ -208,7 +209,7 @@ static int ynorif1_WriteChunkToNAND(struct yaffs_dev *dev,int nand_chunk,
 
 }
 
-static int ynorif1_ReadChunkFromNAND(struct yaffs_dev *dev,int nand_chunk,
+static int m18_drv_ReadChunkFromNAND(struct yaffs_dev *dev,int nand_chunk,
 					u8 *data, int data_len,
 					u8 *oob, int oob_len,
 					enum yaffs_ecc_result *ecc_result)
@@ -220,12 +221,12 @@ static int ynorif1_ReadChunkFromNAND(struct yaffs_dev *dev,int nand_chunk,
 
 	if(data)
 	{
-		ynorif1_FlashRead32(dataAddr,(u32 *)data,dev->param.total_bytes_per_chunk / 4);
+		m18_drv_FlashRead32(dataAddr,(u32 *)data,dev->param.total_bytes_per_chunk / 4);
 	}
 
         if(oob)
         {
-                ynorif1_FlashRead32(spareAddr,(u32 *)spare, oob_len/ 4);
+                m18_drv_FlashRead32(spareAddr,(u32 *)spare, oob_len/ 4);
 
                 /* If the page status is YNOR_POSTMARKER then it was written properly
                  * so change that to 0xFF so that the rest of yaffs is happy.
@@ -245,40 +246,40 @@ static int ynorif1_ReadChunkFromNAND(struct yaffs_dev *dev,int nand_chunk,
 }
 
 
-static int ynorif1_FormatBlock(struct yaffs_dev *dev, int blockNumber)
+static int m18_drv_FormatBlock(struct yaffs_dev *dev, int blockNumber)
 {
 	u32 *blockAddr = Block2Addr(dev,blockNumber);
 	u32 *formatAddr = Block2FormatAddr(dev,blockNumber);
 	u32 formatValue = FORMAT_VALUE;
 
-	ynorif1_FlashEraseBlock(blockAddr);
-	ynorif1_FlashWrite32(formatAddr,&formatValue,1);
+	m18_drv_FlashEraseBlock(blockAddr);
+	m18_drv_FlashWrite32(formatAddr,&formatValue,1);
 
 	return YAFFS_OK;
 }
 
-static int ynorif1_UnformatBlock(struct yaffs_dev *dev, int blockNumber)
+static int m18_drv_UnformatBlock(struct yaffs_dev *dev, int blockNumber)
 {
 	u32 *formatAddr = Block2FormatAddr(dev,blockNumber);
 	u32 formatValue = 0;
 
-	ynorif1_FlashWrite32(formatAddr,&formatValue,1);
+	m18_drv_FlashWrite32(formatAddr,&formatValue,1);
 
 	return YAFFS_OK;
 }
 
-static int ynorif1_IsBlockFormatted(struct yaffs_dev *dev, int blockNumber)
+static int m18_drv_IsBlockFormatted(struct yaffs_dev *dev, int blockNumber)
 {
 	u32 *formatAddr = Block2FormatAddr(dev,blockNumber);
 	u32 formatValue;
 
 
-	ynorif1_FlashRead32(formatAddr,&formatValue,1);
+	m18_drv_FlashRead32(formatAddr,&formatValue,1);
 
 	return (formatValue == FORMAT_VALUE);
 }
 
-static int ynorif1_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
+static int m18_drv_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
 {
 
 	if(blockNumber < 0 || blockNumber >= BLOCKS_IN_DEVICE)
@@ -290,39 +291,57 @@ static int ynorif1_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
 	}
 	else
 	{
-		ynorif1_UnformatBlock(dev,blockNumber);
-		ynorif1_FormatBlock(dev,blockNumber);
+		m18_drv_UnformatBlock(dev,blockNumber);
+		m18_drv_FormatBlock(dev,blockNumber);
 		return YAFFS_OK;
 	}
 
 }
 
-static int ynorif1_InitialiseNAND(struct yaffs_dev *dev)
+static int m18_drv_InitialiseNAND(struct yaffs_dev *dev)
 {
 	int i;
 
-	ynorif1_FlashInit();
+	m18_drv_FlashInit();
 	/* Go through the blocks formatting them if they are not formatted */
 	for(i = dev->param.start_block; i <= dev->param.end_block; i++){
-		if(!ynorif1_IsBlockFormatted(dev,i)){
-			ynorif1_FormatBlock(dev,i);
+		if(!m18_drv_IsBlockFormatted(dev,i)){
+			m18_drv_FormatBlock(dev,i);
 		}
 	}
 	return YAFFS_OK;
 }
 
-static int ynorif1_Deinitialise_flash_fn(struct yaffs_dev *dev)
+static int m18_drv_Deinitialise_flash_fn(struct yaffs_dev *dev)
 {
 	dev=dev;
-	ynorif1_FlashDeinit();
+	m18_drv_FlashDeinit();
 
 	return YAFFS_OK;
 }
 
-void ynorif1_install_drv(struct yaffs_dev *dev)
+
+struct yaffs_dev *yaffs_m18_install_drv(const char *name)
 {
-	struct yaffs_param *param = &dev->param;
-	struct yaffs_driver *drv = &dev->drv;
+
+	struct yaffs_dev *dev = malloc(sizeof(struct yaffs_dev));
+	char *name_copy = strdup(name);
+	struct yaffs_param *param;
+	struct yaffs_driver *drv;
+
+
+	if(!dev || !name_copy) {
+		free(name_copy);
+		free(dev);
+		return NULL;
+	}
+
+	param = &dev->param;
+	drv = &dev->drv;
+
+	memset(dev, 0, sizeof(*dev));
+
+	param->name = name_copy;
 
 	param->total_bytes_per_chunk = 1024;
 	param->chunks_per_block =248;
@@ -330,10 +349,17 @@ void ynorif1_install_drv(struct yaffs_dev *dev)
 	param->start_block = 0; // Can use block 0
 	param->end_block = 31; // Last block
 	param->use_nand_ecc = 0; // use YAFFS's ECC
-	drv->drv_write_chunk_fn = ynorif1_WriteChunkToNAND;
-	drv->drv_read_chunk_fn = ynorif1_ReadChunkFromNAND;
-	drv->drv_erase_fn = ynorif1_EraseBlockInNAND;
-	drv->drv_initialise_fn = ynorif1_InitialiseNAND;
-	drv->drv_deinitialise_fn = ynorif1_Deinitialise_flash_fn;
-}
 
+	drv->drv_write_chunk_fn = m18_drv_WriteChunkToNAND;
+	drv->drv_read_chunk_fn = m18_drv_ReadChunkFromNAND;
+	drv->drv_erase_fn = m18_drv_EraseBlockInNAND;
+	drv->drv_initialise_fn = m18_drv_InitialiseNAND;
+	drv->drv_deinitialise_fn = m18_drv_Deinitialise_flash_fn;
+
+	param->n_caches = 10;
+	param->disable_soft_del = 1;
+
+	dev->driver_context = (void *) 1;	// Used to identify the device in fstat.
+
+	yaffs_add_device(dev);
+}
