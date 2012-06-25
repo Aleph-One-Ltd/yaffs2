@@ -15,9 +15,6 @@
 #include "yaffscfg.h"
 #include "yaffs_guts.h"
 #include "yaffsfs.h"
-#include "yaffs_fileem2k.h"
-#include "yaffs_nandemul2k.h"
-#include "yaffs_norif1.h"
 #include "yaffs_trace.h"
 #include <assert.h>
 

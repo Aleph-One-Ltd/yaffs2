@@ -49,10 +49,6 @@ unsigned yaffs_trace_mask =
 #include "yaffs_flashif2.h"
 #include "yaffs_m18_drv.h"
 
-struct yaffs_dev ram1Dev;
-struct yaffs_dev flashDev;
-struct yaffs_dev m18_1Dev;
-
 int yaffs_start_up(void)
 {
 	static int start_up_called = 0;

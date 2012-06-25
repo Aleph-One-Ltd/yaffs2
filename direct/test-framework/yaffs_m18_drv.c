@@ -362,4 +362,6 @@ struct yaffs_dev *yaffs_m18_install_drv(const char *name)
 	dev->driver_context = (void *) 1;	// Used to identify the device in fstat.
 
 	yaffs_add_device(dev);
+
+	return NULL;
 }
