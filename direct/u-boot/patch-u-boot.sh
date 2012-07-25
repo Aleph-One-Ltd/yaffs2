@@ -17,7 +17,7 @@
 #
 #  Inspired yaffs kernel patching script
 
-set -e -x
+#set -e -x
 
 UBOOTDIR=$1
 

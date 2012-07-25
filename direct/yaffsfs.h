@@ -171,6 +171,10 @@ int yaffs_unmount(const YCHAR *path) ;
 int yaffs_unmount2(const YCHAR *path, int force);
 int yaffs_remount(const YCHAR *path, int force, int read_only);
 
+int yaffs_format(const YCHAR *path,
+		int unmount_flag,
+		int force_unmount_flag,
+		int remount_flag);
 
 int yaffs_sync(const YCHAR *path) ;
 

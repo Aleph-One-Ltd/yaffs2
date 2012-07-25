@@ -2648,6 +2648,67 @@ int yaffs_unmount(const YCHAR *path)
 	return yaffs_unmount2(path, 0);
 }
 
+int yaffs_format(const YCHAR *path,
+		int unmount_flag,
+		int force_unmount_flag,
+		int remount_flag)
+{
+	int retVal = 0;
+	struct yaffs_dev *dev = NULL;
+	int result;
+
+	if (!path) {
+		yaffsfs_SetError(-EFAULT);
+		return -1;
+	}
+
+	if (yaffsfs_CheckPath(path) < 0) {
+		yaffsfs_SetError(-ENAMETOOLONG);
+		return -1;
+	}
+
+	yaffsfs_Lock();
+	dev = yaffsfs_FindMountPoint(path);
+
+	if (dev) {
+		int was_mounted = dev->is_mounted;
+
+		if (dev->is_mounted && unmount_flag) {
+			int inUse;
+			yaffs_flush_whole_cache(dev);
+			yaffs_checkpoint_save(dev);
+			inUse = yaffsfs_IsDevBusy(dev);
+			if (!inUse || force_unmount_flag) {
+				if (inUse)
+					yaffsfs_BreakDeviceHandles(dev);
+				yaffs_deinitialise(dev);
+			}
+		}
+
+		if(dev->is_mounted) {
+				yaffsfs_SetError(-EBUSY);
+				retVal = -1;
+		} else {
+			yaffs_format_dev(dev);
+			if(was_mounted && remount_flag) {
+				result = yaffs_guts_initialise(dev);
+				if (result == YAFFS_FAIL) {
+					yaffsfs_SetError(-ENOMEM);
+					retVal = -1;
+				}
+			}
+		}
+	} else {
+		yaffsfs_SetError(-ENODEV);
+		retVal = -1;
+	}
+
+	yaffsfs_Unlock();
+	return retVal;
+
+}
+
+
 Y_LOFF_T yaffs_freespace(const YCHAR *path)
 {
 	Y_LOFF_T retVal = -1;

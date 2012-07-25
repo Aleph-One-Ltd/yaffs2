@@ -3081,6 +3081,32 @@ void readdir_test(const char *mountpt)
 
 }
 
+void format_test(const char *mountpt)
+{
+	int ret;
+
+	yaffs_start_up();
+
+	ret = yaffs_format(mountpt, 0, 0, 0);
+	printf("yaffs_format(...,0, 0, 0) of unmounted returned %d\n", ret);
+
+	yaffs_mount(mountpt);
+
+	ret = yaffs_format(mountpt, 0, 0, 0);
+	printf("yaffs_format(...,0, 0, 0) of mounted returned %d\n", ret);
+
+	ret = yaffs_format(mountpt, 1, 0, 0);
+	printf("yaffs_format(...,1, 0, 0) of mounted returned %d\n", ret);
+
+	ret = yaffs_mount(mountpt);
+	printf("mount should return 0 returned %d\n", ret);
+
+	ret = yaffs_format(mountpt, 1, 0, 1);
+	printf("yaffs_format(...,1, 0, 1) of mounted returned %d\n", ret);
+
+	ret = yaffs_mount(mountpt);
+	printf("mount should return -1 returned %d\n", ret);
+}
 
 int random_seed;
 int simulate_power_failure;
@@ -3149,7 +3175,10 @@ int main(int argc, char *argv[])
 	 // link_follow_test("/yaffs2");
 	 //basic_utime_test("/yaffs2");
 
-	max_files_test("/yaffs2");
+
+	format_test("/yaffs2");
+
+	//max_files_test("/yaffs2");
 
 	 //start_twice("/yaffs2");
 

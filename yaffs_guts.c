@@ -4986,6 +4986,42 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev)
 	return n_free;
 }
 
+
+int yaffs_format_dev(struct yaffs_dev *dev)
+{
+	int i;
+	enum yaffs_block_state state;
+	u32 dummy;
+
+	if(dev->is_mounted)
+		return YAFFS_FAIL;
+
+	/*
+	* The runtime variables might not have been set up,
+	* so set up what we need.
+	*/
+	dev->internal_start_block = dev->param.start_block;
+	dev->internal_end_block = dev->param.end_block;
+	dev->block_offset = 0;
+	dev->chunk_offset = 0;
+
+	if (dev->param.start_block == 0) {
+		dev->internal_start_block = dev->param.start_block + 1;
+		dev->internal_end_block = dev->param.end_block + 1;
+		dev->block_offset = 1;
+		dev->chunk_offset = dev->param.chunks_per_block;
+	}
+
+	for (i = dev->internal_start_block; i <= dev->internal_end_block; i++) {
+		yaffs_query_init_block_state(dev, i, &state, &dummy);
+		if (state != YAFFS_BLOCK_STATE_DEAD)
+			yaffs_erase_block(dev, i);
+	}
+
+	return YAFFS_OK;
+}
+
+
 /*
  * Marshalling functions to get loff_t file sizes into and out of
  * object headers.
