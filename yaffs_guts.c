@@ -40,7 +40,8 @@
 static int yaffs_wr_data_obj(struct yaffs_obj *in, int inode_chunk,
 			     const u8 *buffer, int n_bytes, int use_reserve);
 
-
+static void yaffs_fix_null_name(struct yaffs_obj *obj, YCHAR *name,
+				int buffer_size);
 
 /* Function to calculate chunk and offset */
 
@@ -647,15 +648,21 @@ static u16 yaffs_calc_name_sum(const YCHAR *name)
 	return sum;
 }
 
+
 void yaffs_set_obj_name(struct yaffs_obj *obj, const YCHAR * name)
 {
 	memset(obj->short_name, 0, sizeof(obj->short_name));
-	if (name &&
+
+	if (name && !name[0]) {
+		yaffs_fix_null_name(obj, obj->short_name,
+				YAFFS_SHORT_NAME_LENGTH);
+		name = obj->short_name;
+	} else if (name &&
 		strnlen(name, YAFFS_SHORT_NAME_LENGTH + 1) <=
-		YAFFS_SHORT_NAME_LENGTH)
+		YAFFS_SHORT_NAME_LENGTH)  {
 		strcpy(obj->short_name, name);
-	else
-		obj->short_name[0] = _Y('\0');
+	}
+
 	obj->sum = yaffs_calc_name_sum(name);
 }
 

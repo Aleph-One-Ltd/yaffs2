@@ -3042,6 +3042,70 @@ void large_file_test(const char *mountpt)
 }
 
 
+int  mk_dir(const char *mp, const char *name)
+{
+	char full_name[100];
+
+	sprintf(full_name, "%s/%s", mp, name);
+
+	return yaffs_mkdir(full_name, S_IREAD| S_IWRITE);
+}
+
+int  mk_file(const char *mp, const char *name)
+{
+	char full_name[100];
+	int h;
+
+	sprintf(full_name, "%s/%s", mp, name);
+
+	h = yaffs_open(full_name, O_RDWR | O_CREAT | O_TRUNC, S_IREAD| S_IWRITE);
+
+	yaffs_write(h, name, strlen(name));
+
+	yaffs_close(h);
+	return 0;
+}
+
+void xx_test(const char *mountpt)
+{
+	char xx_buffer[1000];
+
+	yaffs_start_up();
+
+	yaffs_format(mountpt,0,0,0);
+
+	yaffs_mount(mountpt);
+	printf("mounted\n");
+	dumpDir(mountpt);
+
+	printf("create files\n");
+
+	mk_dir(mountpt, "foo");
+	mk_file(mountpt, "foo/f1");
+	mk_file(mountpt, "foo/f2");
+	mk_file(mountpt, "foo/f3");
+	mk_file(mountpt, "foo/f4");
+	dump_directory_tree(mountpt);
+
+	printf("unmount and remount\n");
+
+	/* Unmount/remount */
+	yaffs_unmount(mountpt);
+	yaffs_mount(mountpt);
+	dump_directory_tree(mountpt);
+}
+
+void yy_test(const char *mountpt)
+{
+	char xx_buffer[1000];
+
+	yaffs_start_up();
+
+	yaffs_mount(mountpt);
+	dump_directory_tree(mountpt);
+}
+
+
 void readdir_test(const char *mountpt)
 {
 	char xx_buffer[1000];
@@ -3176,7 +3240,7 @@ int main(int argc, char *argv[])
 	 //basic_utime_test("/yaffs2");
 
 
-	format_test("/yaffs2");
+	//format_test("/yaffs2");
 
 	//max_files_test("/yaffs2");
 
@@ -3187,6 +3251,9 @@ int main(int argc, char *argv[])
 
 	 //basic_utime_test("/yaffs2");
 	 //case_insensitive_test("/yaffs2");
+
+	 yy_test("/yaffs2");
+
 
 	 return 0;
 
