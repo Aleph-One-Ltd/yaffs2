@@ -66,7 +66,7 @@ int nandmtd_WriteChunkToNAND(struct yaffs_dev *dev, int chunkInNAND,
 	struct mtd_oob_ops ops;
 	size_t dummy;
 	int retval = 0;
-	loff_t addr = ((loff_t) chunkInNAND) * dev->data_bytes_per_chunk;
+	loff_t addr = ((loff_t) chunkInNAND) * dev->param.total_bytes_per_chunk;
 	u8 spareAsBytes[8]; /* OOB */
 
 	if (data && !spare)
@@ -102,7 +102,7 @@ int nandmtd_ReadChunkFromNAND(struct yaffs_dev *dev, int chunkInNAND, u8 *data,
 	size_t dummy;
 	int retval = 0;
 
-	loff_t addr = ((loff_t) chunkInNAND) * dev->data_bytes_per_chunk;
+	loff_t addr = ((loff_t) chunkInNAND) * dev->param.total_bytes_per_chunk;
 	u8 spareAsBytes[8]; /* OOB */
 
 	if (data && !spare)
@@ -135,7 +135,7 @@ int nandmtd_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
 {
 	struct mtd_info *mtd = (struct mtd_info *)(dev->driver_context);
 	__u32 addr =
-	    ((loff_t) blockNumber) * dev->data_bytes_per_chunk
+	    ((loff_t) blockNumber) * dev->param.total_bytes_per_chunk
 		* dev->param.chunks_per_block;
 	struct erase_info ei;
 	int retval = 0;
