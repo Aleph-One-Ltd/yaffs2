@@ -27,11 +27,12 @@ ifneq ($(KERNELRELEASE),)
 
 	obj-m := $(YAFFS_O)
 
-	yaffs2-objs := yaffs_mtdif.o yaffs_mtdif2_single.o
-	yaffs2-objs += yaffs_mtdif1_single.o yaffs_packedtags1.o
+	yaffs2-objs := yaffs_mtdif_single.o
+	yaffs2-objs += yaffs_packedtags1.o
 	yaffs2-objs += yaffs_ecc.o yaffs_vfs_single.o yaffs_guts.o
 	yaffs2-objs += yaffs_packedtags2.o
 	yaffs2-objs += yaffs_tagscompat.o
+	yaffs2-objs += yaffs_tagsmarshall.o
 	yaffs2-objs += yaffs_checkptrw.o yaffs_nand.o
 	yaffs2-objs += yaffs_checkptrw.o yaffs_nand.o yaffs_nameval.o
 	yaffs2-objs += yaffs_allocator.o yaffs_bitmap.o yaffs_attribs.o
@@ -40,11 +41,12 @@ ifneq ($(KERNELRELEASE),)
 	yaffs2-objs += yaffs_verify.o
 	yaffs2-objs += yaffs_summary.o
 
-	yaffs2multi-objs := yaffs_mtdif.o yaffs_mtdif2_multi.o
-	yaffs2multi-objs += yaffs_mtdif1_multi.o yaffs_packedtags1.o
+	yaffs2multi-objs := yaffs_mtdif_multi.o
+	yaffs2multi-objs += yaffs_packedtags1.o
 	yaffs2multi-objs += yaffs_ecc.o yaffs_vfs_multi.o yaffs_guts.o
 	yaffs2multi-objs += yaffs_packedtags2.o
 	yaffs2multi-objs += yaffs_tagscompat.o
+	yaffs2multi-objs += yaffs_tagsmarshall.o
 	yaffs2multi-objs += yaffs_checkptrw.o yaffs_nand.o
 	yaffs2multi-objs += yaffs_checkptrw.o yaffs_nand.o yaffs_nameval.o
 	yaffs2multi-objs += yaffs_allocator.o yaffs_bitmap.o yaffs_attribs.o

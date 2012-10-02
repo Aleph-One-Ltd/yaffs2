@@ -1912,6 +1912,7 @@ static void yaffs_fill_inode_from_obj(struct inode *inode,
 static void yaffs_put_super(struct super_block *sb)
 {
 	struct yaffs_dev *dev = yaffs_super_to_dev(sb);
+	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
 
 	yaffs_trace(YAFFS_TRACE_OS, "yaffs_put_super");
 
@@ -1941,16 +1942,14 @@ static void yaffs_put_super(struct super_block *sb)
 	}
 
 	kfree(dev);
-}
 
-static void yaffs_mtd_put_super(struct super_block *sb)
-{
-	struct mtd_info *mtd = yaffs_dev_to_mtd(yaffs_super_to_dev(sb));
 
-	if (mtd->sync)
+
+	if (mtd && mtd->sync)
 		mtd->sync(mtd);
 
-	put_mtd_device(mtd);
+	if (mtd)
+		put_mtd_device(mtd);
 }
 
 static const struct super_operations yaffs_super_ops = {
@@ -2213,7 +2212,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	yaffs_dev_to_lc(dev)->put_super_fn = yaffs_mtd_put_super;
 
 	param->sb_dirty_fn = yaffs_touch_super;
-	param->gc_control = yaffs_gc_control_callback;
+	param->gc_control_fn = yaffs_gc_control_callback;
 
 	yaffs_dev_to_lc(dev)->super = sb;
 

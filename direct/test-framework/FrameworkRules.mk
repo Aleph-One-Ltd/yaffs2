@@ -1,4 +1,4 @@
-# Makefile for YAFFS direct stress tests
+# Makefile rules for building in test framwork
 #
 #
 # YAFFS: Yet another Flash File System. A NAND-flash specific file system.
@@ -14,13 +14,12 @@
 #
 # NB Warning this Makefile does not include header dependencies.
 #
-# $Id: Makefile,v 1.7 2010-02-25 22:34:47 charles Exp $
 
 #EXTRA_COMPILE_FLAGS = -DYAFFS_IGNORE_TAGS_ECC
 
 CFLAGS =      -DCONFIG_YAFFS_DIRECT -DCONFIG_YAFFS_YAFFS2  -DCONFIG_YAFFS_DEFINES_TYPES
 CFLAGS +=     -DCONFIG_YAFFS_PROVIDE_DEFS -DCONFIG_YAFFSFS_PROVIDE_VALUES
-CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Wstrict-aliasing 
+CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Wstrict-aliasing
 #CFLAGS +=    -fno-strict-aliasing
 CFLAGS +=    -O0
 CFLAGS +=    -Wextra -Wpointer-arith
@@ -33,10 +32,11 @@ CFLAGS +=    -Wextra -Wpointer-arith
 COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o\
 		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
 		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
-		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_nand.o \
+		 yaffs_tagscompat.o yaffs_tagsmarshall.o \
+		 yaffs_packedtags2.o yaffs_nand.o \
 		 yaffs_checkptrw.o  yaffs_qsort.o\
 		 yaffs_nameval.o yaffs_attribs.o \
-		 yaffs_norif1.o  ynorsim.o nor_stress.o yaffs_fsx.o \
+		 yaffs_m18_drv.o  ynorsim.o \
 		 yaffs_allocator.o \
 		 yaffs_bitmap.o \
 		 yaffs_yaffs1.o \
@@ -44,12 +44,9 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o\
 		 yaffs_verify.o \
 		 yaffs_summary.o
 
-#		 yaffs_checkptrwtest.o\
-
-YAFFSTESTOBJS  = $(COMMONTESTOBJS) yaffs_test.o
 
 
-ALLOBJS = $(sort $(YAFFSTESTOBJS))
+ALLOBJS = $(sort $(ALL_UNSORTED_OBJS))
 
 YAFFSDIRECTSYMLINKS =  \
           yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
@@ -61,6 +58,7 @@ YAFFSDIRECTSYMLINKS =  \
           yaffs_hweight.c yaffs_hweight.h \
           yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
           yaffs_tagscompat.c yaffs_tagscompat.h \
+          yaffs_tagsmarshall.c yaffs_tagsmarshall.h \
           yaffs_packedtags1.c yaffs_packedtags1.h \
           yaffs_packedtags2.c yaffs_packedtags2.h  \
           yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
@@ -75,31 +73,23 @@ YAFFSDIRECTSYMLINKS =  \
           yaffs_summary.c yaffs_summary.h
 
 
-DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
-			yaffs_fileem.c yaffs_norif1.c yaffs_norif1.h \
-			yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
-			ynorsim.h ynorsim.c yaffs_osglue.c
+FRAMEWORKEXTRASYMLINKS = \
+		yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
+		yaffs_fileem.c yaffs_m18_drv.c yaffs_m18_drv.h \
+		yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
+		ynorsim.h ynorsim.c yaffs_osglue.c
 
-COPIED_SOURCES = $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
-
-all: yaffs_test fuzzer
-
-$(ALLOBJS): %.o: %.c
-	gcc -c $(CFLAGS) -o $@ $<
-
-
-$(YAFFSDIRECTSYMLINKS):
-	ln -s ../$@ $@
-
-$(DIRECTEXTRASYMLINKS):
-	ln -s ../basic-test/$@ $@
-
-
-yaffs_test: $(COPIED_SOURCES) $(YAFFSTESTOBJS)
-	gcc $(CFLLAG) -o $@ $(YAFFSTESTOBJS)
-
-fuzzer: fuzzer.c
-	gcc $(CFLAGS) -o $@ $<
+FRAMEWORK_SOURCES = $(YAFFSDIRECTSYMLINKS) $(FRAMEWORKEXTRASYMLINKS)
 
 clean:
-	rm -f yaffs_test fuzzer fuzzer.o $(ALLOBJS) core $(COPIED_SOURCES)
+	rm -f $(TARGETS) $(ALLOBJS) core $(FRAMEWORK_SOURCES)
+
+$(YAFFSDIRECTSYMLINKS):
+	ln -s $(YDI_DIR)/$@ $@
+
+
+$(FRAMEWORKEXTRASYMLINKS):
+	ln -s $(YDI_FRAMEWORK_DIR)/$@ $@
+
+$(ALLOBJS): %.o: %.c
+	gcc -c $(CFLAGS)   -o $@ $<

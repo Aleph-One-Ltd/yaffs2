@@ -15,9 +15,6 @@
 #include "yaffscfg.h"
 #include "yaffs_guts.h"
 #include "yaffsfs.h"
-#include "yaffs_fileem2k.h"
-#include "yaffs_nandemul2k.h"
-#include "yaffs_norif1.h"
 #include "yaffs_trace.h"
 #include <assert.h>
 
@@ -35,6 +32,13 @@ void yaffsfs_SetError(int err)
 int yaffsfs_GetLastError(void)
 {
 	return yaffsfs_lastError;
+}
+
+int yaffsfs_CheckMemRegion(const void *addr, size_t size, int writeable)
+{
+	if(!addr)
+		return -1;
+	return 0;
 }
 
 

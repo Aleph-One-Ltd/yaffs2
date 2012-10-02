@@ -17,6 +17,7 @@
 #include "yaffs_guts.h"
 #include "yaffs_getblockinfo.h"
 #include "yaffs_tagscompat.h"
+#include "yaffs_tagsmarshall.h"
 #include "yaffs_nand.h"
 #include "yaffs_yaffs1.h"
 #include "yaffs_yaffs2.h"
@@ -609,10 +610,10 @@ static void yaffs_retire_block(struct yaffs_dev *dev, int flash_block)
 			memset(buffer, 0xff, dev->data_bytes_per_chunk);
 			memset(&tags, 0, sizeof(tags));
 			tags.seq_number = YAFFS_SEQUENCE_BAD_BLOCK;
-			if (dev->param.write_chunk_tags_fn(dev, chunk_id -
-							   dev->chunk_offset,
-							   buffer,
-							   &tags) != YAFFS_OK)
+			if (dev->tagger.write_chunk_tags_fn(dev, chunk_id -
+							dev->chunk_offset,
+							buffer,
+							&tags) != YAFFS_OK)
 				yaffs_trace(YAFFS_TRACE_ALWAYS,
 					"yaffs: Failed to write bad block marker to block %d",
 					flash_block);
@@ -2804,7 +2805,8 @@ static int yaffs_check_gc(struct yaffs_dev *dev, int background)
 	int erased_chunks;
 	int checkpt_block_adjust;
 
-	if (dev->param.gc_control && (dev->param.gc_control(dev) & 1) == 0)
+	if (dev->param.gc_control_fn &&
+		(dev->param.gc_control_fn(dev) & 1) == 0)
 		return YAFFS_OK;
 
 	if (dev->gc_disable)
@@ -3566,9 +3568,11 @@ int yaffs_do_file_wr(struct yaffs_obj *in, const u8 *buffer, loff_t offset,
 		}
 
 		if (n_copy != dev->data_bytes_per_chunk ||
+		    !dev->param.cache_bypass_aligned ||
 		    dev->param.inband_tags) {
 			/* An incomplete start or end chunk (or maybe both
 			 * start and end chunk), or we're using inband tags,
+			 * or we're forcing writes through the cache,
 			 * so we want to use the cache buffers.
 			 */
 			if (dev->param.n_caches > 0) {
@@ -4536,30 +4540,33 @@ YCHAR *yaffs_get_symlink_alias(struct yaffs_obj *obj)
 
 /*--------------------------- Initialisation code -------------------------- */
 
-static int yaffs_check_dev_fns(const struct yaffs_dev *dev)
+static int yaffs_check_dev_fns(struct yaffs_dev *dev)
 {
+	struct yaffs_driver *drv = &dev->drv;
+	struct yaffs_tags_handler *tagger = &dev->tagger;
+
 	/* Common functions, gotta have */
-	if (!dev->param.erase_fn || !dev->param.initialise_flash_fn)
+	if (!drv->drv_read_chunk_fn ||
+	    !drv->drv_write_chunk_fn ||
+	    !drv->drv_erase_fn)
 		return 0;
 
-	/* Can use the "with tags" style interface for yaffs1 or yaffs2 */
-	if (dev->param.write_chunk_tags_fn &&
-	    dev->param.read_chunk_tags_fn &&
-	    !dev->param.write_chunk_fn &&
-	    !dev->param.read_chunk_fn &&
-	    dev->param.bad_block_fn && dev->param.query_block_fn)
-		return 1;
+	if (dev->param.is_yaffs2 &&
+	     (!drv->drv_mark_bad_fn  || !drv->drv_check_bad_fn))
+		return 0;
 
-	/* Can use the "spare" style interface for yaffs1 */
-	if (!dev->param.is_yaffs2 &&
-	    !dev->param.write_chunk_tags_fn &&
-	    !dev->param.read_chunk_tags_fn &&
-	    dev->param.write_chunk_fn &&
-	    dev->param.read_chunk_fn &&
-	    !dev->param.bad_block_fn && !dev->param.query_block_fn)
-		return 1;
+	/* Install the default tags marshalling functions if needed. */
+	yaffs_tags_compat_install(dev);
+	yaffs_tags_marshall_install(dev);
 
-	return 0;		/* bad */
+	/* Check we now have the marshalling functions required. */
+	if (!tagger->write_chunk_tags_fn ||
+	    !tagger->read_chunk_tags_fn ||
+	    !tagger->query_block_fn ||
+	    !tagger->mark_bad_fn)
+		return 0;
+
+	return 1;
 }
 
 static int yaffs_create_initial_dir(struct yaffs_dev *dev)
@@ -4929,8 +4936,7 @@ void yaffs_deinitialise(struct yaffs_dev *dev)
 
 		dev->is_mounted = 0;
 
-		if (dev->param.deinitialise_flash_fn)
-			dev->param.deinitialise_flash_fn(dev);
+		yaffs_deinit_nand(dev);
 	}
 }
 

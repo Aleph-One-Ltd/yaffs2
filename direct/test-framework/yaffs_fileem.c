@@ -16,9 +16,6 @@
  * This is only intended as test code to test persistence etc.
  */
 
-const char *yaffs_flashif_c_version = "$Id: yaffs_fileem.c,v 1.7 2010-02-18 01:18:04 charles Exp $";
-
-
 #include "yportenv.h"
 #include "yaffs_trace.h"
 
