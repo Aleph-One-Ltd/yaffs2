@@ -92,10 +92,10 @@ static struct nor_sim *nor_sim;
 
 static u32 *Block2Addr(struct yaffs_dev *dev, int blockNumber)
 {
-	u32 addr;
+	u8 *addr;
 	dev=dev;
 
-	addr = (u32) DEVICE_BASE;
+	addr = (u8*) DEVICE_BASE;
 	addr += blockNumber * BLOCK_SIZE_IN_BYTES;
 
 	return (u32 *) addr;
@@ -103,9 +103,9 @@ static u32 *Block2Addr(struct yaffs_dev *dev, int blockNumber)
 
 static u32 *Block2FormatAddr(struct yaffs_dev *dev,int blockNumber)
 {
-	u32 addr;
+	u8 *addr;
 
-	addr = (u32) Block2Addr(dev,blockNumber);
+	addr = (u8*) Block2Addr(dev,blockNumber);
 	addr += FORMAT_OFFSET;
 
 	return (u32 *)addr;
@@ -115,12 +115,12 @@ static u32 *Chunk2DataAddr(struct yaffs_dev *dev,int chunk_id)
 {
 	unsigned block;
 	unsigned chunkInBlock;
-	u32  addr;
+	u8 *addr;
 
 	block = chunk_id/dev->param.chunks_per_block;
 	chunkInBlock = chunk_id % dev->param.chunks_per_block;
 
-	addr = (u32) Block2Addr(dev,block);
+	addr = (u8*) Block2Addr(dev,block);
 	addr += chunkInBlock * DATA_BYTES_PER_CHUNK;
 
 	return (u32 *)addr;
@@ -130,12 +130,12 @@ static u32 *Chunk2SpareAddr(struct yaffs_dev *dev,int chunk_id)
 {
 	unsigned block;
 	unsigned chunkInBlock;
-	u32 addr;
+	u8 *addr;
 
 	block = chunk_id/dev->param.chunks_per_block;
 	chunkInBlock = chunk_id % dev->param.chunks_per_block;
 
-	addr = (u32) Block2Addr(dev,block);
+	addr = (u8*) Block2Addr(dev,block);
 	addr += SPARE_AREA_OFFSET;
 	addr += chunkInBlock * (SPARE_BYTES_PER_CHUNK + M18_SKIP);
 	return (u32 *)addr;
