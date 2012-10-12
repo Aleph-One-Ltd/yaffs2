@@ -36,7 +36,7 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o\
 		 yaffs_packedtags2.o yaffs_nand.o \
 		 yaffs_checkptrw.o  yaffs_qsort.o\
 		 yaffs_nameval.o yaffs_attribs.o \
-		 yaffs_m18_drv.o  ynorsim.o \
+		 yaffs_m18_drv.o  yaffs_nor_drv.o ynorsim.o \
 		 yaffs_allocator.o \
 		 yaffs_bitmap.o \
 		 yaffs_yaffs1.o \
@@ -76,6 +76,7 @@ YAFFSDIRECTSYMLINKS =  \
 FRAMEWORKEXTRASYMLINKS = \
 		yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
 		yaffs_fileem.c yaffs_m18_drv.c yaffs_m18_drv.h \
+		yaffs_nor_drv.c yaffs_nor_drv.h \
 		yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
 		ynorsim.h ynorsim.c yaffs_osglue.c
 

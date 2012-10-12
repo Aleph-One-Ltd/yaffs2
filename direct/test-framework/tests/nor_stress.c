@@ -51,7 +51,7 @@ static unsigned cycleEnds;
 static int interleave_fsx;
 
 static int no_verification;
- 
+
 char fullPathName[100];
 char fullPowerUpName[100];
 char fullStartName[100];
@@ -96,7 +96,7 @@ static void FatalError(int line_no)
 
   if(ext_fatal)
   	ext_fatal();
-  	
+
   while(1){
    sleep(1);
   }
@@ -113,11 +113,11 @@ static void UpdateCounter(const char *name, unsigned *val,  int initialise)
   unsigned x[2];
   int nread = 0;
   int nwritten = 0;
-  
+
   x[0] = x[1] = 0;
-  
+
   if(initialise){
-    x[0] = 0; 
+    x[0] = 0;
     x[1] = 1;
   } else {
     inh = yaffs_open(name,O_RDONLY, S_IREAD | S_IWRITE);
@@ -132,18 +132,18 @@ static void UpdateCounter(const char *name, unsigned *val,  int initialise)
       printf("Error reading counter %s handle %d, x[0] %u x[1] %u last error %d\n",
               name, inh, x[0], x[1],yaffsfs_GetLastError());
       FatalError(__LINE__);
-              
+
     }
     x[0]++;
     x[1]++;
   }
-  
+
   FSX();
   outh = yaffs_open(fullTempCounterName, O_RDWR | O_TRUNC | O_CREAT, S_IREAD | S_IWRITE);
-  
+
   if(outh >= 0){
    struct yaffs_stat tmpstat, oldstat, tmpfstat;
-   FSX(); 
+   FSX();
     yaffs_fstat(outh,&tmpfstat);
     printf("\n\n\n*** Writing file %s inode %d\n",fullTempCounterName,tmpfstat.st_ino);
     nwritten = yaffs_write(outh,x,sizeof(x));
@@ -160,15 +160,15 @@ static void UpdateCounter(const char *name, unsigned *val,  int initialise)
     yaffs_rename(fullTempCounterName,name);
     FSX();
   }
-  
+
   if(nwritten != sizeof(x)){
       printf("Error writing counter %s handle %d, x[0] %u x[1] %u\n",
               name, inh, x[0], x[1]);
       FatalError(__LINE__);
   }
-  
+
   *val = x[0];
-  
+
   printf("##\n"
          "## Set counter %s to %u\n"
          "##\n", name,x[0]);
@@ -183,9 +183,9 @@ static void dump_directory_tree_worker(const char *dname,int recursive)
 	char str[1000];
 	int error_line = 0;
 	int nentries;
-			
+
 	d = yaffs_opendir(dname);
-	
+
 	if(!d)
 	{
 		printf("opendir failed\n");
@@ -199,9 +199,9 @@ static void dump_directory_tree_worker(const char *dname,int recursive)
 			strcat(str,"/");
 			strcat(str,de->d_name);
 			nentries++;
-			
+
 			yaffs_lstat(str,&s);
-			
+
 			printf("%s inode %ld %d obj %x length %d mode %X ",str, de->d_ino, s.st_ino,de->d_dont_use,(int)s.st_size,s.st_mode);\
 			if(de->d_ino != s.st_ino){
 				printf(" \n\n!!!! HEY inode mismatch\n\n");
@@ -216,21 +216,21 @@ static void dump_directory_tree_worker(const char *dname,int recursive)
 							  if(yaffs_readlink(str,str,100) < 0)
 								printf("no alias");
 							  else
-								printf("\"%s\"",str);    
+								printf("\"%s\"",str);
 							  break;
 				default: printf("unknown"); break;
 			}
-			
+
 			printf("\n");
 
 			if((s.st_mode & S_IFMT) == S_IFDIR && recursive)
 				dump_directory_tree_worker(str,1);
-				
+
                         if(s.st_ino > 10000)
                         	error_line = __LINE__;
-							
+
 		}
-		
+
 		if(strstr(dname,"lost+found") && nentries >0){
 			printf("\n\n!!! HEY lost+found not empty, had %d entries\n\n\n",nentries);
 			error_line = __LINE__;
@@ -238,7 +238,7 @@ static void dump_directory_tree_worker(const char *dname,int recursive)
 
 		if(error_line && !no_verification)
 			FatalError(error_line);
-		
+
 		yaffs_closedir(d);
 	}
 
@@ -265,13 +265,13 @@ static int y_wr_file(const char *fname, unsigned sz32)
 	int i;
 	struct yaffs_stat st;
 	unsigned checksum = 0;
-	
+
 
 	FSX();
 	h = yaffs_open(fname,O_RDWR | O_CREAT | O_TRUNC, S_IREAD | S_IWRITE);
 	yaffs_fstat(h,&st);
 	printf("\n\n\n**** Open writing file %s inode %d\n",fname, st.st_ino);
-	
+
 	FSX();
 
 	if(h < 0){
@@ -291,7 +291,7 @@ static int y_wr_file(const char *fname, unsigned sz32)
         	  xx[i] = sz32 + i;
         	  checksum ^= xx[i];
                 }
-                
+
                 FSX();
 		if((r = yaffs_write(h,xx,sizeof(xx))) != sizeof(xx)){
 			goto WRITE_ERROR;
@@ -304,7 +304,7 @@ static int y_wr_file(const char *fname, unsigned sz32)
 	if((r = yaffs_write(h,xx,sizeof(unsigned))) != sizeof(unsigned)){
 		goto WRITE_ERROR;
 	}
-	
+
 	FSX();
 	yaffs_close(h);
 	printf("File closed\n");
@@ -314,7 +314,7 @@ WRITE_ERROR:
 	printf("ywrite error at position %d\n",(int)yaffs_lseek(h,0,SEEK_END));
 	yaffs_close(h);
 	return -1;
-	
+
 }
 
 static int y_verify_file(const char *fName)
@@ -332,7 +332,7 @@ static int y_verify_file(const char *fName)
 		return 0;
 
         printf("Verifying file %s\n",fName);
-        	
+
 	h = yaffs_open(fName, O_RDONLY,S_IREAD | S_IWRITE);
 
 	if(h < 0){
@@ -350,7 +350,7 @@ static int y_verify_file(const char *fName)
 		yaffs_close(h);
 		return -1;
 	}
-	
+
 	recordedSize = sz32 * sizeof(xx) + 8;
 
 	printf("verify %s: file size is %d, recorded size is %d\n", fName, totalSize, recordedSize);
@@ -380,7 +380,7 @@ static int y_verify_file(const char *fName)
 		yaffs_close(h);
 		return -1;
 	}
-	
+
 	checksum ^= xx[0];
 
 	if(checksum != 0){
@@ -399,12 +399,12 @@ static void DoUpdateMainFile(void)
         int result;
         int sz32;
         sz32 = (myrand() % 1000)   + 20;
-        
+
 	result = y_wr_file(fullTempMainName,sz32);
 	FSX();
 	if(!no_verification && result)
 	    FatalError(__LINE__);
-	printf("Raname file %s to %s\n",fullTempMainName,fullMainName);
+	printf("Rename file %s to %s\n",fullTempMainName,fullMainName);
 	yaffs_rename(fullTempMainName,fullMainName);
 	FSX();
 }
@@ -424,7 +424,7 @@ static void DoVerifyMainFile(void)
 void NorStressTestInitialise(const char *prefix)
 {
   MakeFullNames(prefix);
-  
+
   UpdateCounter(fullPowerUpName,&powerUps,1);
   UpdateCounter(fullStartName,&cycleStarts,1);
   UpdateCounter(fullEndName,&cycleEnds,1);
@@ -439,16 +439,16 @@ void NorStressTestRun(const char *prefix, int n_cycles, int do_fsx, int skip_ver
 
   interleave_fsx = do_fsx;
   no_verification = skip_verification;
- 
+
   MakeFullNames(prefix);
   dump_directory_tree(fullPathName);
   FSX_INIT(prefix);
-    
+
   dump_directory_tree(fullPathName);
-  
+
   UpdateCounter(fullPowerUpName,&powerUps,0);
   dump_directory_tree(fullPathName);
-  
+
   while(n_cycles < 0 || n_cycles > 0){
     if(n_cycles > 0)
       n_cycles--;
@@ -457,7 +457,7 @@ void NorStressTestRun(const char *prefix, int n_cycles, int do_fsx, int skip_ver
     DoVerifyMainFile();
     DoUpdateMainFile();
     dump_directory_tree(fullPathName);
-  
+
     UpdateCounter(fullEndName,&cycleEnds,0);
     dump_directory_tree(fullPathName);
   }

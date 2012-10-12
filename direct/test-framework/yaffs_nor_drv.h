@@ -13,18 +13,13 @@
  * Note: Only YAFFS headers are LGPL, YAFFS C code is covered by GPL.
  */
 
-#ifndef __Y_NORSIM_H__
-#define __Y_NORSIM_H__
 
-#include "yaffs_guts.h"
+#ifndef __YAFFS_NOR_DRV_H__
+#define __YAFFS_NOR_DRV_H__
 
-struct nor_sim;
-
-void ynorsim_rd32(struct nor_sim *sim, u32 *addr, u32 *data, int nwords);
-void ynorsim_wr32(struct nor_sim *sim, u32 *addr, u32 *data, int nwords);
-void ynorsim_erase(struct nor_sim *sim, u32 *addr);
-void ynorsim_shutdown(struct nor_sim *sim);
-struct nor_sim *ynorsim_initialise(char *name, int n_blocks, int block_size_bytes);
-u32 * ynorsim_get_base(struct nor_sim *sim);
+struct yaffs_dev;
+struct yaffs_dev *yaffs_nor_install_drv(const char *name);
 
 #endif
+
+

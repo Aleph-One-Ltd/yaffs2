@@ -67,12 +67,16 @@
 
 /* Compile this for a simulation */
 #include "ynorsim.h"
-#define m18_drv_FlashInit() ynorsim_initialise()
-#define m18_drv_FlashDeinit() ynorsim_shutdown()
-#define m18_drv_FlashWrite32(addr,buf,nwords) ynorsim_wr32(addr,buf,nwords)
-#define m18_drv_FlashRead32(addr,buf,nwords) ynorsim_rd32(addr,buf,nwords)
-#define m18_drv_FlashEraseBlock(addr) ynorsim_erase(addr)
-#define DEVICE_BASE     ynorsim_get_base()
+
+static struct nor_sim *nor_sim;
+
+#define m18_drv_FlashInit() do {nor_sim = ynorsim_initialise("emfile-m18", BLOCKS_IN_DEVICE, BLOCK_SIZE_IN_BYTES); } while(0)
+#define m18_drv_FlashDeinit() ynorsim_shutdown(nor_sim)
+#define m18_drv_FlashWrite32(addr,buf,nwords) ynorsim_wr32(nor_sim,addr,buf,nwords)
+#define m18_drv_FlashRead32(addr,buf,nwords) ynorsim_rd32(nor_sim,addr,buf,nwords)
+#define m18_drv_FlashEraseBlock(addr) ynorsim_erase(nor_sim,addr)
+#define DEVICE_BASE     ynorsim_get_base(nor_sim)
+
 #else
 
 /* Compile this to hook up to read hardware */
@@ -84,6 +88,7 @@
 #define m18_drv_FlashEraseBlock(addr)         Y_FlashErase(addr,BLOCK_SIZE_IN_BYTES)
 #define DEVICE_BASE     (32 * 1024 * 1024)
 #endif
+
 
 static u32 *Block2Addr(struct yaffs_dev *dev, int blockNumber)
 {
@@ -315,6 +320,7 @@ static int m18_drv_InitialiseNAND(struct yaffs_dev *dev)
 static int m18_drv_Deinitialise_flash_fn(struct yaffs_dev *dev)
 {
 	dev=dev;
+
 	m18_drv_FlashDeinit();
 
 	return YAFFS_OK;
