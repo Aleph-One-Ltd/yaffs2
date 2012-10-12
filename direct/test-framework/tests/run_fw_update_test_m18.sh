@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+set -x
+
 iterations=100000
 
 [ -z $1 ]  || iterations=$1
