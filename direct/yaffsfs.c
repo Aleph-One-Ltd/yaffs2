@@ -122,6 +122,8 @@ static void yaffsfs_InitHandles(void)
 	if (yaffsfs_handlesInitialised)
 		return;
 
+	yaffsfs_handlesInitialised = 1;
+
 	memset(yaffsfs_inode, 0, sizeof(yaffsfs_inode));
 	memset(yaffsfs_fd, 0, sizeof(yaffsfs_fd));
 	memset(yaffsfs_handle, 0, sizeof(yaffsfs_handle));
