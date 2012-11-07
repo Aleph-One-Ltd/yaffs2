@@ -54,14 +54,12 @@ fi
 
 if [ $MULTIORSINGLE = m ]; then
    VFS_CODE="yaffs_vfs_multi.c"
-   MTD1_CODE="yaffs_mtdif1_multi.c"
-   MTD2_CODE="yaffs_mtdif2_multi.c"
+   MTD_CODE="yaffs_mtdif_multi.c"
    YPORTENV="yportenv_multi.h"
    KCONFIG_SRC="Kconfig_multi"
 elif [ $MULTIORSINGLE = s ]; then
    VFS_CODE="yaffs_vfs_single.c"
-   MTD1_CODE="yaffs_mtdif1_single.c"
-   MTD2_CODE="yaffs_mtdif2_single.c"
+   MTD_CODE="yaffs_mtdif_single.c"
    YPORTENV="yportenv_single.h"
    KCONFIG_SRC="Kconfig_single"
 
@@ -149,11 +147,10 @@ else
    $CPY  $PWD/Makefile.kernel $LINUXDIR/fs/yaffs2/Makefile
    $CPY $PWD/$KCONFIG_SRC $LINUXDIR/fs/yaffs2/Kconfig
    $CPY $PWD/*.c $PWD/*.h  $LINUXDIR/fs/yaffs2
-   rm $LINUXDIR/fs/yaffs2/yaffs_vfs*.c $LINUXDIR/fs/yaffs2/yaffs_mtdif[12]*.c
+   rm $LINUXDIR/fs/yaffs2/yaffs_vfs*.c $LINUXDIR/fs/yaffs2/yaffs_mtdif*.c
    rm $LINUXDIR/fs/yaffs2/yportenv*.h
    rm $LINUXDIR/fs/yaffs2/moduleconfig.h
    $CPY $PWD/$VFS_CODE $LINUXDIR/fs/yaffs2/yaffs_vfs.c
-   $CPY $PWD/$MTD1_CODE $LINUXDIR/fs/yaffs2/yaffs_mtdif1.c
-   $CPY $PWD/$MTD2_CODE $LINUXDIR/fs/yaffs2/yaffs_mtdif2.c
+   $CPY $PWD/$MTD_CODE $LINUXDIR/fs/yaffs2/yaffs_mtdif.c
    $CPY $PWD/$YPORTENV $LINUXDIR/fs/yaffs2/yportenv.h
 fi
