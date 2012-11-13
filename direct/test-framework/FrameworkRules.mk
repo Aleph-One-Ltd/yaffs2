@@ -29,7 +29,7 @@ CFLAGS +=    -Wextra -Wpointer-arith
 #CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
 
 
-COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o\
+COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o yaffs_error.o\
 		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
 		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
 		 yaffs_tagscompat.o yaffs_tagsmarshall.o \
@@ -56,6 +56,7 @@ YAFFSDIRECTSYMLINKS =  \
           yaffs_attribs.c \
           yaffs_nandif.c yaffs_nandif.h yportenv.h \
           yaffs_hweight.c yaffs_hweight.h \
+	  yaffs_error.c \
           yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
           yaffs_tagscompat.c yaffs_tagscompat.h \
           yaffs_tagsmarshall.c yaffs_tagsmarshall.h \
@@ -83,7 +84,7 @@ FRAMEWORKEXTRASYMLINKS = \
 FRAMEWORK_SOURCES = $(YAFFSDIRECTSYMLINKS) $(FRAMEWORKEXTRASYMLINKS)
 
 clean:
-	rm -f $(TARGETS) $(ALLOBJS) core $(FRAMEWORK_SOURCES)
+	rm -f $(TARGETS) $(ALLOBJS) core $(FRAMEWORK_SOURCES) yaffs_test
 
 $(YAFFSDIRECTSYMLINKS):
 	ln -s $(YDI_DIR)/$@ $@

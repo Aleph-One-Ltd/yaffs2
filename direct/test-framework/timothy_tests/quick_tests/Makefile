@@ -18,7 +18,7 @@
 YDI_DIR = ../../../
 YDI_FRAMEWORK_DIR = ../../
 
-TARGETS = yaffs_test fuzzer
+
 TESTFILES = 	quick_tests.o lib.o \
 		test_yaffs_mount.o test_yaffs_mount_ENODEV.o test_yaffs_mount_ENAMETOOLONG.o test_yaffs_mount_EBUSY.o \
 		test_yaffs_mount_NULL.o \
@@ -34,7 +34,7 @@ TESTFILES = 	quick_tests.o lib.o \
 		test_yaffs_truncate.o test_yaffs_truncate_ENOTDIR.o test_yaffs_truncate_EISDIR.o test_yaffs_truncate_ENOENT.o \
 		test_yaffs_truncate_EINVAL.o test_yaffs_truncate_big_file.o test_yaffs_truncate_ENOENT2.o test_yaffs_truncate_ELOOP.o \
 		test_yaffs_truncate_ELOOP_dir.o test_yaffs_truncate_EROFS.o test_yaffs_truncate_ENAMETOOLONG.o \
-		test_yaffs_truncate_NULL.o\
+		test_yaffs_truncate_NULL.o \
 		test_yaffs_write.o test_yaffs_write_EBADF.o test_yaffs_write_big_file.o test_yaffs_write_EROFS.o \
 		test_yaffs_read.o test_yaffs_read_EBADF.o test_yaffs_read_EINVAL.o\
 		test_yaffs_lseek.o test_yaffs_lseek_EBADF.o test_yaffs_lseek_EINVAL.o test_yaffs_lseek_big_file.o \
@@ -48,12 +48,12 @@ TESTFILES = 	quick_tests.o lib.o \
 		test_yaffs_chmod.o test_yaffs_chmod_ENOENT.o test_yaffs_chmod_ENOTDIR.o test_yaffs_chmod_EINVAL.o \
 		test_yaffs_chmod_ENOENT2.o test_yaffs_chmod_ELOOP_dir.o test_yaffs_chmod_ELOOP.o test_yaffs_chmod_EROFS.o \
 		test_yaffs_chmod_ENAMETOOLONG.o test_yaffs_chmod_NULL.o \
-		test_yaffs_fchmod.o test_yaffs_fchmod_EBADF.o test_yaffs_fchmod_EROFS.o test_yaffs_fchmod_EINVAL.o\
+		test_yaffs_fchmod_EROFS.o test_yaffs_fchmod_EINVAL.o\
 		test_yaffs_fsync.o test_yaffs_fsync_EBADF.o test_yaffs_fsync_EROFS.o \
 		test_yaffs_fdatasync.o test_yaffs_fdatasync_EBADF.o test_yaffs_fdatasync_EROFS.o test_yaffs_fdatasync_NULL.o \
 		test_yaffs_mkdir.o test_yaffs_mkdir_EEXIST.o test_yaffs_mkdir_ENOTDIR.o test_yaffs_mkdir_ENOENT.o \
 		test_yaffs_mkdir_ELOOP_dir.o test_yaffs_mkdir_EROFS.o test_yaffs_mkdir_ENAMETOOLONG.o test_yaffs_mkdir_NULL.o \
-		test_yaffs_fchmod.o test_yaffs_fchmod_EBADF.o test_yaffs_fchmod_EINVAL.o test_yaffs_fchmod_NULL.o \
+		test_yaffs_fchmod.o test_yaffs_fchmod_EBADF.o  test_yaffs_fchmod_NULL.o \
 		test_yaffs_symlink.o test_yaffs_symlink_ENOTDIR.o test_yaffs_symlink_EEXIST.o test_yaffs_symlink_ENOENT.o \
 		test_yaffs_symlink_ENOENT2.o test_yaffs_symlink_ELOOP_dir.o test_yaffs_symlink_EROFS.o test_yaffs_symlink_ENAMETOOLONG.o\
 		test_yaffs_symlink_NULL.o test_yaffs_symlink_NULL2.o \
@@ -68,7 +68,7 @@ TESTFILES = 	quick_tests.o lib.o \
 		test_yaffs_totalspace.o test_yaffs_totalspace_EINVAL.o test_yaffs_totalspace_ENAMETOOLONG.o test_yaffs_totalspace_NULL.o\
 		test_yaffs_inodecount.o test_yaffs_inodecount_EINVAL.o test_yaffs_inodecount_ENAMETOOLONG.o test_yaffs_inodecount_NULL.o\
 		test_yaffs_link.o test_yaffs_link_ENOENT.o test_yaffs_link_EEXIST.o test_yaffs_link_ENOTDIR.o \
-		test_yaffs_link_ENOTDIR2.o test_yaffs_link_ENOENT2.o test_yaffs_link_ENOENT3.o test_yaffs_link_ENOENT3.o \
+		test_yaffs_link_ENOTDIR2.o test_yaffs_link_ENOENT2.o test_yaffs_link_ENOENT3.o  \
 		test_yaffs_link_ENOENT4.o test_yaffs_link_ELOOP_dir.o test_yaffs_link_EROFS.o test_yaffs_link_ENAMETOOLONG.o \
 		test_yaffs_link_ENAMETOOLONG2.o test_yaffs_link_NULL.o test_yaffs_link_NULL2.o \
 		test_yaffs_rmdir.o test_yaffs_rmdir_EBUSY.o test_yaffs_rmdir_EINVAL.o test_yaffs_rmdir_ENOENT.o \
@@ -84,7 +84,7 @@ TESTFILES = 	quick_tests.o lib.o \
 		test_yaffs_dup.o test_yaffs_dup_EBADF.o 
 
 
-all: $(TARGETS)
+all: quick_tests
 
 YAFFS_TEST_OBJS = $(COMMONTESTOBJS) $(TESTFILES)
 FUZZER_OBJS = fuzzer.o
@@ -95,11 +95,10 @@ include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
 
 yaffs_test: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLLAG) -o $@ $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS)
 
 
 
-
-quick_tests: $(TESTFILES)
-	gcc $(CFLAG) -o $@ $(TESTFILES)
+quick_tests: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS)
 
