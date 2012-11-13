@@ -20,8 +20,13 @@ fi
 
 
 xterm  -e "$LAUNCHDIR/manage_nor_test.sh  0 $iterations"&
-xterm  -e "$LAUNCHDIR/manage_nand_test.sh  0 $iterations"&
 xterm  -e "$LAUNCHDIR/manage_nor_test.sh  1 $iterations"&
-xterm  -e "$LAUNCHDIR/manage_nand_test.sh  1 $iterations"&
 xterm  -e "$LAUNCHDIR/manage_nor_test.sh  2 $iterations"&
+
+xterm  -e "$LAUNCHDIR/manage_m18_test.sh  0 $iterations"&
+xterm  -e "$LAUNCHDIR/manage_m18_test.sh  1 $iterations"&
+xterm  -e "$LAUNCHDIR/manage_m18_test.sh  2 $iterations"&
+
+xterm  -e "$LAUNCHDIR/manage_nand_test.sh  0 $iterations"&
+xterm  -e "$LAUNCHDIR/manage_nand_test.sh  1 $iterations"&
 xterm  -e "$LAUNCHDIR/manage_nand_test.sh  2 $iterations"&

@@ -329,7 +329,7 @@ test_template test_list[]={
 
 	{test_yaffs_write,test_yaffs_write_clean,"test_yaffs_write"},
 	{test_yaffs_write_EBADF,test_yaffs_write_EBADF_clean,"test_yaffs_write_EBADF"},
-	{test_yaffs_write_big_file,test_yaffs_write_big_file_clean,"test_yaffs_write_big_file"},
+//	{test_yaffs_write_big_file,test_yaffs_write_big_file_clean,"test_yaffs_write_big_file"},
 	{test_yaffs_write_EROFS,test_yaffs_write_EROFS_clean,"test_yaffs_write_EROFS"},
 
 	{test_yaffs_read,test_yaffs_read_clean,"test_yaffs_read"},

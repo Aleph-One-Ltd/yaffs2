@@ -33,7 +33,7 @@ do
    echo "#########"
    echo "#########"
    echo "#########"
-   ./yaffs_test -u -f -p -s$seed -t0 M18-1 
+   ./yaffs_test -u -f -p -s$seed -t0 nor
    #>log-nor-$i
 done
 

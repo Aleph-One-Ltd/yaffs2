@@ -13,17 +13,18 @@
  * Note: Only YAFFS headers are LGPL, YAFFS C code is covered by GPL.
  */
 
-#ifndef __YAFFS_MTDIF2_H__
-#define __YAFFS_MTDIF2_H__
+#ifndef __Y_NORSIM_H__
+#define __Y_NORSIM_H__
 
 #include "yaffs_guts.h"
-int nandmtd2_write_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
-			      const u8 *data,
-			      const struct yaffs_ext_tags *tags);
-int nandmtd2_read_chunk_tags(struct yaffs_dev *dev, int nand_chunk,
-			     u8 *data, struct yaffs_ext_tags *tags);
-int nandmtd2_mark_block_bad(struct yaffs_dev *dev, int block_no);
-int nandmtd2_query_block(struct yaffs_dev *dev, int block_no,
-			 enum yaffs_block_state *state, u32 *seq_number);
+
+struct nor_sim;
+
+void ynorsim_rd32(struct nor_sim *sim, u32 *addr, u32 *data, int nwords);
+void ynorsim_wr32(struct nor_sim *sim, u32 *addr, u32 *data, int nwords);
+void ynorsim_erase(struct nor_sim *sim, u32 *addr);
+void ynorsim_shutdown(struct nor_sim *sim);
+struct nor_sim *ynorsim_initialise(char *name, int n_blocks, int block_size_bytes);
+u32 * ynorsim_get_base(struct nor_sim *sim);
 
 #endif

@@ -176,8 +176,6 @@ static uint32_t YCALCBLOCKS(uint64_t partition_size, uint32_t block_size)
 #include "yaffs_linux.h"
 
 #include "yaffs_mtdif.h"
-#include "yaffs_mtdif1.h"
-#include "yaffs_mtdif2.h"
 
 unsigned int yaffs_trace_mask = YAFFS_TRACE_BAD_BLOCKS | YAFFS_TRACE_ALWAYS;
 unsigned int yaffs_wr_attempts = YAFFS_WR_ATTEMPTS;
@@ -2475,8 +2473,10 @@ struct mutex yaffs_context_lock;
 static void yaffs_put_super(struct super_block *sb)
 {
 	struct yaffs_dev *dev = yaffs_super_to_dev(sb);
+	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
 
-	yaffs_trace(YAFFS_TRACE_OS, "yaffs_put_super");
+	yaffs_trace(YAFFS_TRACE_OS | YAFFS_TRACE_ALWAYS,
+			"yaffs_put_super");
 
 	yaffs_trace(YAFFS_TRACE_OS | YAFFS_TRACE_BACKGROUND,
 		"Shutting down yaffs background thread");
@@ -2487,9 +2487,6 @@ static void yaffs_put_super(struct super_block *sb)
 	yaffs_gross_lock(dev);
 
 	yaffs_flush_super(sb, 1);
-
-	if (yaffs_dev_to_lc(dev)->put_super_fn)
-		yaffs_dev_to_lc(dev)->put_super_fn(sb);
 
 	yaffs_deinitialise(dev);
 
@@ -2505,17 +2502,17 @@ static void yaffs_put_super(struct super_block *sb)
 	}
 
 	kfree(dev);
-}
 
-static void yaffs_mtd_put_super(struct super_block *sb)
-{
-	struct mtd_info *mtd = yaffs_dev_to_mtd(yaffs_super_to_dev(sb));
-
-	if (mtd->sync)
+	if (mtd && mtd->sync)
 		mtd->sync(mtd);
 
-	put_mtd_device(mtd);
+	if(mtd)
+		put_mtd_device(mtd);
+
+	yaffs_trace(YAFFS_TRACE_OS | YAFFS_TRACE_ALWAYS,
+			"yaffs_put_super done");
 }
+
 
 static void yaffs_touch_super(struct yaffs_dev *dev)
 {
@@ -2831,14 +2828,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	/* Set up the memory size parameters.... */
 
-	n_blocks =
-	    YCALCBLOCKS(mtd->size,
-			(YAFFS_CHUNKS_PER_BLOCK * YAFFS_BYTES_PER_CHUNK));
 
-	param->start_block = 0;
-	param->end_block = n_blocks - 1;
-	param->chunks_per_block = YAFFS_CHUNKS_PER_BLOCK;
-	param->total_bytes_per_chunk = YAFFS_BYTES_PER_CHUNK;
 	param->n_reserved_blocks = 5;
 	param->n_caches = (options.no_cache) ? 0 : 10;
 	param->inband_tags = options.inband_tags;
@@ -2861,12 +2851,6 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	/* ... and the functions. */
 	if (yaffs_version == 2) {
-		param->write_chunk_tags_fn = nandmtd2_write_chunk_tags;
-		param->read_chunk_tags_fn = nandmtd2_read_chunk_tags;
-		param->bad_block_fn = nandmtd2_mark_block_bad;
-		param->query_block_fn = nandmtd2_query_block;
-		yaffs_dev_to_lc(dev)->spare_buffer =
-				kmalloc(mtd->oobsize, GFP_NOFS);
 		param->is_yaffs2 = 1;
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 		param->total_bytes_per_chunk = mtd->writesize;
@@ -2880,26 +2864,21 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 		param->start_block = 0;
 		param->end_block = n_blocks - 1;
 	} else {
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
-		/* use the MTD interface in yaffs_mtdif1.c */
-		param->write_chunk_tags_fn = nandmtd1_write_chunk_tags;
-		param->read_chunk_tags_fn = nandmtd1_read_chunk_tags;
-		param->bad_block_fn = nandmtd1_mark_block_bad;
-		param->query_block_fn = nandmtd1_query_block;
-#else
-		param->write_chunk_fn = nandmtd_write_chunk;
-		param->read_chunk_fn = nandmtd_read_chunk;
-#endif
 		param->is_yaffs2 = 0;
-	}
-	/* ... and common functions */
-	param->erase_fn = nandmtd_erase_block;
-	param->initialise_flash_fn = nandmtd_initialise;
+		n_blocks = YCALCBLOCKS(mtd->size,
+			     YAFFS_CHUNKS_PER_BLOCK * YAFFS_BYTES_PER_CHUNK);
 
-	yaffs_dev_to_lc(dev)->put_super_fn = yaffs_mtd_put_super;
+		param->chunks_per_block = YAFFS_CHUNKS_PER_BLOCK;
+		param->total_bytes_per_chunk = YAFFS_BYTES_PER_CHUNK;
+	}
+
+	param->start_block = 0;
+	param->end_block = n_blocks - 1;
+
+	yaffs_mtd_drv_install(dev);
 
 	param->sb_dirty_fn = yaffs_touch_super;
-	param->gc_control = yaffs_gc_control_callback;
+	param->gc_control_fn = yaffs_gc_control_callback;
 
 	yaffs_dev_to_lc(dev)->super = sb;
 
