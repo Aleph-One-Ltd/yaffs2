@@ -1,4 +1,4 @@
-# Makefile for YAFFS direct stress tests
+# Makefile for stress tests and fuzzer
 #
 #
 # YAFFS: Yet another Flash File System. A NAND-flash specific file system.
@@ -14,109 +14,28 @@
 #
 # NB Warning this Makefile does not include header dependencies.
 #
-# $Id: Makefile,v 1.7 2010-02-25 22:34:47 charles Exp $
 
-#EXTRA_COMPILE_FLAGS = -DYAFFS_IGNORE_TAGS_ECC
+YDI_DIR = ../../../
+YDI_FRAMEWORK_DIR = ../../
+CLEAN_OBJS = yaffs_tester emfile-2k-0
 
-CFLAGS =      -DCONFIG_YAFFS_DIRECT -DCONFIG_YAFFS_SHORT_NAMES_IN_RAM -DCONFIG_YAFFS_YAFFS2  
-CFLAGS +=     -DCONFIG_YAFFS_PROVIDE_DEFS -DCONFIG_YAFFSFS_PROVIDE_VALUES
-CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Wstrict-aliasing 
-#CFLAGS +=    -fno-strict-aliasing
-CFLAGS +=    -O0
-CFLAGS +=    -Wextra -Wpointer-arith
-#CFLAGS +=    -DCONFIG_YAFFS_VALGRIND_TEST
+TESTFILES = 	yaffs_tester.o message_buffer.o error_handler.o 
 
-#CFLAGS+=   -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-declarations
-#CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
+all: yaffs_tester
 
-COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o\
-		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
-		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
-		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_nand.o \
-		 yaffs_checkptrw.o  yaffs_qsort.o\
-		 yaffs_nameval.o yaffs_attribs.o \
-		 yaffs_norif1.o  ynorsim.o  \
-		 yaffs_allocator.o \
-		 yaffs_bitmap.o \
-		 yaffs_yaffs1.o \
-		 yaffs_yaffs2.o \
-		 yaffs_verify.o \
-		 yaffs_summary.o
+YAFFS_TEST_OBJS = $(COMMONTESTOBJS) $(TESTFILES)
 
 
-SSCOMMONTESTOBJS = yaffscfg2k.o yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
-		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
-		 yaffs_tagscompat.o yaffs_packedtags2.o yaffs_nand.o \
-		 yaffs_attribs.o yaffs_allocator.o \
-		 yaffs_checkptrw.o  yaffs_qsort.o\
-		 yaffs_nameval.o \
-		 yaffs_norif1.o  ynorsim.o   \
-		 yaffs_allocator.o \
-		 yaffs_bitmap.o \
-		 yaffs_yaffs1.o \
-		 yaffs_yaffs2.o \
-		 yaffs_verify.o
+ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(FUZZER_OBJS)
 
-#		 yaffs_checkptrwtest.o\
-
-YAFFSTESTOBJS  = $(COMMONTESTOBJS) yaffs_tester.o message_buffer.o error_handler.o
+include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
 
-ALLOBJS = $(sort $(YAFFSTESTOBJS))
-
-YAFFSSYMLINKS = yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h yaffs_tagscompat.c yaffs_tagscompat.h \
-          yaffs_packedtags1.c yaffs_packedtags1.h yaffs_packedtags2.c yaffs_packedtags2.h  \
-          yaffs_nand.c yaffs_nand.h yaffs_getblockinfo.h \
-          yaffs_checkptrw.h yaffs_checkptrw.c \
-          yaffs_nameval.c yaffs_nameval.h \
-          yaffs_trace.h yaffs_attribs.h \
-          yaffs_allocator.c yaffs_allocator.h \
-          yaffs_yaffs1.c yaffs_yaffs1.h \
-          yaffs_yaffs2.c yaffs_yaffs2.h \
-          yaffs_bitmap.c yaffs_bitmap.h \
-          yaffs_verify.c yaffs_verify.h \
-		  yaffs_summary.c yaffs_summary.h
-
-YAFFSDIRECTSYMLINKS =  yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
-		       yaffsfs.h yaffs_osglue.h ydirectenv.h \
-		       yaffs_flashif.c yaffscfg.h yaffs_qsort.c \
-		       yaffs_nandemul2k.h yaffs_list.h \
-		       yaffs_attribs.c \
-		       yaffs_nandif.c yaffs_nandif.h yportenv.h \
-		       yaffs_hweight.c yaffs_hweight.h
-
-
-DIRECTEXTRASYMLINKS = 	yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
-			yaffs_fileem.c yaffs_norif1.c yaffs_norif1.h \
-			yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
-			ynorsim.h ynorsim.c yaffs_osglue.c
-
-SYMLINKS = $(YAFFSSYMLINKS) $(YAFFSDIRECTSYMLINKS) $(DIRECTEXTRASYMLINKS)
-#all: directtest2k boottest
-
-all: yaffs_tester 
-
-$(ALLOBJS): %.o: %.c
-	gcc -c $(CFLAGS) -o $@ $<
-
-
-$(YAFFSSYMLINKS):
-	ln -s ../../../$@ $@
-
-$(YAFFSDIRECTSYMLINKS):
-	ln -s ../../$@ $@
-
-$(DIRECTEXTRASYMLINKS):
-	ln -s ../../basic-test/$@ $@
-
-
-yaffs_tester: $(SYMLINKS) $(YAFFSTESTOBJS)
-	gcc $(CFLLAG) -o $@ $(YAFFSTESTOBJS)
+yaffs_test: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS)
 
 
 
+yaffs_tester: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS)
 
-
-
-clean:
-	rm -f yaffs_tester  $(ALLOBJS) core $(SYMLINKS) log.txt 

@@ -17,7 +17,7 @@
 
 YDI_DIR = ../../../
 YDI_FRAMEWORK_DIR = ../../
-
+CLEAN_OBJS = quick_tests emfile-2k-0
 
 TESTFILES = 	quick_tests.o lib.o \
 		test_yaffs_mount.o test_yaffs_mount_ENODEV.o test_yaffs_mount_ENAMETOOLONG.o test_yaffs_mount_EBUSY.o \

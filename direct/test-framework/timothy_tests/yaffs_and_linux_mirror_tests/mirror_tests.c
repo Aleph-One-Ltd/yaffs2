@@ -313,7 +313,7 @@ int compare_linux_and_yaffs(arg_temp *args_struct)
 	struct yaffs_stat yaffs_stat_struct;
 	struct stat linux_stat_struct;
 	yaffs_DIR *yaffs_open_dir;
-	yaffs_dirent *yaffs_current_file;
+	struct yaffs_dirent *yaffs_current_file;
 	
 	DIR *linux_open_dir;
 	struct dirent *linux_current_file;

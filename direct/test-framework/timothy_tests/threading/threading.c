@@ -12,7 +12,6 @@
  */
 
 #include "threading.h"
-
 int random_seed;
 int simulate_power_failure = 0;
 
@@ -61,7 +60,7 @@ int main(int argc, char *argv[])
 	for (x=0;x<get_num_of_threads();x++)
 	{
 		
-		output=pthread_create(&threads[x], NULL,thread_function, (void *)x );
+		output = pthread_create(&threads[x], NULL,thread_function, (void *)x );
 		if (output>0){
 			printf("failed to create thread %d. Error is %d\n",x,output);
 		}
