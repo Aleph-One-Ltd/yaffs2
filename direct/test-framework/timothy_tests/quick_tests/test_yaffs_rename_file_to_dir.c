@@ -31,6 +31,13 @@ int test_yaffs_rename_file_to_dir(void)
 			}
 		}
 	}
+	if (0 !=  yaffs_access(RENAME_DIR_PATH,0)) {
+		output = yaffs_mkdir(RENAME_DIR_PATH,S_IWRITE | S_IREAD);
+		if (output < 0) {
+			print_message("failed to create directory\n",2);
+			return -1;
+		}
+	}
 	output = yaffs_rename( "/yaffs2/foo" , RENAME_DIR_PATH);
 	if (output<0){ 
 		print_message("failed to rename a file over an empty directory\n",2);

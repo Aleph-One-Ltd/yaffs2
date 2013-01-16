@@ -125,9 +125,55 @@ void join_paths(char *path1,char *path2,char *new_path )
 void print_message(char *message,char print_level)
 {
 	if (print_level <= PRINT_LEVEL){
-		printf(message);
+		printf("%s",message);
 	}
 }
-	
 
+/*same as forcing the rmdir of a directory*/
+int delete_dir(char *dir_name)
+{
+	yaffs_DIR *d;
+   	struct yaffs_dirent *de;
+   	struct yaffs_stat s;
+   	char str[100];
+	d = yaffs_opendir(dir_name);
+	printf("%s\n",dir_name);
+	if(!d)
+	{
+		printf("%s\n",dir_name);
+		print_message("failed to open dir\n",2);
+		get_error();
+		return -1;
+    }
+    
+    while((de = yaffs_readdir(d)) != NULL) {
+		//stats the file
+		sprintf(str,"%s/%s",dir_name,de->d_name);
+		yaffs_lstat(str,&s);
+		
+		if ((s.st_mode & S_IFMT) == S_IFDIR){
+			//it is a directory. call the function recursivly.
+			delete_dir(str);
+			yaffs_rmdir(str);
+		}else{
+			yaffs_unlink(str);
+		}
+	}
+	yaffs_rmdir(dir_name);
+	yaffs_closedir(d);
+	return 1;
+}
+
+void get_error(void)
+{
+	int error_code=0;
+	char message[30];
+	message[0]='\0';
+
+	error_code=yaffs_get_error();
+	sprintf(message,"yaffs_error code %d\n",error_code);
+	print_message(message,1);
+	sprintf(message,"error is : %s\n",yaffs_error_to_str(error_code));
+	print_message(message,1);
+}
 

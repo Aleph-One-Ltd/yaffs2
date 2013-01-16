@@ -50,14 +50,15 @@ int main(int argc, char *argv[])
 	}	
 	/*this is where the loop should break to*/
 	quit_quick_tests(0);
+	
 }
 
 
 void run_random_test_loop(void)
 {
 	int id=0;
-	int x=0;
-	int run_list[total_number_of_tests];
+	unsigned int x=0;
+	//int run_list[total_number_of_tests];
 	for (x=0;x<total_number_of_tests;x++){ 
 		id = (rand() % (total_number_of_tests-1));
 		run_test(id); 	
@@ -77,8 +78,10 @@ void logical_run_of_tests(void)
 void run_test(int x)
 {
 	int output=0;
+	int y= 0;
 	char message[200];
 	message[0]='\0';
+	printf ("making test dir %d\n",yaffs_mkdir(TEST_DIR,S_IWRITE | S_IREAD));
 
 	yaffs_set_error(0);	/*reset the last error to 0 */
 	//printf("foo exists %d\n",test_yaffs_open());
@@ -121,12 +124,18 @@ void run_test(int x)
 		sprintf(message,"\ttest clean: %s passed\n",test_list[x].name_of_test);
 		print_message(message,3);
 	}
+	/* close all open handles */
+	for (y=0; y<100;y++){
+		yaffs_close(y);
+	}
+	delete_dir(TEST_DIR);
 }
 
 void quit_quick_tests(int exit_code)
 {
-	char message[30];
-	message[0]='\0';	
+	/*char message[30];
+	message[0]='\0';
+	*/	
 	if (num_of_tests_pass==total_number_of_tests &&  num_of_tests_failed==0){
 		printf("\t OK --all tests passed\n");
 	}
@@ -135,24 +144,12 @@ void quit_quick_tests(int exit_code)
 	exit(exit_code);
 }
 
-void get_error(void)
-{
-	int error_code=0;
-	char message[30];
-	message[0]='\0';
-
-	error_code=yaffs_get_error();
-	sprintf(message,"yaffs_error code %d\n",error_code);
-	print_message(message,1);
-	sprintf(message,"error is : %s\n",yaffs_error_to_str(error_code));
-	print_message(message,1);
-}
 
 void init_quick_tests(int argc, char *argv[])
 {
 	int trace=0;
 	int new_option;
-	int x=0;	
+	//int x=0;	
 	do{
 		new_option=getopt_long(argc,argv,short_options,long_options,NULL);		
 		if (new_option=='h'){

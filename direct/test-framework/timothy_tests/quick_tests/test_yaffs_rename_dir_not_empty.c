@@ -13,7 +13,7 @@
 
 #include "test_yaffs_rename_dir.h"
 
-
+/*tests renaming a non empty file */
 int test_yaffs_rename_dir(void)
 {
 	int output=0;
