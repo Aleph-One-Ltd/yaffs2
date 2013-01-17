@@ -31,7 +31,8 @@
 #define FILE_TEXT_NBYTES 10
 #define TEST_DIR "/yaffs2/test_dir"
 #define DIR_PATH "/yaffs2/test_dir/new_directory"
-
+#define DIR_PATH2 "/yaffs2/test_dir/new_directory2"
+#define DIR_PATH2_FILE "/yaffs2/test_dir/new_directory2/foo"
 #define SYMLINK_PATH "/yaffs2/test_dir/sym_foo"
 
 #define HARD_LINK_PATH "/yaffs2/test_dir/hard_link"
@@ -49,6 +50,7 @@
 
 /* warning do not define anything as FILE because there seems to be a conflict with stdio.h */ 
 #define FILE_PATH "/yaffs2/test_dir/foo"
+#define FILE_PATH2 "/yaffs2/test_dir/foo2"
 
 void join_paths(char *path1,char *path2,char *new_path );
 void print_message(char *message,char print_level);
