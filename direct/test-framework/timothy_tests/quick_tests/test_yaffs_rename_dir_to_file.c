@@ -17,7 +17,7 @@
 int test_yaffs_rename_dir_to_file(void)
 {
 	int output=0;
-
+	int error_code=0;
 	if (0 !=  yaffs_access(DIR_PATH,0)) {
 		output= yaffs_mkdir(DIR_PATH,(S_IREAD | S_IWRITE));
 		if (output<0) {
@@ -25,20 +25,23 @@ int test_yaffs_rename_dir_to_file(void)
 			return -1;
 		}
 	}
-	if (0 !=  yaffs_access(RENAME_PATH,0)) {
-		output= yaffs_mkdir(RENAME_PATH,(S_IREAD | S_IWRITE));
-		if (output<0) {
-			print_message("failed to remove file\n",2);
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
+	output = yaffs_rename( DIR_PATH , FILE_PATH);
+	if (output==-1){
+		error_code=yaffs_get_error();
+		if (abs(error_code)==ENOTDIR){
+			return 1;
+		} else {
+			print_message("different error than expected\n",2);
 			return -1;
 		}
-	}
-	output = yaffs_rename( DIR_PATH , RENAME_PATH);
-	if (output<0){ 
-		print_message("failed to rename a file over an empty directory\n",2);
+	} else {
+		print_message("renamed a directory over file.(which is a bad thing)\n",2);
 		return -1;
-	} else{
-		return 1;
-	}	
+	}
 
 }
 
