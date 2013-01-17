@@ -18,6 +18,10 @@
 int test_yaffs_link(void)
 {
 	int output=0;
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
 	output = yaffs_link(FILE_PATH,HARD_LINK_PATH);
 	return output;
 }

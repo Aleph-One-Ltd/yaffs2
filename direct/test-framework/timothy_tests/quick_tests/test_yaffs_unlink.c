@@ -15,6 +15,10 @@
 
 int test_yaffs_unlink(void)
 {
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file before remounting\n",1);
+		return -1;
+	}
 	int output=yaffs_unlink(FILE_PATH);
 	if (output>=0){
 		return (-test_yaffs_access());	/*return negative access. we do not want the file to be there*/

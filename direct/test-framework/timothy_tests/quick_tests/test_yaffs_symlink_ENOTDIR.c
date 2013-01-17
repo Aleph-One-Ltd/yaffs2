@@ -18,7 +18,11 @@ static int output = 0;
 int test_yaffs_symlink_ENOTDIR(void)
 {
 	int error_code = 0;
-	output = yaffs_symlink(FILE_PATH,"yaffs2/foo/sym_link");
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
+	output = yaffs_symlink(FILE_PATH,"yaffs2/test_dir/foo/sym_link");
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

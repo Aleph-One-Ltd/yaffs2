@@ -19,7 +19,11 @@ int test_yaffs_link_ENOTDIR(void)
 {
 	int output=0;	
 	int error =0;
-	output = yaffs_link("/yaffs2/foo/file",HARD_LINK_PATH);
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
+	output = yaffs_link("/yaffs2/test_dir/foo/file",HARD_LINK_PATH);
 	if (output<0){
 		error=yaffs_get_error();
 		if (abs(error)==ENOTDIR){

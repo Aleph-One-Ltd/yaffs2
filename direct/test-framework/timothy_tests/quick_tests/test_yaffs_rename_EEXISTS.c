@@ -18,7 +18,10 @@ int test_yaffs_rename_EEXISTS(void)
 {
 	int output=0;
 	int error_code =0;
-
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
 	if (0 !=  yaffs_access(DIR_PATH,0)) {
 		output = yaffs_mkdir(DIR_PATH,S_IWRITE | S_IREAD);
 		if (output < 0) {
@@ -36,7 +39,7 @@ int test_yaffs_rename_EEXISTS(void)
 			}
 		}
 	}
-	output= yaffs_open("/yaffs2/dir2/file",O_CREAT | O_RDWR, FILE_MODE);
+	output= yaffs_open("/yaffs2/test_dir/dir2/file",O_CREAT | O_RDWR, FILE_MODE);
 	if (output<0){
 		print_message("failed to open file in the second directory\n",2);
 		return -1;

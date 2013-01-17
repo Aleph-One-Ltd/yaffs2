@@ -20,7 +20,11 @@ int test_yaffs_stat_ENOTDIR(void)
 	int output=0;
 	char text[100];
 	text[0] ='\0';
-	output=yaffs_stat("/yaffs2/foo/file", &stat);;
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
+	output=yaffs_stat("/yaffs2/test_dir/foo/file", &stat);;
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

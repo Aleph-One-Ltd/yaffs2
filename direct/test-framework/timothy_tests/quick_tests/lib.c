@@ -37,6 +37,7 @@ int get_exit_on_error(void)
 int EROFS_setup(void)
 {
 	int output= -1;
+	
 	output=yaffs_remount(YAFFS_MOUNT_POINT,1,1);
 	if (output<0){
 		print_message("failed to remount yaffs\n",2);
@@ -132,16 +133,19 @@ void print_message(char *message,char print_level)
 /*same as forcing the rmdir of a directory*/
 int delete_dir(char *dir_name)
 {
+	char message[200];
 	yaffs_DIR *d;
    	struct yaffs_dirent *de;
    	struct yaffs_stat s;
    	char str[100];
 	d = yaffs_opendir(dir_name);
-	printf("%s\n",dir_name);
+	//printf("%s\n",dir_name);
 	if(!d)
 	{
-		printf("%s\n",dir_name);
-		print_message("failed to open dir\n",2);
+		sprintf(message,"\nfailed to open dir %s \n was trying to delete this",dir_name);
+		print_message(message,1);
+
+		
 		get_error();
 		return -1;
     }

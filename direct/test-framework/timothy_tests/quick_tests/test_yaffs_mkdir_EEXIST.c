@@ -19,19 +19,12 @@ int test_yaffs_mkdir_EEXIST(void)
 {
 	int error_code = 0;
 	
-	if (0==yaffs_access(DIR_PATH,0)){
-		/* if the file exists  then the file does not need to be created the first time*/
-		
-	} else {
-	
-		output = yaffs_mkdir(DIR_PATH,O_CREAT | O_RDWR);
-		if (output <0) {
-			print_message("failed to create the directory the first time\n",2);
-			return -1;
-		}
+	output = yaffs_mkdir(DIR_PATH,O_CREAT | O_RDWR);
+	if (output <0) {
+		print_message("failed to create the directory the first time\n",2);
+		return -1;
 	}
-
-	output = yaffs_mkdir("/yaffs2/new_directory/",O_CREAT | O_RDWR);
+	output = yaffs_mkdir("/yaffs2/test_dir/new_directory/",O_CREAT | O_RDWR);
 	if (output < 0){
 		error_code = yaffs_get_error();
 		if (abs(error_code) == EEXIST){

@@ -15,7 +15,12 @@
 
 int test_yaffs_access(void)
 {
-		return yaffs_access(FILE_PATH,0);
+
+	if (-1==yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
+	return yaffs_access(FILE_PATH,0);
 }
 
 int test_yaffs_access_clean(void)

@@ -84,7 +84,7 @@
 
 #include "test_yaffs_read.h"
 #include "test_yaffs_read_EBADF.h"
-#include "test_yaffs_read_EINVAL.h"
+//#include "test_yaffs_read_EINVAL.h"
 
 #include "test_yaffs_lseek.h"
 #include "test_yaffs_lseek_EBADF.h"
@@ -334,7 +334,7 @@ test_template test_list[]={
 
 	{test_yaffs_read,test_yaffs_read_clean,"test_yaffs_read"},
 	{test_yaffs_read_EBADF,test_yaffs_read_EBADF_clean,"test_yaffs_read_EBADF"},
-	{test_yaffs_read_EINVAL,test_yaffs_read_EINVAL_clean,"test_yaffs_read_EINVAL"},
+//	{test_yaffs_read_EINVAL,test_yaffs_read_EINVAL_clean,"test_yaffs_read_EINVAL"},
 
 	{test_yaffs_stat,test_yaffs_stat_clean,"test_yaffs_stat"},
 	{test_yaffs_stat_ENOENT,test_yaffs_stat_ENOENT_clean,"test_yaffs_stat_ENOENT"},

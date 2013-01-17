@@ -81,8 +81,8 @@ void run_test(int x)
 	int y= 0;
 	char message[200];
 	message[0]='\0';
-	printf ("making test dir %d\n",yaffs_mkdir(TEST_DIR,S_IWRITE | S_IREAD));
 
+	yaffs_mkdir(TEST_DIR,S_IWRITE | S_IREAD);
 	yaffs_set_error(0);	/*reset the last error to 0 */
 	//printf("foo exists %d\n",test_yaffs_open());
 	sprintf(message,"\nrunning test: %s \n",test_list[x].name_of_test);
@@ -95,7 +95,7 @@ void run_test(int x)
 		num_of_tests_pass++;
 	} else {
 		/*test is assumed to have failed*/
-		//printf("test failed\n");
+		printf("test failed\n");
 		sprintf(message,"test: %s failed\n",test_list[x].name_of_test);
 		print_message(message,1);		
 		num_of_tests_failed ++;	

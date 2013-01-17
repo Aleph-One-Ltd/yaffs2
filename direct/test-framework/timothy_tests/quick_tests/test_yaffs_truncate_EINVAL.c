@@ -18,8 +18,11 @@ int test_yaffs_truncate_EINVAL(void)
 {
 	int error=0;
 	int output=0;
-
-	output= yaffs_truncate("/yaffs2/foo",-1 );
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file \n",1);
+		return -1;
+	}
+	output= yaffs_truncate(FILE_PATH,-1 );
 	if (output<0){
 		error=yaffs_get_error();
 		if (abs(error)==EINVAL){

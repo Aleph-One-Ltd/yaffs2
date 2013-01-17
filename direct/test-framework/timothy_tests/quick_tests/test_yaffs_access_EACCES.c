@@ -17,6 +17,10 @@ int test_yaffs_access_EACCES(void)
 {
 	int output=0;
 	int error=0;
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file before remounting\n",1);
+		return -1;
+	}
 	output=yaffs_chmod(FILE_PATH,S_IREAD);
 	if (output<0){
 		print_message("failed to chmod file\n",2);

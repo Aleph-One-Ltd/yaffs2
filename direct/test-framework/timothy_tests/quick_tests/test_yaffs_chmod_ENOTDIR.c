@@ -16,7 +16,11 @@
 int test_yaffs_chmod_ENOTDIR(void)
 {
 	int error=0;
-	int output=yaffs_chmod("/yaffs2/foo/file",S_IREAD|S_IWRITE);
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
+	int output=yaffs_chmod("/yaffs2/test_dir/foo/file",S_IREAD|S_IWRITE);
 
 	if (output<0){
 		error=yaffs_get_error();
