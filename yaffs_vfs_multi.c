@@ -62,6 +62,11 @@
 #define YAFFS_NEW_FOLLOW_LINK 0
 #endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
+#define YAFFS_HAS_WRITE_SUPER
+#endif
+
+
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 19))
 #include <linux/config.h>
 #endif
@@ -1302,7 +1307,10 @@ static int yaffs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
 }
 
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
+static int yaffs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
+			bool dummy)
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0))
 static int yaffs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 			struct nameidata *n)
 #elif (LINUX_VERSION_CODE > KERNEL_VERSION(2, 5, 0))
@@ -1316,8 +1324,10 @@ static int yaffs_create(struct inode *dir, struct dentry *dentry, int mode)
 	return yaffs_mknod(dir, dentry, mode | S_IFREG, 0);
 }
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 5, 0))
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
+static struct dentry *yaffs_lookup(struct inode *dir, struct dentry *dentry,
+				   unsigned int dummy)
+#elif (LINUX_VERSION_CODE > KERNEL_VERSION(2, 5, 0))
 static struct dentry *yaffs_lookup(struct inode *dir, struct dentry *dentry,
 				   struct nameidata *n)
 #else
@@ -2419,6 +2429,7 @@ static int yaffs_do_sync_fs(struct super_block *sb, int request_checkpoint)
 }
 
 
+#ifdef YAFFS_HAS_WRITE_SUPER
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 static void yaffs_write_super(struct super_block *sb)
 #else
@@ -2437,6 +2448,7 @@ static int yaffs_write_super(struct super_block *sb)
 	return 0;
 #endif
 }
+#endif
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 17))
 static int yaffs_sync_fs(struct super_block *sb, int wait)
@@ -2473,7 +2485,9 @@ static const struct super_operations yaffs_super_ops = {
 	.clear_inode = yaffs_clear_inode,
 #endif
 	.sync_fs = yaffs_sync_fs,
+#ifdef YAFFS_HAS_WRITE_SUPER
 	.write_super = yaffs_write_super,
+#endif
 };
 
 struct yaffs_options {
