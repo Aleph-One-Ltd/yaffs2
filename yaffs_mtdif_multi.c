@@ -105,7 +105,7 @@ static int yaffs_mtd_read(struct yaffs_dev *dev, int nand_chunk,
 	struct mtd_oob_ops ops;
 	int retval;
 
-	addr = ((loff_t) nand_chunk) * dev->data_bytes_per_chunk;
+	addr = ((loff_t) nand_chunk) * dev->param.total_bytes_per_chunk;
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OPS_AUTO_OOB;
 	ops.len = (data) ? data_len : 0;
@@ -186,7 +186,7 @@ static 	int yaffs_mtd_erase(struct yaffs_dev *dev, int block_no)
 static int yaffs_mtd_mark_bad(struct yaffs_dev *dev, int block_no)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
-	int blocksize = dev->param.chunks_per_block * dev->data_bytes_per_chunk;
+	int blocksize = dev->param.chunks_per_block * dev->param.total_bytes_per_chunk;
 	int retval;
 
 	yaffs_trace(YAFFS_TRACE_BAD_BLOCKS, "marking block %d bad", block_no);
@@ -198,7 +198,7 @@ static int yaffs_mtd_mark_bad(struct yaffs_dev *dev, int block_no)
 static int yaffs_mtd_check_bad(struct yaffs_dev *dev, int block_no)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
-	int blocksize = dev->param.chunks_per_block * dev->data_bytes_per_chunk;
+	int blocksize = dev->param.chunks_per_block * dev->param.total_bytes_per_chunk;
 	int retval;
 
 	yaffs_trace(YAFFS_TRACE_BAD_BLOCKS, "checking block %d bad", block_no);
