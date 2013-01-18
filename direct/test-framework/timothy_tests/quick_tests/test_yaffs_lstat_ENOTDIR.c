@@ -40,7 +40,7 @@ int test_yaffs_lstat_ENOTDIR(void)
 		}
 	}
 	
-	output =yaffs_lstat("yaffs2/foo/dir",&stat);
+	output =yaffs_lstat("yaffs2/test_dir/foo/dir",&stat);
 	if (output<0){
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

@@ -19,7 +19,10 @@ int test_yaffs_fsync_EROFS(void)
 {
 	int output = 0;
 	int error_code = 0;
-
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
 	EROFS_setup();
 	handle = yaffs_open(FILE_PATH,O_CREAT  ,S_IREAD  );
 	if (handle<0){
@@ -29,6 +32,7 @@ int test_yaffs_fsync_EROFS(void)
 	output = yaffs_fsync(handle);
 	if (output==-1){
 		error_code=yaffs_get_error();
+
 		if (abs(error_code)==EROFS){
 			return 1;
 		} else {

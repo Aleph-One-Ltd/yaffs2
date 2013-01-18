@@ -13,7 +13,7 @@
 
 #include "test_yaffs_rename_dir.h"
 
-
+/*creates a new directory and renames it*/
 int test_yaffs_rename_dir(void)
 {
 	int output=0;

@@ -78,7 +78,8 @@ TESTFILES = 	quick_tests.o lib.o \
 		test_yaffs_rename_dir.o test_yaffs_rename_dir_ENOENT.o test_yaffs_rename_dir_ENOENT2.o test_yaffs_rename_dir_to_file.o \
 		test_yaffs_rename_file_to_dir.o test_yaffs_rename_EEXISTS.o  test_yaffs_rename_ELOOP_dir.o test_yaffs_rename_EROFS.o \
 		test_yaffs_rename_ENAMETOOLONG.o test_yaffs_rename_ENAMETOOLONG2.o test_yaffs_rename_NULL.o test_yaffs_rename_NULL2.o \
-		test_yaffs_lstat.o test_yaffs_lstat_ENOENT.o test_yaffs_lstat_ENOTDIR.o test_yaffs_lstat_ENAMETOOLONG.o \
+		test_yaffs_lstat.o test_yaffs_lstat_ENOENT.o test_yaffs_lstat_ENOTDIR.o test_yaffs_lstat_ENAMETOOLONG.o test_yaffs_rename_to_null_file.o \
+		test_yaffs_rename_file_over_file.o test_yaffs_rename_dir_over_dir.o test_yaffs_rename_full_dir_over_dir.o test_yaffs_rename_ENOTEMPTY.o \
 		test_yaffs_lstat_NULL.o \
 		test_yaffs_flush.o test_yaffs_flush_EBADF.o test_yaffs_flush_EROFS.o \
 		test_yaffs_dup.o test_yaffs_dup_EBADF.o 

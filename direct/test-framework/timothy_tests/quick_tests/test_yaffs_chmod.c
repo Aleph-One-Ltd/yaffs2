@@ -15,7 +15,13 @@
 
 int test_yaffs_chmod(void)
 {
-	int output=yaffs_chmod(FILE_PATH,S_IREAD|S_IWRITE);
+	int output=0;
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
+	
+	output=yaffs_chmod(FILE_PATH,S_IREAD|S_IWRITE);
 
 	if (output>=0){
 		/* there were no errors */

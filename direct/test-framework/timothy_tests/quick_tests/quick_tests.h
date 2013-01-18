@@ -84,7 +84,7 @@
 
 #include "test_yaffs_read.h"
 #include "test_yaffs_read_EBADF.h"
-#include "test_yaffs_read_EINVAL.h"
+//#include "test_yaffs_read_EINVAL.h"
 
 #include "test_yaffs_lseek.h"
 #include "test_yaffs_lseek_EBADF.h"
@@ -241,6 +241,11 @@
 #include "test_yaffs_rename_ENAMETOOLONG2.h"
 #include "test_yaffs_rename_NULL.h"
 #include "test_yaffs_rename_NULL2.h"
+#include "test_yaffs_rename_file_over_file.h"
+#include "test_yaffs_rename_dir_over_dir.h"
+#include "test_yaffs_rename_to_null_file.h"
+#include "test_yaffs_rename_full_dir_over_dir.h"
+#include "test_yaffs_rename_ENOTEMPTY.h"
 
 #include "test_yaffs_lstat.h"
 #include "test_yaffs_lstat_ENOENT.h"
@@ -334,7 +339,7 @@ test_template test_list[]={
 
 	{test_yaffs_read,test_yaffs_read_clean,"test_yaffs_read"},
 	{test_yaffs_read_EBADF,test_yaffs_read_EBADF_clean,"test_yaffs_read_EBADF"},
-	{test_yaffs_read_EINVAL,test_yaffs_read_EINVAL_clean,"test_yaffs_read_EINVAL"},
+//	{test_yaffs_read_EINVAL,test_yaffs_read_EINVAL_clean,"test_yaffs_read_EINVAL"},
 
 	{test_yaffs_stat,test_yaffs_stat_clean,"test_yaffs_stat"},
 	{test_yaffs_stat_ENOENT,test_yaffs_stat_ENOENT_clean,"test_yaffs_stat_ENOENT"},
@@ -495,6 +500,11 @@ test_template test_list[]={
 	{test_yaffs_rename_ENAMETOOLONG2,test_yaffs_rename_ENAMETOOLONG2_clean,"test_yaffs_rename_ENAMETOOLONG2"},
 	{test_yaffs_rename_NULL,test_yaffs_rename_NULL_clean,"test_yaffs_rename_NULL"},
 	{test_yaffs_rename_NULL2,test_yaffs_rename_NULL2_clean,"test_yaffs_rename_NULL2"},
+	{test_yaffs_rename_to_null_file,test_yaffs_rename_to_null_file_clean,"test_yaffs_rename_to_null_file"},
+	{test_yaffs_rename_file_over_file,test_yaffs_rename_file_over_file_clean,"test_yaffs_rename_file_over_file"},
+	{test_yaffs_rename_dir_over_dir,test_yaffs_rename_dir_over_dir_clean,"test_yaffs_rename_dir_over_dir"},
+	{test_yaffs_rename_full_dir_over_dir,test_yaffs_rename_full_dir_over_dir_clean,"test_yaffs_rename_full_dir_over_dir"},
+	{test_yaffs_rename_ENOTEMPTY,test_yaffs_rename_ENOTEMPTY_clean,"test_yaffs_rename_ENOTEMPTY"},
 
 	{test_yaffs_lstat,test_yaffs_lstat_clean,"test_yaffs_lstat"},
 	{test_yaffs_lstat_ENOENT,test_yaffs_lstat_ENOENT_clean,"test_yaffs_lstat_ENOENT"},

@@ -13,7 +13,7 @@
 
 #include "test_yaffs_rename_dir_ENOENT.h"
 
-
+/*tries to rename a nonexisting directory */
 int test_yaffs_rename_dir_ENOENT(void)
 {
 	int output=0;

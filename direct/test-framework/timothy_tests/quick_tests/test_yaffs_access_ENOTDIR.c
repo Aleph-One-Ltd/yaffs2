@@ -19,8 +19,11 @@ int test_yaffs_access_ENOTDIR(void)
 {
 	int output=0;
 	int error_code=0;
-	
-	output=yaffs_access("/yaffs2/foo/file",0);
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
+	output=yaffs_access("/yaffs2/test_dir/foo/file",0);
 	if (output==-1){
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

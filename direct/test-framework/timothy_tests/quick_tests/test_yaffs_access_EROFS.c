@@ -17,6 +17,10 @@ int test_yaffs_access_EROFS(void)
 {
 	int output=0;
 	int error=0;
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file before remounting\n",1);
+		return -1;
+	}
 	if (EROFS_setup() < 0 ){
 		return -1;
 	}

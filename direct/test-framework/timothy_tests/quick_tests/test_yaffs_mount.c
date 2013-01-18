@@ -17,6 +17,8 @@ int test_yaffs_mount(void)
 {
 	int output = 0;
 	output = yaffs_mount(YAFFS_MOUNT_POINT);
+	yaffs_mkdir(TEST_DIR,S_IWRITE | S_IREAD);
+
 	return output;
 }
 

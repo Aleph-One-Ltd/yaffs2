@@ -11,6 +11,8 @@
  * published by the Free Software Foundation.
  */
 
+/*this is no longer relevent because it is not possiable to read -1 bytes*/
+
 #include "test_yaffs_read_EINVAL.h"
 
 static int handle = -1;
@@ -19,10 +21,14 @@ static char *file_name = NULL;
 int test_yaffs_read_EINVAL(void)
 {
 	int error_code = 0;
-	handle=yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE);
 	char text[2000000];
 	int output=0;	
-	
+	/*if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file before remounting\n",1);
+		return -1;
+	}*/
+	handle=yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE);
+
 	if (handle<0){
 		print_message("could not open file\n",2);
 		return -1;

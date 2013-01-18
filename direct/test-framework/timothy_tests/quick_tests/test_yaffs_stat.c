@@ -20,7 +20,10 @@ int test_yaffs_stat(void)
 	int size=0;
 	message[0]='\0';
 	struct yaffs_stat stat;
-
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file \n",1);
+		return -1;
+	}
 	return yaffs_stat(FILE_PATH, &stat);
 }
 

@@ -18,6 +18,7 @@ static int handle = -1;
 int test_yaffs_open_EINVAL(void)
 {
 	int error_code = 0;
+	handle = yaffs_open(FILE_PATH, O_CREAT | O_RDWR, FILE_MODE);
 
 	handle=yaffs_open(FILE_PATH, 255,FILE_MODE);
 	if (handle == -1){

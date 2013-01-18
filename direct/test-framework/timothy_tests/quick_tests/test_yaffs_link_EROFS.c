@@ -19,7 +19,10 @@ int test_yaffs_link_EROFS(void)
 {
 	int output=0;	
 	int error =0;
-
+	if (yaffs_close(yaffs_open(FILE_PATH,O_CREAT | O_RDWR, FILE_MODE))==-1){
+		print_message("failed to create file\n",1);
+		return -1;
+	}
 	EROFS_setup();
 
 	output = yaffs_link(FILE_PATH,HARD_LINK_PATH);

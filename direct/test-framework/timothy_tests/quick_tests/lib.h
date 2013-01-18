@@ -22,33 +22,35 @@
 
 
 #define YAFFS_MOUNT_POINT "/yaffs2/"
-#define FILE_NAME "foo"
+#define FILE_NAME "test_dir/foo"
 #define FILE_SIZE 10
 
 #define FILE_MODE (S_IREAD | S_IWRITE)
 #define FILE_SIZE_TRUNCATED 100
 #define FILE_TEXT "file foo "	/* keep space at end of string */
 #define FILE_TEXT_NBYTES 10
+#define TEST_DIR "/yaffs2/test_dir"
+#define DIR_PATH "/yaffs2/test_dir/new_directory"
+#define DIR_PATH2 "/yaffs2/test_dir/new_directory2"
+#define DIR_PATH2_FILE "/yaffs2/test_dir/new_directory2/foo"
+#define SYMLINK_PATH "/yaffs2/test_dir/sym_foo"
 
-#define DIR_PATH "/yaffs2/new_directory"
+#define HARD_LINK_PATH "/yaffs2/test_dir/hard_link"
 
-#define SYMLINK_PATH "/yaffs2/sym_foo"
+#define NODE_PATH "/yaffs2/test_dir/node"
 
-#define HARD_LINK_PATH "/yaffs2/hard_link"
+#define RENAME_PATH "/yaffs2/test_dir/foo2"
 
-#define NODE_PATH "/yaffs2/node"
+#define RENAME_DIR_PATH "/yaffs2/test_dir/dir2"
 
-#define RENAME_PATH "/yaffs2/foo2"
+#define ELOOP_PATH "/yaffs2/test_dir/ELOOP"
+#define ELOOP2_PATH "/yaffs2/test_dir/ELOOP2"
 
-#define RENAME_DIR_PATH "/yaffs2/dir2"
-
-#define ELOOP_PATH "/yaffs2/ELOOP"
-#define ELOOP2_PATH "/yaffs2/ELOOP2"
-
-#define RMDIR_PATH "/yaffs2/RM_DIR"
+#define RMDIR_PATH "/yaffs2/test_dir/RM_DIR"
 
 /* warning do not define anything as FILE because there seems to be a conflict with stdio.h */ 
-#define FILE_PATH "/yaffs2/foo"
+#define FILE_PATH "/yaffs2/test_dir/foo"
+#define FILE_PATH2 "/yaffs2/test_dir/foo2"
 
 void join_paths(char *path1,char *path2,char *new_path );
 void print_message(char *message,char print_level);
@@ -58,4 +60,6 @@ int get_exit_on_error(void);
 int set_up_ELOOP(void);
 int EROFS_setup(void);
 int EROFS_clean(void);
+int delete_dir(char *dir_name);
+void get_error(void);
 #endif
