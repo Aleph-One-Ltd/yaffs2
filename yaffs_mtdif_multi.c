@@ -33,6 +33,16 @@
 #endif
 
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
+#define mtd_erase(m, ei) (m)->erase(m, ei)
+#define mtd_write_oob(m, addr, pops) (m)->write_oob(m, addr, pops)
+#define mtd_read_oob(m, addr, pops) (m)->read_oob(m, addr, pops)
+#define mtd_block_isbad(m, offs) (m)->block_isbad(m, offs)
+#define mtd_block_markbad(m, offs) (m)->block_markbad(m, offs)
+#endif
+
+
+
 int nandmtd_erase_block(struct yaffs_dev *dev, int block_no)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
@@ -50,7 +60,7 @@ int nandmtd_erase_block(struct yaffs_dev *dev, int block_no)
 	ei.callback = NULL;
 	ei.priv = (u_long) dev;
 
-	retval = mtd->erase(mtd, &ei);
+	retval = mtd_erase(mtd, &ei);
 
 	if (retval == 0)
 		return YAFFS_OK;
@@ -76,7 +86,7 @@ static 	int yaffs_mtd_write(struct yaffs_dev *dev, int nand_chunk,
 	ops.datbuf = (u8 *)data;
 	ops.oobbuf = (u8 *)oob;
 
-	retval = mtd->write_oob(mtd, addr, &ops);
+	retval = mtd_write_oob(mtd, addr, &ops);
 	if (retval) {
 		yaffs_trace(YAFFS_TRACE_MTD,
 			"write_oob failed, chunk %d, mtd error %d",
@@ -112,7 +122,7 @@ static int yaffs_mtd_read(struct yaffs_dev *dev, int nand_chunk,
 	/* Read page and oob using MTD.
 	 * Check status and determine ECC result.
 	 */
-	retval = mtd->read_oob(mtd, addr, &ops);
+	retval = mtd_read_oob(mtd, addr, &ops);
 	if (retval)
 		yaffs_trace(YAFFS_TRACE_MTD,
 			"read_oob failed, chunk %d, mtd error %d",
@@ -165,7 +175,7 @@ static 	int yaffs_mtd_erase(struct yaffs_dev *dev, int block_no)
 	ei.callback = NULL;
 	ei.priv = (u_long) dev;
 
-	retval = mtd->erase(mtd, &ei);
+	retval = mtd_erase(mtd, &ei);
 
 	if (retval == 0)
 		return YAFFS_OK;
@@ -181,7 +191,7 @@ static int yaffs_mtd_mark_bad(struct yaffs_dev *dev, int block_no)
 
 	yaffs_trace(YAFFS_TRACE_BAD_BLOCKS, "marking block %d bad", block_no);
 
-	retval = mtd->block_markbad(mtd, (loff_t) blocksize * block_no);
+	retval = mtd_block_markbad(mtd, (loff_t) blocksize * block_no);
 	return (retval) ? YAFFS_FAIL : YAFFS_OK;
 }
 
@@ -193,7 +203,7 @@ static int yaffs_mtd_check_bad(struct yaffs_dev *dev, int block_no)
 
 	yaffs_trace(YAFFS_TRACE_BAD_BLOCKS, "checking block %d bad", block_no);
 
-	retval = mtd->block_isbad(mtd, (loff_t) blocksize * block_no);
+	retval = mtd_block_isbad(mtd, (loff_t) blocksize * block_no);
 	return (retval) ? YAFFS_FAIL : YAFFS_OK;
 }
 
@@ -208,7 +218,6 @@ static int yaffs_mtd_deinitialise(struct yaffs_dev *dev)
 }
 
 
-
 void yaffs_mtd_drv_install(struct yaffs_dev *dev)
 {
 	struct yaffs_driver *drv = &dev->drv;
@@ -220,4 +229,66 @@ void yaffs_mtd_drv_install(struct yaffs_dev *dev)
 	drv->drv_check_bad_fn = yaffs_mtd_check_bad;
 	drv->drv_initialise_fn = yaffs_mtd_initialise;
 	drv->drv_deinitialise_fn = yaffs_mtd_deinitialise;
+}
+
+
+struct mtd_info * yaffs_get_mtd_device(dev_t sdev)
+{
+	struct mtd_info *mtd;
+
+	mtd = yaffs_get_mtd_device(sdev);
+
+	/* Check it's an mtd device..... */
+	if (MAJOR(sdev) != MTD_BLOCK_MAJOR)
+		return NULL;	/* This isn't an mtd device */
+
+	/* Check it's NAND */
+	if (mtd->type != MTD_NANDFLASH) {
+		yaffs_trace(YAFFS_TRACE_ALWAYS,
+			"yaffs: MTD device is not NAND it's type %d",
+			mtd->type);
+		return NULL;
+	}
+
+	yaffs_trace(YAFFS_TRACE_OS, " %s %d", WRITE_SIZE_STR, WRITE_SIZE(mtd));
+	yaffs_trace(YAFFS_TRACE_OS, " oobsize %d", mtd->oobsize);
+	yaffs_trace(YAFFS_TRACE_OS, " erasesize %d", mtd->erasesize);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29)
+	yaffs_trace(YAFFS_TRACE_OS, " size %u", mtd->size);
+#else
+	yaffs_trace(YAFFS_TRACE_OS, " size %lld", mtd->size);
+#endif
+
+	return mtd;
+}
+
+int yaffs_verify_mtd(struct mtd_info *mtd, int yaffs_version, int inband_tags)
+{
+	if (yaffs_version == 2) {
+		if ((WRITE_SIZE(mtd) < YAFFS_MIN_YAFFS2_CHUNK_SIZE ||
+		     mtd->oobsize < YAFFS_MIN_YAFFS2_SPARE_SIZE) &&
+		    !inband_tags) {
+			yaffs_trace(YAFFS_TRACE_ALWAYS,
+				"MTD device does not have the right page sizes"
+			);
+			return -1;
+		}
+	} else {
+		if (WRITE_SIZE(mtd) < YAFFS_BYTES_PER_CHUNK ||
+		    mtd->oobsize != YAFFS_BYTES_PER_SPARE) {
+			yaffs_trace(YAFFS_TRACE_ALWAYS,
+				"MTD device does not support have the right page sizes"
+			);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+
+void yaffs_put_mtd_device(struct mtd_info *mtd)
+{
+	if(mtd)
+		put_mtd_device(mtd);
 }
