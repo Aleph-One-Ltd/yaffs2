@@ -28,11 +28,6 @@
 #include "yaffs_linux.h"
 
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 2, 0))
-#define MTD_OPS_AUTO_OOB MTD_OOB_AUTO
-#endif
-
-
 int nandmtd_erase_block(struct yaffs_dev *dev, int block_no)
 {
 	struct mtd_info *mtd = yaffs_dev_to_mtd(dev);
@@ -103,12 +98,6 @@ static int yaffs_mtd_read(struct yaffs_dev *dev, int nand_chunk,
 	ops.datbuf = data;
 	ops.oobbuf = oob;
 
-#if (MTD_VERSION_CODE < MTD_VERSION(2, 6, 20))
-	/* In MTD 2.6.18 to 2.6.19 nand_base.c:nand_do_read_oob() has a bug;
-	 * help it out with ops.len = ops.ooblen when ops.datbuf == NULL.
-	 */
-	ops.len = (ops.datbuf) ? ops.len : ops.ooblen;
-#endif
 	/* Read page and oob using MTD.
 	 * Check status and determine ECC result.
 	 */

@@ -80,7 +80,7 @@ void yaffs_load_current_time(struct yaffs_obj *obj, int do_a, int do_c)
 #endif
 }
 
-loff_t yaffs_get_file_size(struct yaffs_obj *obj)
+static Y_LOFF_T yaffs_get_file_size(struct yaffs_obj *obj)
 {
 	YCHAR *alias = NULL;
 	obj = yaffs_get_equivalent_obj(obj);
