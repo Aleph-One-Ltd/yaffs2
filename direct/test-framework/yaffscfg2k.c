@@ -49,6 +49,7 @@ unsigned yaffs_trace_mask =
 #include "yaffs_flashif2.h"
 #include "yaffs_m18_drv.h"
 #include "yaffs_nor_drv.h"
+#include "yaffs_nand_drv.h"
 
 int yaffs_start_up(void)
 {
@@ -62,12 +63,11 @@ int yaffs_start_up(void)
 	// Stuff to initialise anything special (eg lock semaphore).
 	yaffsfs_OSInitialisation();
 
+	yflash2_install_drv("yflash2");
 
 	yaffs_m18_install_drv("M18-1");
 	yaffs_nor_install_drv("nor");
-
-	// /yaffs2  yaffs2 file emulation
-	yflash2_install_drv("yaffs2");
+	yaffs_nandsim_install_drv("nand", "emfile-nand", 256);
 
 	return 0;
 }

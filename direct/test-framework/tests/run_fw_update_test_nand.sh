@@ -21,15 +21,9 @@ do
    rm -f seed-nand-*$j
    echo $seed>seed-nand-for-run-$i
 
-   rm -f emfile-2k-0-*$j
-   rm -f emfile-2k-1-*$j
-   rm -f emfile-2k-2-*$j
-   rm -f emfile-2k-3-*$j
+   rm -f emfile-nand-*$j
 
-   cp emfile-2k-0 emfile-2k-0-$i
-   cp emfile-2k-1 emfile-2k-1-$i
-   cp emfile-2k-2 emfile-2k-2-$i
-   cp emfile-2k-3 emfile-2k-3-$i
+   cp emfile-nand emfile-nand-$j
 
    echo "#########"
    echo "#########"
@@ -38,5 +32,5 @@ do
    echo "#########"
    echo "#########"
    echo "#########"
-   ./yaffs_test -u -f -p -s$seed -t 0 yaffs2 >log-nand-$i
+   ./yaffs_test -u -f -p -s$seed -t 0 nand >log-nand-$i
 done
