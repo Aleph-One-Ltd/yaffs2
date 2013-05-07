@@ -39,7 +39,7 @@
  * 2^(3*MAX_LEVEL+4)
  *
  * Thus a max level of 8 supports files with up to 2^^28 chunks which gives
- * a maximum file size of arounf 51Gbytees with 2k chunks.
+ * a maximum file size of around 512Gbytees with 2k chunks.
  */
 #define YAFFS_NTNODES_LEVEL0		16
 #define YAFFS_TNODES_LEVEL0_BITS	4

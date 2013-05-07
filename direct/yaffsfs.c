@@ -1482,6 +1482,24 @@ int yaffs_unlink(const YCHAR *path)
 	return yaffsfs_DoUnlink(path, 0);
 }
 
+static int rename_file_over_dir(struct yaffs_obj *obj, struct yaffs_obj *newobj)
+{
+	if (obj && obj->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY &&
+	    newobj && newobj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY)
+		return 1;
+	else
+		return 0;
+}
+
+static int rename_dir_over_file(struct yaffs_obj *obj, struct yaffs_obj *newobj)
+{
+	if (obj && obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY &&
+	    newobj && newobj->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
+		return 1;
+	else
+		return 0;
+}
+
 int yaffs_rename(const YCHAR *oldPath, const YCHAR *newPath)
 {
 	struct yaffs_obj *olddir = NULL;
@@ -1550,6 +1568,12 @@ int yaffs_rename(const YCHAR *oldPath, const YCHAR *newPath)
 		rename_allowed = 0;
 	} else if (obj->my_dev->read_only) {
 		yaffsfs_SetError(-EROFS);
+		rename_allowed = 0;
+	} else if (rename_file_over_dir(obj, newobj)) {
+		yaffsfs_SetError(-EISDIR);
+		rename_allowed = 0;
+	} else if (rename_dir_over_file(obj, newobj)) {
+		yaffsfs_SetError(-ENOTDIR);
 		rename_allowed = 0;
 	} else if (yaffs_is_non_empty_dir(newobj)) {
 		yaffsfs_SetError(-ENOTEMPTY);

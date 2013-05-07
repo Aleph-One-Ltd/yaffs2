@@ -3172,6 +3172,37 @@ void format_test(const char *mountpt)
 	printf("mount should return -1 returned %d\n", ret);
 }
 
+void dir_rename_test(const char *mountpt)
+{
+         char fname[100];
+         char dname[100];
+         int h;
+         int ret;
+
+         yaffs_start_up();
+         yaffs_mount(mountpt);
+
+         sprintf(fname,"%s/file",mountpt);
+         sprintf(dname,"%s/directory",mountpt);
+
+         h = yaffs_open(fname,O_CREAT | O_RDWR | O_TRUNC, 0666);
+         yaffs_close(h);
+
+         yaffs_mkdir(dname, 0666);
+
+         dump_directory_tree(mountpt);
+
+         printf("Try to rename %s to %s\n", fname, dname);
+         ret = yaffs_rename(fname, dname);
+         printf("result %d, %d\n", ret, yaffs_get_error());
+
+         printf("Try to rename %s to %s\n", dname, fname);
+         ret = yaffs_rename(dname, fname);
+         printf("result %d, %d\n", ret, yaffs_get_error());
+
+
+}
+
 int random_seed;
 int simulate_power_failure;
 
@@ -3252,8 +3283,8 @@ int main(int argc, char *argv[])
 	 //basic_utime_test("/yaffs2");
 	 //case_insensitive_test("/yaffs2");
 
-	 yy_test("/yaffs2");
-
+	 //yy_test("/yaffs2");
+	 dir_rename_test("/yaffs2");
 
 	 return 0;
 
