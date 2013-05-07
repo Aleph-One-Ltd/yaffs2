@@ -143,7 +143,6 @@ static int yaffs_nand_drv_ReadChunk(struct yaffs_dev *dev, int nand_chunk,
 
 	ecc_result = YAFFS_ECC_RESULT_NO_ERROR;
 
-#if 0
 	if(data) {
 		for(i = 0, e = buffer + 2; i < chip->data_bytes_per_page; i+=256, e+=3) {
 			yaffs_ecc_calc(data + i, read_ecc);
@@ -154,7 +153,6 @@ static int yaffs_nand_drv_ReadChunk(struct yaffs_dev *dev, int nand_chunk,
 				ecc_result = YAFFS_ECC_RESULT_FIXED;
 		}
 	}
-#endif
 
 	if (ecc_result_out)
 		*ecc_result_out = ecc_result;
