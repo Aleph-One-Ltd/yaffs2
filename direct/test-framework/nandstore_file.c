@@ -165,7 +165,7 @@ nandstore_file_init(const char *fname,
 
 	strncpy(nsfp->backing_file, fname, sizeof(nsfp->backing_file));
 
-	nsfp->handle = open(nsfp->backing_file, O_RDWR | O_CREAT);
+	nsfp->handle = open(nsfp->backing_file, O_RDWR | O_CREAT, 0666);
 	if(nsfp->handle >=0){
 		fsize = lseek(nsfp->handle,0,SEEK_END);
 		nbytes = ns->blocks * ns->pages_per_block *
