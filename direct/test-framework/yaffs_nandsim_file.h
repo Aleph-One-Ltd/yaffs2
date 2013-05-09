@@ -16,9 +16,10 @@
 #ifndef __YAFFS_NAND_DRV_H__
 #define __YAFFS_NAND_DRV_H__
 
-#include "yaffs_guts.h"
-#include "nand_chip.h"
+struct yaffs_dev;
 
-int yaffs_nand_install_drv(struct yaffs_dev *dev, struct nand_chip *chip);
+struct yaffs_dev *yaffs_nandsim_file_install(const char *dev_name,
+					const char *backing_file_name,
+					int n_blocks);
 
 #endif

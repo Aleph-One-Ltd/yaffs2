@@ -220,6 +220,7 @@ static int yaffs_nand_drv_Initialise(struct yaffs_dev *dev)
 {
 	struct nand_chip *chip = dev_to_chip(dev);
 
+	(void)chip;
 	return YAFFS_OK;
 }
 
@@ -227,55 +228,22 @@ static int yaffs_nand_drv_Deinitialise(struct yaffs_dev *dev)
 {
 	struct nand_chip *chip = dev_to_chip(dev);
 
+	(void) chip;
 	return YAFFS_OK;
 }
 
-#include "nandsim_file.h"
 
-struct yaffs_dev *yaffs_nandsim_install_drv(const char *name,
-					const char *file_name,
-					int n_blocks)
+int yaffs_nand_install_drv(struct yaffs_dev *dev, struct nand_chip *chip)
 {
-	struct yaffs_dev *dev;
-	char *name_copy = NULL;
-	struct yaffs_param *param;
-	struct yaffs_driver *drv;
-	struct nand_chip *chip = NULL;
-	struct nand_context *ctxt = NULL;
+	struct yaffs_driver *drv = &dev->drv;
 	u8 *buffer = NULL;
+	struct nand_context *ctxt = NULL;
 
-	dev = malloc(sizeof(struct yaffs_dev));
 	ctxt = malloc(sizeof(struct nand_context));
-	name_copy = strdup(name);
-
-	if(!dev || !ctxt || !name_copy)
-		goto fail;
-
-	chip = nandsim_file_init(file_name, n_blocks, 64, 2048, 64, 0);
-	if(!chip)
-		goto fail;
-
 	buffer = malloc(chip->spare_bytes_per_page);
 
-	if(!buffer)
+	if(!buffer || !ctxt)
 		goto fail;
-
-	param = &dev->param;
-	drv = &dev->drv;
-
-	memset(dev, 0, sizeof(*dev));
-	memset(ctxt, 0, sizeof(*ctxt));
-
-	param->name = name_copy;
-
-	param->total_bytes_per_chunk = chip->data_bytes_per_page;
-	param->chunks_per_block = chip->pages_per_block;
-	param->n_reserved_blocks = 5;
-	param->start_block = 0; // Can use block 0
-	param->end_block = chip->blocks - 1; // Last block
-	param->is_yaffs2 = 1;
-	param->use_nand_ecc = 1;
-	param->n_caches = 10;
 
 	drv->drv_write_chunk_fn = yaffs_nand_drv_WriteChunk;
 	drv->drv_read_chunk_fn = yaffs_nand_drv_ReadChunk;
@@ -288,15 +256,10 @@ struct yaffs_dev *yaffs_nandsim_install_drv(const char *name,
 	ctxt->chip = chip;
 	ctxt->buffer = buffer;
 	dev->driver_context = (void *) ctxt;
-
-	yaffs_add_device(dev);
-
-	return dev;
+	return YAFFS_OK;
 
 fail:
-	free(dev);
 	free(ctxt);
-	free(name_copy);
 	free(buffer);
-	return NULL;
+	return YAFFS_FAIL;
 }

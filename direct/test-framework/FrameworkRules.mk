@@ -38,8 +38,8 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o yaffs_error.o\
 		 yaffs_nameval.o yaffs_attribs.o \
 		 yaffs_m18_drv.o  yaffs_nor_drv.o ynorsim.o \
 		 yaffs_nand_drv.o \
-		 nanddrv.o nandsim.o \
-		 nandsim_file.o nandstore_file.o \
+		 nanddrv.o \
+		 yaffs_nandsim_file.o nandsim.o nandsim_file.o nandstore_file.o \
 		 yaffs_allocator.o \
 		 yaffs_bitmap.o \
 		 yaffs_yaffs1.o \
@@ -85,6 +85,7 @@ FRAMEWORKEXTRASYMLINKS = \
 		yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \
 		nand_chip.h nanddrv.c nanddrv.h nandsim.c nandsim.h nand_store.h \
 		nandsim_file.c nandsim_file.h nandstore_file.c nandstore_file.h \
+		yaffs_nandsim_file.c yaffs_nandsim_file.h \
 		ynorsim.h ynorsim.c yaffs_osglue.c
 
 FRAMEWORK_SOURCES = $(YAFFSDIRECTSYMLINKS) $(FRAMEWORKEXTRASYMLINKS)
