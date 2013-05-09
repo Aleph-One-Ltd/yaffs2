@@ -57,7 +57,7 @@ YAFFSDIRECTSYMLINKS =  \
           yaffscfg.h yaffs_qsort.c \
           yaffs_nandemul2k.h yaffs_list.h \
           yaffs_attribs.c \
-          yaffs_nandif.c yaffs_nandif.h yportenv.h \
+          yportenv.h \
           yaffs_hweight.c yaffs_hweight.h \
 	  yaffs_error.c \
           yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
