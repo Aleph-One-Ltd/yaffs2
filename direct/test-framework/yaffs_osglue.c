@@ -11,6 +11,9 @@
  * published by the Free Software Foundation.
  */
 
+/* 
+ * Example OS glue functions for running on a Linux/POSIX system.
+ */
 
 #include "yaffscfg.h"
 #include "yaffs_guts.h"
@@ -20,6 +23,11 @@
 
 #include <errno.h>
 
+/*
+ * yaffsfs_SetError() and yaffsfs_GetError()
+ * Do whatever to set the system error.
+ * yaffsfs_GetError() just fetches the last error.
+ */
 
 static int yaffsfs_lastError;
 
@@ -27,6 +35,7 @@ void yaffsfs_SetError(int err)
 {
 	//Do whatever to set error
 	yaffsfs_lastError = err;
+	errno = err;
 }
 
 int yaffsfs_GetLastError(void)
@@ -34,13 +43,26 @@ int yaffsfs_GetLastError(void)
 	return yaffsfs_lastError;
 }
 
-int yaffsfs_CheckMemRegion(const void *addr, size_t size, int writeable)
+/*
+ * yaffsfs_CheckMemRegion()
+ * Check that access to an address is valid.
+ * This can check memory is in bounds and is writable etc.
+ *
+ * Returns 0 if ok, negative if not.
+ */
+int yaffsfs_CheckMemRegion(const void *addr, size_t size, int write_request)
 {
 	if(!addr)
 		return -1;
 	return 0;
 }
 
+/*
+ * yaffsfs_Lock()
+ * yaffsfs_Unlock()
+ * A single mechanism to lock and unlock yaffs. Hook up to a mutex or whatever.
+ * Here are two examples, one using POSIX pthreads, the other doing nothing.
+ */
 
 #ifdef CONFIG_YAFFS_USE_PTHREADS
 #include <pthread.h>
@@ -77,11 +99,26 @@ void yaffsfs_LockInit(void)
 }
 #endif
 
+/*
+ * yaffsfs_CurrentTime() retrns a 32-bit timestamp.
+ * 
+ * Can return 0 if your system does not care about time.
+ */
+ 
 u32 yaffsfs_CurrentTime(void)
 {
 	return time(NULL);
 }
 
+
+/*
+ * yaffsfs_malloc()
+ * yaffsfs_free()
+ *
+ * Functions to allocate and free memory.
+ */
+ 
+#ifdef CONFIG_YAFFS_TEST_MALLOC
 
 static int yaffs_kill_alloc = 0;
 static size_t total_malloced = 0;
@@ -101,6 +138,15 @@ void *yaffsfs_malloc(size_t size)
 	return this;
 }
 
+#else
+
+void *yaffsfs_malloc(size_t size)
+{
+	return malloc(size);
+}
+
+#endif
+
 void yaffsfs_free(void *ptr)
 {
 	free(ptr);
@@ -111,7 +157,11 @@ void yaffsfs_OSInitialisation(void)
 	yaffsfs_LockInit();
 }
 
-
+/*
+ * yaffs_bug_fn()
+ * Function to report a bug.
+ */
+ 
 void yaffs_bug_fn(const char *file_name, int line_no)
 {
 	printf("yaffs bug detected %s:%d\n",
