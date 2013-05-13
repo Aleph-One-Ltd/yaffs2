@@ -611,6 +611,63 @@ static void dump_directory_tree(const char *dname)
 	printf("Free space in %s is %d\n\n",dname,(int)yaffs_freespace(dname));
 }
 
+void dump_directory_tree_worker_fd(const char *dname,int recursive)
+{
+	int h;
+	struct yaffs_dirent *de;
+	struct yaffs_stat s;
+	char str[1000];
+
+	h = yaffs_open(dname, O_RDONLY, 0);
+
+	if(h < 0)
+	{
+		printf("open of dir failed\n");
+	}
+	else
+	{
+		printf("using fd %d\n", h);
+
+		while((de = yaffs_readdir_fd(h)) != NULL)
+		{
+			sprintf(str,"%s/%s",dname,de->d_name);
+
+			yaffs_lstat(str,&s);
+
+			printf("%s inode %d obj %x length %lld mode %X ",
+				str,s.st_ino,de->d_dont_use, s.st_size,s.st_mode);
+			switch(s.st_mode & S_IFMT)
+			{
+				case S_IFREG: printf("data file"); break;
+				case S_IFDIR: printf("directory"); break;
+				case S_IFLNK: printf("symlink -->");
+							  if(yaffs_readlink(str,str,100) < 0)
+								printf("no alias");
+							  else
+								printf("\"%s\"",str);
+							  break;
+				default: printf("unknown"); break;
+			}
+
+			printf("\n");
+
+			if((s.st_mode & S_IFMT) == S_IFDIR && recursive)
+				dump_directory_tree_worker_fd(str,1);
+
+		}
+
+		yaffs_close(h);
+	}
+
+}
+
+static void dump_directory_tree_fd(const char *dname)
+{
+	dump_directory_tree_worker_fd(dname,1);
+	printf("\n");
+	printf("Free space in %s is %d\n\n",dname,(int)yaffs_freespace(dname));
+}
+
 void dumpDir(const char *dname)
 {	dump_directory_tree_worker(dname,0);
 	printf("\n");
@@ -3203,6 +3260,43 @@ void dir_rename_test(const char *mountpt)
 
 }
 
+
+void dir_fd_test(const char *mountpt)
+{
+	char name[100];
+	int h;
+	int ret;
+	int i;
+
+	yaffs_start_up();
+	yaffs_mount(mountpt);
+
+	sprintf(name,"%s/directory",mountpt);
+	yaffs_mkdir(name, 0666);
+	for(i=0; i < 20; i++) {
+		sprintf(name,"%s/directory/file%d",mountpt, i);
+
+		h = yaffs_open(name, O_CREAT | O_TRUNC | O_RDWR, 0666);
+		yaffs_write(h, name, strlen(name));
+		yaffs_close(h);
+	}
+	sprintf(name,"%s/dddd",mountpt);
+	yaffs_mkdir(name, 0666);
+	for(i=0; i < 20; i++) {
+		sprintf(name,"%s/dddd/filezzz%d",mountpt, i);
+
+		h = yaffs_open(name, O_CREAT | O_TRUNC | O_RDWR, 0666);
+		yaffs_write(h, name, strlen(name));
+		yaffs_close(h);
+	}
+
+
+	dump_directory_tree(mountpt);
+	dump_directory_tree_fd(mountpt);
+	dump_directory_tree_fd(mountpt);
+
+}
+
 int random_seed;
 int simulate_power_failure;
 
@@ -3223,12 +3317,12 @@ int main(int argc, char *argv[])
 
 	//rename_over_test("//////////////////flash///////////////////yaffs1///////////");
 
-	//fill_empty_files_test("/yaffs2/");
-	//resize_stress_test("/yaffs2");
-	//overwrite_test("/yaffs2");
+	//fill_empty_files_test("/nand/");
+	//resize_stress_test("/nand");
+	//overwrite_test("/nand");
 
-	//long_name_test("/yaffs2");
-	//link_test0("/yaffs2");
+	//long_name_test("/nand");
+	//link_test0("/nand");
 	//link_test1("yaffs2");
 	 //scan_pattern_test("/flash",10000,10);
 	//short_scan_test("/flash/flash",40000,200);
@@ -3261,30 +3355,32 @@ int main(int argc, char *argv[])
 
 	 //check_resize_gc_bug("/flash");
 
-	 //basic_xattr_test("/yaffs2");
-	 //big_xattr_test("/yaffs2");
+	 //basic_xattr_test("/nand");
+	 //big_xattr_test("/nand");
 
 	 //null_name_test("yaffs2");
 
 	 //test_flash_traffic("yaffs2");
-	 // link_follow_test("/yaffs2");
-	 //basic_utime_test("/yaffs2");
+	 // link_follow_test("/nand");
+	 //basic_utime_test("/nand");
 
 
-	//format_test("/yaffs2");
+	//format_test("/nand");
 
-	//max_files_test("/yaffs2");
+	//max_files_test("/nand");
 
-	 //start_twice("/yaffs2");
+	 //start_twice("/nand");
 
-	 //large_file_test("/yaffs2");
-	 //readdir_test("/yaffs2");
+	 //large_file_test("/nand");
+	 //readdir_test("/nand");
 
-	 //basic_utime_test("/yaffs2");
-	 //case_insensitive_test("/yaffs2");
+	 //basic_utime_test("/nand");
+	 //case_insensitive_test("/nand");
 
-	 //yy_test("/yaffs2");
-	 dir_rename_test("/yaffs2");
+	 //yy_test("/nand");
+	 //dir_rename_test("/nand");
+
+	dir_fd_test("/nand");
 
 	 return 0;
 
