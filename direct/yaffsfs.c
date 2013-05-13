@@ -37,6 +37,8 @@ static struct yaffs_obj *yaffsfs_FindObject(struct yaffs_obj *relativeDirectory,
 					    int *notDir, int *loop);
 
 static void yaffsfs_RemoveObjectCallback(struct yaffs_obj *obj);
+static yaffs_DIR *yaffsfs_opendir_no_lock(const YCHAR *dirname);
+static int yaffsfs_closedir_no_lock(yaffs_DIR *dirent);
 
 unsigned int yaffs_wr_attempts;
 
@@ -66,24 +68,8 @@ struct yaffsfs_Inode {
 	struct yaffs_obj *iObj;
 };
 
-struct yaffsfs_FileDes {
-	u8 reading:1;
-	u8 writing:1;
-	u8 append:1;
-	u8 shareRead:1;
-	u8 shareWrite:1;
-	int inodeId:12;		/* Index to corresponding yaffsfs_Inode */
-	int handleCount:10;	/* Number of handles for this fd */
-	Y_LOFF_T position;	/* current position in file */
-};
 
-struct yaffsfs_Handle {
-	short int fdId;
-	short int useCount;
-};
-
-
-struct yaffsfs_DirSearchContxt {
+struct yaffsfs_DirSearchContext {
 	struct yaffs_dirent de;	/* directory entry */
 	YCHAR name[NAME_MAX + 1];	/* name of directory being searched */
 	struct yaffs_obj *dirObj;	/* ptr to directory being searched */
@@ -93,7 +79,28 @@ struct yaffsfs_DirSearchContxt {
 	unsigned inUse:1;
 };
 
-static struct yaffsfs_DirSearchContxt yaffsfs_dsc[YAFFSFS_N_DSC];
+struct yaffsfs_FileDes {
+	u8 isDir:1; 		/* This s a directory */
+	u8 reading:1;
+	u8 writing:1;
+	u8 append:1;
+	u8 shareRead:1;
+	u8 shareWrite:1;
+	int inodeId:12;		/* Index to corresponding yaffsfs_Inode */
+	int handleCount:10;	/* Number of handles for this fd */
+	union {
+		Y_LOFF_T position;	/* current position in file */
+		yaffs_DIR *dir;
+	} v;
+};
+
+struct yaffsfs_Handle {
+	short int fdId;
+	short int useCount;
+};
+
+
+static struct yaffsfs_DirSearchContext yaffsfs_dsc[YAFFSFS_N_DSC];
 static struct yaffsfs_Inode yaffsfs_inode[YAFFSFS_N_HANDLES];
 static struct yaffsfs_FileDes yaffsfs_fd[YAFFSFS_N_HANDLES];
 static struct yaffsfs_Handle yaffsfs_handle[YAFFSFS_N_HANDLES];
@@ -337,6 +344,8 @@ static int yaffsfs_PutFileDes(int fdId)
 		fd = &yaffsfs_fd[fdId];
 		fd->handleCount--;
 		if (fd->handleCount < 1) {
+			if (fd->isDir)
+				yaffsfs_closedir_no_lock(fd->v.dir);
 			if (fd->inodeId >= 0) {
 				yaffsfs_PutInode(fd->inodeId);
 				fd->inodeId = -1;
@@ -797,6 +806,8 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 	u8 writeRequested;
 	int notDir = 0;
 	int loop = 0;
+	int is_dir = 0;
+	yaffs_DIR *dsc;
 
 	if (yaffsfs_CheckMemRegion(path, 0, 0)< 0) {
 		yaffsfs_SetError(-EFAULT);
@@ -847,12 +858,25 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 		if (obj) {
 
 			/* The file already exists or it might be a directory */
+			is_dir = (obj->variant_type ==
+					YAFFS_OBJECT_TYPE_DIRECTORY);
 
-			/* A directory can't be opened as a file */
-			if (obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY) {
+			/* A directory can't be opened except for read */
+			if ( is_dir &&
+			    (writeRequested || !readRequested ||
+				(oflag & ~O_RDONLY))) {
 				openDenied = 1;
 				yaffsfs_SetError(-EISDIR);
 				errorReported = 1;
+			}
+
+			if(is_dir) {
+				dsc = yaffsfs_opendir_no_lock(path);
+				if (!dsc) {
+					openDenied = 1;
+					yaffsfs_SetError(-ENFILE);
+					errorReported = 1;
+				}
 			}
 
 			/* Open should fail if O_CREAT and O_EXCL are specified
@@ -977,14 +1001,19 @@ int yaffs_open_sharing(const YCHAR *path, int oflag, int mode, int sharing)
 			fd->reading = readRequested;
 			fd->writing = writeRequested;
 			fd->append = (oflag & O_APPEND) ? 1 : 0;
-			fd->position = 0;
 			fd->shareRead = shareRead;
 			fd->shareWrite = shareWrite;
+			fd->isDir = is_dir;
+
+			if(is_dir)
+				fd->v.dir = dsc;
+			else
+				fd->v.position = 0;
 
 			/* Hook inode to object */
 			obj->my_inode = (void *)&yaffsfs_inode[inodeId];
 
-			if ((oflag & O_TRUNC) && fd->writing)
+			if (!is_dir && (oflag & O_TRUNC) && fd->writing)
 				yaffs_resize_file(obj, 0);
 		} else {
 			yaffsfs_PutHandle(handle);
@@ -1046,19 +1075,22 @@ int yaffs_fdatasync(int handle)
 int yaffs_close(int handle)
 {
 	struct yaffsfs_Handle *h = NULL;
+	struct yaffsfs_FileDes *f;
 	struct yaffs_obj *obj = NULL;
 	int retVal = -1;
 
 	yaffsfs_Lock();
 
 	h = yaffsfs_HandleToPointer(handle);
+	f = yaffsfs_HandleToFileDes(handle);
 	obj = yaffsfs_HandleToObject(handle);
 
-	if (!h || !obj)
+	if (!h || !obj || !f)
 		yaffsfs_SetError(-EBADF);
 	else {
 		/* clean up */
-		yaffs_flush_file(obj, 1, 0);
+		if(!f->isDir)
+			yaffs_flush_file(obj, 1, 0);
 		yaffsfs_PutHandle(handle);
 		retVal = 0;
 	}
@@ -1106,7 +1138,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 		if (isPread)
 			startPos = offset;
 		else
-			startPos = fd->position;
+			startPos = fd->v.position;
 
 		pos = startPos;
 
@@ -1167,7 +1199,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 
 		if (!isPread) {
 			if (totalRead >= 0)
-				fd->position = startPos + totalRead;
+				fd->v.position = startPos + totalRead;
 			else
 				yaffsfs_SetError(-EINVAL);
 		}
@@ -1229,7 +1261,7 @@ static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 		else if (isPwrite)
 			startPos = offset;
 		else
-			startPos = fd->position;
+			startPos = fd->v.position;
 
 		yaffsfs_GetHandle(handle);
 		pos = startPos;
@@ -1286,7 +1318,7 @@ static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 
 		if (!isPwrite) {
 			if (totalWritten > 0)
-				fd->position = startPos + totalWritten;
+				fd->v.position = startPos + totalWritten;
 			else
 				yaffsfs_SetError(-EINVAL);
 		}
@@ -1400,8 +1432,8 @@ Y_LOFF_T yaffs_lseek(int handle, Y_LOFF_T offset, int whence)
 			if (offset >= 0)
 				pos = offset;
 		} else if (whence == SEEK_CUR) {
-			if ((fd->position + offset) >= 0)
-				pos = (fd->position + offset);
+			if ((fd->v.position + offset) >= 0)
+				pos = (fd->v.position + offset);
 		} else if (whence == SEEK_END) {
 			fSize = yaffs_get_obj_length(obj);
 			if (fSize >= 0 && (fSize + offset) >= 0)
@@ -1409,7 +1441,7 @@ Y_LOFF_T yaffs_lseek(int handle, Y_LOFF_T offset, int whence)
 		}
 
 		if (pos >= 0 && pos <= YAFFS_MAX_FILE_SIZE)
-			fd->position = pos;
+			fd->v.position = pos;
 		else {
 			yaffsfs_SetError(-EINVAL);
 			pos = -1;
@@ -2889,7 +2921,7 @@ struct yaffs_dev *yaffs_next_dev(void)
 
 static struct list_head search_contexts;
 
-static void yaffsfs_SetDirRewound(struct yaffsfs_DirSearchContxt *dsc)
+static void yaffsfs_SetDirRewound(struct yaffsfs_DirSearchContext *dsc)
 {
 	if (dsc &&
 	    dsc->dirObj &&
@@ -2909,7 +2941,7 @@ static void yaffsfs_SetDirRewound(struct yaffsfs_DirSearchContxt *dsc)
 	}
 }
 
-static void yaffsfs_DirAdvance(struct yaffsfs_DirSearchContxt *dsc)
+static void yaffsfs_DirAdvance(struct yaffsfs_DirSearchContext *dsc)
 {
 	if (dsc &&
 	    dsc->dirObj &&
@@ -2937,7 +2969,7 @@ static void yaffsfs_RemoveObjectCallback(struct yaffs_obj *obj)
 {
 
 	struct list_head *i;
-	struct yaffsfs_DirSearchContxt *dsc;
+	struct yaffsfs_DirSearchContext *dsc;
 
 	/* if search contexts not initilised then skip */
 	if (!search_contexts.next)
@@ -2949,7 +2981,7 @@ static void yaffsfs_RemoveObjectCallback(struct yaffs_obj *obj)
 	 */
 	list_for_each(i, &search_contexts) {
 		if (i) {
-			dsc = list_entry(i, struct yaffsfs_DirSearchContxt,
+			dsc = list_entry(i, struct yaffsfs_DirSearchContext,
 					 others);
 			if (dsc->nextReturn == obj)
 				yaffsfs_DirAdvance(dsc);
@@ -2958,11 +2990,11 @@ static void yaffsfs_RemoveObjectCallback(struct yaffs_obj *obj)
 
 }
 
-yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
+static yaffs_DIR *yaffsfs_opendir_no_lock(const YCHAR *dirname)
 {
 	yaffs_DIR *dir = NULL;
 	struct yaffs_obj *obj = NULL;
-	struct yaffsfs_DirSearchContxt *dsc = NULL;
+	struct yaffsfs_DirSearchContext *dsc = NULL;
 	int notDir = 0;
 	int loop = 0;
 
@@ -2975,8 +3007,6 @@ yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
 		yaffsfs_SetError(-ENAMETOOLONG);
 		return NULL;
 	}
-
-	yaffsfs_Lock();
 
 	obj = yaffsfs_FindObject(NULL, dirname, 0, 1, NULL, &notDir, &loop);
 
@@ -2999,7 +3029,7 @@ yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
 		dir = (yaffs_DIR *) dsc;
 
 		if (dsc) {
-			memset(dsc, 0, sizeof(struct yaffsfs_DirSearchContxt));
+			memset(dsc, 0, sizeof(struct yaffsfs_DirSearchContext));
 			dsc->inUse = 1;
 			dsc->dirObj = obj;
 			yaffs_strncpy(dsc->name, dirname, NAME_MAX);
@@ -3011,21 +3041,27 @@ yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
 			list_add(&dsc->others, &search_contexts);
 			yaffsfs_SetDirRewound(dsc);
 		}
-
 	}
-
-	yaffsfs_Unlock();
-
 	return dir;
 }
 
-struct yaffs_dirent *yaffs_readdir(yaffs_DIR * dirp)
+yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
 {
-	struct yaffsfs_DirSearchContxt *dsc;
+	yaffs_DIR *ret;
+
+	yaffsfs_Lock();
+	ret = yaffsfs_opendir_no_lock(dirname);
+	yaffsfs_Unlock();
+	return ret;
+}
+
+struct yaffs_dirent *yaffsfs_readdir_no_lock(yaffs_DIR * dirp)
+{
+	struct yaffsfs_DirSearchContext *dsc;
 	struct yaffs_dirent *retVal = NULL;
 
-	dsc = (struct yaffsfs_DirSearchContxt *) dirp;
-	yaffsfs_Lock();
+	dsc = (struct yaffsfs_DirSearchContext *) dirp;
+
 
 	if (dsc && dsc->inUse) {
 		yaffsfs_SetError(0);
@@ -3048,44 +3084,88 @@ struct yaffs_dirent *yaffs_readdir(yaffs_DIR * dirp)
 	} else
 		yaffsfs_SetError(-EBADF);
 
-	yaffsfs_Unlock();
-
 	return retVal;
+
+}
+struct yaffs_dirent *yaffs_readdir(yaffs_DIR * dirp)
+{
+	struct yaffs_dirent *ret;
+
+	yaffsfs_Lock();
+	ret = yaffsfs_readdir_no_lock(dirp);
+	yaffsfs_Unlock();
+	return ret;
+}
+
+static void yaffsfs_rewinddir_no_lock(yaffs_DIR *dirp)
+{
+	struct yaffsfs_DirSearchContext *dsc;
+
+	dsc = (struct yaffsfs_DirSearchContext *) dirp;
+
+	if (yaffsfs_CheckMemRegion(dirp, sizeof(*dsc), 0) < 0)
+		return;
+
+	yaffsfs_SetDirRewound(dsc);
 
 }
 
 void yaffs_rewinddir(yaffs_DIR *dirp)
 {
-	struct yaffsfs_DirSearchContxt *dsc;
-
-	dsc = (struct yaffsfs_DirSearchContxt *) dirp;
-
-	if (yaffsfs_CheckMemRegion(dirp, sizeof(*dsc), 0) < 0)
-		return;
-
 	yaffsfs_Lock();
-
-	yaffsfs_SetDirRewound(dsc);
-
+	yaffsfs_rewinddir_no_lock(dirp);
 	yaffsfs_Unlock();
 }
 
-int yaffs_closedir(yaffs_DIR *dirp)
+struct yaffs_dirent *yaffs_readdir_fd(int fd)
 {
-	struct yaffsfs_DirSearchContxt *dsc;
+	struct yaffs_dirent *ret = NULL;
+	struct yaffsfs_FileDes *f;
 
-	dsc = (struct yaffsfs_DirSearchContxt *) dirp;
+	yaffsfs_Lock();
+	f = yaffsfs_HandleToFileDes(fd);
+	if(f && f->isDir)
+		ret = yaffsfs_readdir_no_lock(f->v.dir);
+	yaffsfs_Unlock();
+	return ret;
+}
+
+void yaffs_rewinddir_fd(int fd)
+{
+	struct yaffsfs_FileDes *f;
+
+	yaffsfs_Lock();
+	f = yaffsfs_HandleToFileDes(fd);
+	if(f && f->isDir)
+		yaffsfs_rewinddir_no_lock(f->v.dir);
+	yaffsfs_Unlock();
+}
+
+
+static int yaffsfs_closedir_no_lock(yaffs_DIR *dirp)
+{
+	struct yaffsfs_DirSearchContext *dsc;
+
+	dsc = (struct yaffsfs_DirSearchContext *) dirp;
 
 	if (yaffsfs_CheckMemRegion(dirp, sizeof(*dsc), 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
 		return -1;
 	}
 
-	yaffsfs_Lock();
 	dsc->inUse = 0;
 	list_del(&dsc->others);	/* unhook from list */
-	yaffsfs_Unlock();
+
 	return 0;
+}
+int yaffs_closedir(yaffs_DIR *dirp)
+{
+	int ret;
+
+	yaffsfs_Lock();
+	ret = yaffsfs_closedir_no_lock(dirp);
+	yaffsfs_Unlock();
+	return ret;
 }
 
 /* End of directory stuff */

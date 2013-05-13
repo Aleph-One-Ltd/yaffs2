@@ -163,6 +163,10 @@ struct yaffs_dirent *yaffs_readdir(yaffs_DIR *dirp) ;
 void yaffs_rewinddir(yaffs_DIR *dirp) ;
 int yaffs_closedir(yaffs_DIR *dirp) ;
 
+/* Some non-standard functions to use fds to access directories */
+struct yaffs_dirent *yaffs_readdir_fd(int fd);
+void yaffs_rewinddir_fd(int fd);
+
 int yaffs_mount(const YCHAR *path) ;
 int yaffs_mount2(const YCHAR *path, int read_only);
 int yaffs_mount_common(const YCHAR *path, int read_only, int skip_checkpt);
