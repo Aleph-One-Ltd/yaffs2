@@ -39,12 +39,11 @@ unsigned yaffs_trace_mask =
 	YAFFS_TRACE_ALLOCATE |
 	YAFFS_TRACE_BAD_BLOCKS |
 	YAFFS_TRACE_VERIFY |
-
 	0;
 
 
 
-// Configuration
+/* Configure the devices that will be used */
 
 #include "yaffs_flashif2.h"
 #include "yaffs_m18_drv.h"
@@ -59,12 +58,11 @@ int yaffs_start_up(void)
 		return 0;
 	start_up_called = 1;
 
-	// Stuff to configure YAFFS
-	// Stuff to initialise anything special (eg lock semaphore).
+	/* Call the OS initialisation (eg. set up lock semaphore */
 	yaffsfs_OSInitialisation();
 
+	/* Install the various devices and their device drivers */
 	yflash2_install_drv("yflash2");
-
 	yaffs_m18_install_drv("M18-1");
 	yaffs_nor_install_drv("nor");
 	yaffs_nandsim_install_drv("nand", "emfile-nand", 256);
