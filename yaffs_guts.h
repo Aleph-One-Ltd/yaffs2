@@ -923,6 +923,8 @@ int yaffs_bg_gc(struct yaffs_dev *dev, unsigned urgency);
 int yaffs_dump_obj(struct yaffs_obj *obj);
 
 void yaffs_guts_test(struct yaffs_dev *dev);
+int yaffs_guts_ll_init(struct yaffs_dev *dev);
+
 
 /* A few useful functions to be used within the core files*/
 void yaffs_chunk_del(struct yaffs_dev *dev, int chunk_id, int mark_flash,

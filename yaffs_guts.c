@@ -4593,11 +4593,14 @@ static int yaffs_create_initial_dir(struct yaffs_dev *dev)
 	return YAFFS_FAIL;
 }
 
-int yaffs_guts_initialise(struct yaffs_dev *dev)
+/* Low level init.
+ * Typically only used by yaffs_guts_initialise, but also used by the
+ * Low level yaffs driver tests.
+ */
+
+int yaffs_guts_ll_init(struct yaffs_dev *dev)
 {
-	int init_failed = 0;
-	unsigned x;
-	int bits;
+
 
 	yaffs_trace(YAFFS_TRACE_TRACING, "yaffs: yaffs_guts_initialise()");
 
@@ -4653,11 +4656,6 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 		return YAFFS_FAIL;
 	}
 
-	if (yaffs_init_nand(dev) != YAFFS_OK) {
-		yaffs_trace(YAFFS_TRACE_ALWAYS, "InitialiseNAND failed");
-		return YAFFS_FAIL;
-	}
-
 	/* Sort out space for inband tags, if required */
 	if (dev->param.inband_tags)
 		dev->data_bytes_per_chunk =
@@ -4675,7 +4673,24 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 		return YAFFS_FAIL;
 	}
 
-	/* Finished with most checks. Further checks happen later on too. */
+	return YAFFS_OK;
+}
+
+
+int yaffs_guts_initialise(struct yaffs_dev *dev)
+{
+	int init_failed = 0;
+	unsigned x;
+	int bits;
+
+	if(yaffs_guts_ll_init(dev) != YAFFS_OK)
+		return YAFFS_FAIL;
+
+
+	if (yaffs_init_nand(dev) != YAFFS_OK) {
+		yaffs_trace(YAFFS_TRACE_ALWAYS, "InitialiseNAND failed");
+		return YAFFS_FAIL;
+	}
 
 	dev->is_mounted = 1;
 

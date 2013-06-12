@@ -73,6 +73,9 @@
 	({ int x = __builtin_choose_expr(assertion, 0, (void)0); (void) x; })
 
 
+#define yaffs_printf(msk, fmt, ...) \
+	printk(KERN_DEBUG "yaffs: " fmt "\n", ##__VA_ARGS__)
+
 #define yaffs_trace(msk, fmt, ...) do { \
 	if (yaffs_trace_mask & (msk)) \
 		printk(KERN_DEBUG "yaffs: " fmt "\n", ##__VA_ARGS__); \
