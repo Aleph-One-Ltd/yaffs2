@@ -78,6 +78,20 @@ static 	int yaffs_mtd_write(struct yaffs_dev *dev, int nand_chunk,
 	struct mtd_oob_ops ops;
 	int retval;
 
+	yaffs_trace(YAFFS_TRACE_MTD,
+			"yaffs_mtd_write(%p, %d, %p, %d, %p, %d)\n",
+			dev, nand_chunk, data, data_len, oob, oob_len);
+
+	if (!data || !data_len) {
+		data = NULL;
+		data_len = 0;
+	}
+
+	if (!oob || !oob_len) {
+		oob = NULL;
+		oob_len = 0;
+	}
+
 	addr = ((loff_t) nand_chunk) * dev->param.total_bytes_per_chunk;
 	memset(&ops, 0, sizeof(ops));
 	ops.mode = MTD_OPS_AUTO_OOB;
