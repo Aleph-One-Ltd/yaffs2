@@ -176,6 +176,7 @@ static uint32_t YCALCBLOCKS(uint64_t partition_size, uint32_t block_size)
 #include "yaffs_linux.h"
 
 #include "yaffs_mtdif.h"
+#include "yaffs_packedtags2.h"
 
 unsigned int yaffs_trace_mask = YAFFS_TRACE_BAD_BLOCKS | YAFFS_TRACE_ALWAYS;
 unsigned int yaffs_wr_attempts = YAFFS_WR_ATTEMPTS;
@@ -2743,7 +2744,10 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	param->n_reserved_blocks = 5;
 	param->n_caches = (options.no_cache) ? 0 : 10;
-	param->inband_tags = options.inband_tags;
+
+	if (mtd->oobavail < sizeof(struct yaffs_packed_tags2) ||
+	    options.inband_tags)
+		param->inband_tags = 1;
 
 	param->enable_xattr = 1;
 	if (options.lazy_loading_overridden)
@@ -2758,6 +2762,10 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	param->refresh_period = 500;
 	param->disable_summary = options.disable_summary;
 
+
+#ifdef CONFIG_YAFFS_DISABLE_BAD_BLOCK_MARKING
+	param->disable_bad_block_marking  = 1;
+#endif
 	if (options.empty_lost_and_found_overridden)
 		param->empty_lost_n_found = options.empty_lost_and_found;
 
@@ -3001,6 +3009,8 @@ static char *yaffs_dump_dev_part0(char *buf, struct yaffs_dev *dev)
 				param->empty_lost_n_found);
 	buf += sprintf(buf, "disable_lazy_load.... %d\n",
 				param->disable_lazy_load);
+	buf += sprintf(buf, "disable_bad_block_mrk %d\n",
+				param->disable_bad_block_marking);
 	buf += sprintf(buf, "refresh_period....... %d\n",
 				param->refresh_period);
 	buf += sprintf(buf, "n_caches............. %d\n", param->n_caches);

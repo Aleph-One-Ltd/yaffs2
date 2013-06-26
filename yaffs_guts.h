@@ -592,6 +592,7 @@ struct yaffs_param {
 	int always_check_erased;	/* Force chunk erased check always on */
 
 	int disable_summary;
+	int disable_bad_block_marking;
 
 };
 

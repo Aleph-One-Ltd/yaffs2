@@ -152,6 +152,16 @@ config YAFFS_DISABLE_BACKGROUND
 
 	 If unsure, say N.
 
+config YAFFS_DISABLE_BAD_BLOCK_MARKING
+	bool "Disable yaffs2 bad block marking"
+	depends on YAFFS_FS
+	default n
+	help
+	 Useful during early flash bring up to prevent problems causing
+	 lots of bad block marking.
+
+	 If unsure, say N.
+
 config YAFFS_XATTR
 	bool "Enable yaffs2 xattr support"
 	depends on YAFFS_FS

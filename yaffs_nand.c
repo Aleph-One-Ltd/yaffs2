@@ -80,6 +80,10 @@ int yaffs_mark_bad(struct yaffs_dev *dev, int block_no)
 {
 	block_no -= dev->block_offset;
 	dev->n_bad_markings++;
+
+	if (dev->param.disable_bad_block_marking)
+		return YAFFS_OK;
+
 	return dev->tagger.mark_bad_fn(dev, block_no);
 }
 
