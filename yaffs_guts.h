@@ -637,6 +637,7 @@ struct yaffs_dev {
 
 	struct list_head dev_list;
 
+	int ll_init;
 	/* Runtime parameters. Set up by YAFFS. */
 	int data_bytes_per_chunk;
 
