@@ -989,5 +989,14 @@ void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize);
 loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh);
 loff_t yaffs_max_file_size(struct yaffs_dev *dev);
 
+/*
+ * Debug function to count number of blocks in each state
+ * NB Needs to be called with correct number of integers
+ */
+
+void yaffs_count_blocks_by_state(struct yaffs_dev *dev, int bs[10]);
+
+int yaffs_find_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
+				    struct yaffs_ext_tags *tags);
 
 #endif

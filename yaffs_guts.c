@@ -980,7 +980,7 @@ static int yaffs_find_chunk_in_group(struct yaffs_dev *dev, int the_chunk,
 	return -1;
 }
 
-static int yaffs_find_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
+int yaffs_find_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 				    struct yaffs_ext_tags *tags)
 {
 	/*Get the Tnode, then get the level 0 offset chunk offset */
@@ -5071,4 +5071,24 @@ loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh)
 		retval = (loff_t) oh->file_size_low;
 
 	return retval;
+}
+
+
+void yaffs_count_blocks_by_state(struct yaffs_dev *dev, int bs[10])
+{
+	int i;
+	struct yaffs_block_info *bi;
+	int s;
+
+	for(i = 0; i < 10; i++)
+		bs[i] = 0;
+
+	for(i = dev->internal_start_block; i <= dev->internal_end_block; i++) {
+		bi = yaffs_get_block_info(dev, i);
+		s = bi->block_state;
+		if(s > YAFFS_BLOCK_STATE_DEAD || s < YAFFS_BLOCK_STATE_UNKNOWN)
+			bs[0]++;
+		else
+			bs[s]++;
+	}
 }
