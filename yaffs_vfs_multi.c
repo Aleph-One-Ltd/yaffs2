@@ -177,8 +177,13 @@ static uint32_t YCALCBLOCKS(uint64_t partition_size, uint32_t block_size)
 
 #include "yaffs_mtdif.h"
 #include "yaffs_packedtags2.h"
+#include "yaffs_getblockinfo.h"
 
-unsigned int yaffs_trace_mask = YAFFS_TRACE_BAD_BLOCKS | YAFFS_TRACE_ALWAYS;
+unsigned int yaffs_trace_mask =
+		YAFFS_TRACE_BAD_BLOCKS |
+		YAFFS_TRACE_ALWAYS |
+		0;
+
 unsigned int yaffs_wr_attempts = YAFFS_WR_ATTEMPTS;
 unsigned int yaffs_auto_checkpoint = 1;
 unsigned int yaffs_gc_control = 1;
@@ -2996,6 +3001,9 @@ static struct proc_dir_entry *my_proc_entry;
 static char *yaffs_dump_dev_part0(char *buf, struct yaffs_dev *dev)
 {
 	struct yaffs_param *param = &dev->param;
+	int bs[10];
+
+	yaffs_count_blocks_by_state(dev,bs);
 
 	buf += sprintf(buf, "start_block.......... %d\n", param->start_block);
 	buf += sprintf(buf, "end_block............ %d\n", param->end_block);
@@ -3019,6 +3027,11 @@ static char *yaffs_dump_dev_part0(char *buf, struct yaffs_dev *dev)
 	buf += sprintf(buf, "always_check_erased.. %d\n",
 				param->always_check_erased);
 	buf += sprintf(buf, "\n");
+	buf += sprintf(buf, "block count by state\n");
+	buf += sprintf(buf, "0:%d 1:%d 2:%d 3:%d 4:%d\n",
+				bs[0], bs[1], bs[2], bs[3], bs[4]);
+	buf += sprintf(buf, "5:%d 6:%d 7:%d 8:%d 9:%d\n",
+				bs[5], bs[6], bs[7], bs[8], bs[9]);
 
 	return buf;
 }
@@ -3268,9 +3281,92 @@ static int yaffs_proc_write_trace_options(struct file *file, const char *buf,
 	return count;
 }
 
+/* Debug strings are of the form:
+ * .bnnn         print info on block n
+ * .cobjn,chunkn print nand chunk id for objn:chunkn
+ */
+
+static int yaffs_proc_debug_write(struct file *file, const char *buf,
+					  unsigned long count, void *data)
+{
+
+	char str[100];
+	char *p0;
+	char *p1;
+	long p1_val;
+	long p0_val;
+	char cmd;
+	struct list_head *item;
+
+	memset(str, 0, sizeof(str));
+	memcpy(str, buf, min(count, sizeof(str) -1));
+
+	cmd = str[1];
+
+	p0 = str + 2;
+
+	p1 = p0;
+
+	while (*p1 && *p1 != ',') {
+		p1++;
+	}
+	*p1 = '\0';
+	p1++;
+
+	p0_val = simple_strtol(p0, NULL, 0);
+	p1_val = simple_strtol(p1, NULL, 0);
+
+
+	mutex_lock(&yaffs_context_lock);
+
+	/* Locate and print the Nth entry.  Order N-squared but N is small. */
+	list_for_each(item, &yaffs_context_list) {
+		struct yaffs_linux_context *dc =
+		    list_entry(item, struct yaffs_linux_context,
+			       context_list);
+		struct yaffs_dev *dev = dc->dev;
+
+		if (cmd == 'b') {
+			struct yaffs_block_info *bi;
+
+			bi = yaffs_get_block_info(dev,p0_val);
+
+			if(bi) {
+				printk("Block %d: state %d, retire %d, use %d, seq %d\n",
+					(int)p0_val, bi->block_state,
+					bi->needs_retiring, bi->pages_in_use,
+					bi->seq_number);
+			}
+		} else if (cmd == 'c') {
+			struct yaffs_obj *obj;
+			int nand_chunk;
+
+			obj = yaffs_find_by_number(dev, p0_val);
+			if (!obj)
+				printk("No obj %d\n", (int)p0_val);
+			else {
+				if(p1_val == 0)
+					nand_chunk = obj->hdr_chunk;
+				else
+					nand_chunk =
+						yaffs_find_chunk_in_file(obj,
+							p1_val, NULL);
+				printk("Nand chunk for %d:%d is %d\n",
+					(int)p0_val, (int)p1_val, nand_chunk);
+			}
+		}
+	}
+
+	mutex_unlock(&yaffs_context_lock);
+
+	return count;
+}
+
 static int yaffs_proc_write(struct file *file, const char *buf,
 			    unsigned long count, void *data)
 {
+	if (buf[0] == '.')
+		return yaffs_proc_debug_write(file, buf, count, data);
 	return yaffs_proc_write_trace_options(file, buf, count, data);
 }
 
