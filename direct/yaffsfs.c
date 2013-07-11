@@ -2888,6 +2888,8 @@ void yaffs_add_device(struct yaffs_dev *dev)
 		INIT_LIST_HEAD(&dev->dev_list);
 
 	list_add(&dev->dev_list, &yaffsfs_deviceList);
+
+
 }
 
 void yaffs_remove_device(struct yaffs_dev *dev)

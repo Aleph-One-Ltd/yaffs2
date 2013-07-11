@@ -4602,9 +4602,7 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 {
 
 
-	yaffs_trace(YAFFS_TRACE_TRACING, "yaffs: yaffs_guts_initialise()");
-
-	/* Check stuff that must be set */
+	yaffs_trace(YAFFS_TRACE_TRACING, "yaffs: yaffs_ll_init()");
 
 	if (!dev) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
@@ -4613,10 +4611,8 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 		return YAFFS_FAIL;
 	}
 
-	if (dev->is_mounted) {
-		yaffs_trace(YAFFS_TRACE_ALWAYS, "device already mounted");
-		return YAFFS_FAIL;
-	}
+	if (dev->ll_init)
+		return YAFFS_OK;
 
 	dev->internal_start_block = dev->param.start_block;
 	dev->internal_end_block = dev->param.end_block;
@@ -4673,6 +4669,33 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 		return YAFFS_FAIL;
 	}
 
+	if (yaffs_init_nand(dev) != YAFFS_OK) {
+		yaffs_trace(YAFFS_TRACE_ALWAYS, "InitialiseNAND failed");
+		return YAFFS_FAIL;
+	}
+
+	return YAFFS_OK;
+}
+
+
+int yaffs_format_dev(struct yaffs_dev *dev)
+{
+	int i;
+	enum yaffs_block_state state;
+	u32 dummy;
+
+	if(yaffs_guts_ll_init(dev) != YAFFS_OK)
+		return YAFFS_FAIL;
+
+	if(dev->is_mounted)
+		return YAFFS_FAIL;
+
+	for (i = dev->internal_start_block; i <= dev->internal_end_block; i++) {
+		yaffs_query_init_block_state(dev, i, &state, &dummy);
+		if (state != YAFFS_BLOCK_STATE_DEAD)
+			yaffs_erase_block(dev, i);
+	}
+
 	return YAFFS_OK;
 }
 
@@ -4686,9 +4709,8 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 	if(yaffs_guts_ll_init(dev) != YAFFS_OK)
 		return YAFFS_FAIL;
 
-
-	if (yaffs_init_nand(dev) != YAFFS_OK) {
-		yaffs_trace(YAFFS_TRACE_ALWAYS, "InitialiseNAND failed");
+	if (dev->is_mounted) {
+		yaffs_trace(YAFFS_TRACE_ALWAYS, "device already mounted");
 		return YAFFS_FAIL;
 	}
 
@@ -5014,40 +5036,6 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev)
 	return n_free;
 }
 
-
-int yaffs_format_dev(struct yaffs_dev *dev)
-{
-	int i;
-	enum yaffs_block_state state;
-	u32 dummy;
-
-	if(dev->is_mounted)
-		return YAFFS_FAIL;
-
-	/*
-	* The runtime variables might not have been set up,
-	* so set up what we need.
-	*/
-	dev->internal_start_block = dev->param.start_block;
-	dev->internal_end_block = dev->param.end_block;
-	dev->block_offset = 0;
-	dev->chunk_offset = 0;
-
-	if (dev->param.start_block == 0) {
-		dev->internal_start_block = dev->param.start_block + 1;
-		dev->internal_end_block = dev->param.end_block + 1;
-		dev->block_offset = 1;
-		dev->chunk_offset = dev->param.chunks_per_block;
-	}
-
-	for (i = dev->internal_start_block; i <= dev->internal_end_block; i++) {
-		yaffs_query_init_block_state(dev, i, &state, &dummy);
-		if (state != YAFFS_BLOCK_STATE_DEAD)
-			yaffs_erase_block(dev, i);
-	}
-
-	return YAFFS_OK;
-}
 
 
 /*

@@ -215,7 +215,7 @@ static int yaffs_mtd_check_bad(struct yaffs_dev *dev, int block_no)
 	int blocksize = dev->param.chunks_per_block * dev->param.total_bytes_per_chunk;
 	int retval;
 
-	yaffs_trace(YAFFS_TRACE_BAD_BLOCKS, "checking block %d bad", block_no);
+	yaffs_trace(YAFFS_TRACE_MTD, "checking block %d bad", block_no);
 
 	retval = mtd_block_isbad(mtd, (loff_t) blocksize * block_no);
 	return (retval) ? YAFFS_FAIL : YAFFS_OK;

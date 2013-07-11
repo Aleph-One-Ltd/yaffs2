@@ -2610,6 +2610,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 	struct yaffs_param *param;
 
 	int read_only = 0;
+	int inband_tags = 0;
 
 	struct yaffs_options options;
 
@@ -2688,7 +2689,11 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 		yaffs_version = 1;
 	}
 
-	if(yaffs_verify_mtd(mtd, yaffs_version, options.inband_tags) < 0)
+	if (mtd->oobavail < sizeof(struct yaffs_packed_tags2) ||
+	    options.inband_tags)
+		inband_tags = 1;
+
+	if(yaffs_verify_mtd(mtd, yaffs_version, inband_tags) < 0)
 		return NULL;
 
 	/* OK, so if we got here, we have an MTD that's NAND and looks
@@ -2749,10 +2754,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	param->n_reserved_blocks = 5;
 	param->n_caches = (options.no_cache) ? 0 : 10;
-
-	if (mtd->oobavail < sizeof(struct yaffs_packed_tags2) ||
-	    options.inband_tags)
-		param->inband_tags = 1;
+	param->inband_tags = inband_tags;
 
 	param->enable_xattr = 1;
 	if (options.lazy_loading_overridden)

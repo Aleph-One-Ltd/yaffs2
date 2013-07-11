@@ -3199,7 +3199,6 @@ void readdir_test(const char *mountpt)
 
 	yaffs_unmount(mountpt);
 
-
 }
 
 void format_test(const char *mountpt)
@@ -3209,21 +3208,25 @@ void format_test(const char *mountpt)
 	yaffs_start_up();
 
 	ret = yaffs_format(mountpt, 0, 0, 0);
-	printf("yaffs_format(...,0, 0, 0) of unmounted returned %d\n", ret);
+	printf("yaffs_format(...,0, 0, 0) of unmounted returned %d."
+		" Should return 0\n\n\n", ret);
 
 	yaffs_mount(mountpt);
 
 	ret = yaffs_format(mountpt, 0, 0, 0);
-	printf("yaffs_format(...,0, 0, 0) of mounted returned %d\n", ret);
+	printf("yaffs_format(...,0, 0, 0) of mounted returned %d."
+		" Should return -1 (busy)\n\n\n", ret);
 
 	ret = yaffs_format(mountpt, 1, 0, 0);
-	printf("yaffs_format(...,1, 0, 0) of mounted returned %d\n", ret);
+	printf("yaffs_format(...,1, 0, 0) of mounted returned %d."
+		" Should return 0.\n\n\n", ret);
 
 	ret = yaffs_mount(mountpt);
-	printf("mount should return 0 returned %d\n", ret);
+	printf("mount should return 0 returned %d\n\n\n", ret);
 
 	ret = yaffs_format(mountpt, 1, 0, 1);
-	printf("yaffs_format(...,1, 0, 1) of mounted returned %d\n", ret);
+	printf("yaffs_format(...,1, 0, 1) of mounted returned %d."
+		" Should return 0.\n\n\n", ret);
 
 	ret = yaffs_mount(mountpt);
 	printf("mount should return -1 returned %d\n", ret);
@@ -3380,7 +3383,9 @@ int main(int argc, char *argv[])
 	 //yy_test("/nand");
 	 //dir_rename_test("/nand");
 
-	dir_fd_test("/nand");
+	//dir_fd_test("/nand");
+
+	format_test("/nand");
 
 	 return 0;
 
