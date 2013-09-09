@@ -2670,7 +2670,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	/* Get the device */
 	mtd = get_mtd_device(NULL, MINOR(sb->s_dev));
-	if (!mtd) {
+	if (IS_ERR(mtd)) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"yaffs: MTD device %u either not valid or unavailable",
 			MINOR(sb->s_dev));
