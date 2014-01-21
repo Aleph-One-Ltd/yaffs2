@@ -776,6 +776,7 @@ struct yaffs_dev {
 	u32 n_page_writes;
 	u32 n_page_reads;
 	u32 n_erasures;
+	u32 n_bad_queries;
 	u32 n_bad_markings;
 	u32 n_erase_failures;
 	u32 n_gc_copies;
@@ -854,6 +855,9 @@ int yaffs_rename_obj(struct yaffs_obj *old_dir, const YCHAR * old_name,
 
 int yaffs_unlinker(struct yaffs_obj *dir, const YCHAR * name);
 int yaffs_del_obj(struct yaffs_obj *obj);
+struct yaffs_obj *yaffs_retype_obj(struct yaffs_obj *obj,
+				   enum yaffs_obj_type type);
+
 
 int yaffs_get_obj_name(struct yaffs_obj *obj, YCHAR * name, int buffer_size);
 loff_t yaffs_get_obj_length(struct yaffs_obj *obj);

@@ -3950,6 +3950,70 @@ int yaffs_del_obj(struct yaffs_obj *obj)
 	return ret_val;
 }
 
+
+static void yaffs_empty_dir_to_dir(struct yaffs_obj *from_dir,
+				   struct yaffs_obj *to_dir)
+{
+	struct yaffs_obj *obj;
+	struct list_head *lh;
+	struct list_head *n;
+
+	list_for_each_safe(lh, n, &from_dir->variant.dir_variant.children) {
+		obj = list_entry(lh, struct yaffs_obj, siblings);
+		yaffs_add_obj_to_dir(to_dir, obj);
+	}
+}
+
+struct yaffs_obj *yaffs_retype_obj(struct yaffs_obj *obj,
+				   enum yaffs_obj_type type)
+{
+	/* Tear down the old variant */
+	switch (obj->variant_type) {
+	case YAFFS_OBJECT_TYPE_FILE:
+		/* Nuke file data */
+		yaffs_resize_file(obj, 0);
+		yaffs_free_tnode(obj->my_dev, obj->variant.file_variant.top);
+		obj->variant.file_variant.top = NULL;
+		break;
+	case YAFFS_OBJECT_TYPE_DIRECTORY:
+		/* Put the children in lost and found. */
+		yaffs_empty_dir_to_dir(obj, obj->my_dev->lost_n_found);
+		if (!list_empty(&obj->variant.dir_variant.dirty))
+			list_del_init(&obj->variant.dir_variant.dirty);
+		break;
+	case YAFFS_OBJECT_TYPE_SYMLINK:
+		/* Nuke symplink data */
+		kfree(obj->variant.symlink_variant.alias);
+		obj->variant.symlink_variant.alias = NULL;
+		break;
+	case YAFFS_OBJECT_TYPE_HARDLINK:
+		list_del_init(&obj->hard_links);
+		break;
+	default:
+		break;
+	}
+
+	memset(&obj->variant, 0, sizeof(obj->variant));
+
+	/*Set up new variant if the memset is not enough. */
+	switch (type) {
+	case YAFFS_OBJECT_TYPE_DIRECTORY:
+		INIT_LIST_HEAD(&obj->variant.dir_variant.children);
+		INIT_LIST_HEAD(&obj->variant.dir_variant.dirty);
+		break;
+	case YAFFS_OBJECT_TYPE_FILE:
+	case YAFFS_OBJECT_TYPE_SYMLINK:
+	case YAFFS_OBJECT_TYPE_HARDLINK:
+	default:
+		break;
+	}
+
+	obj->variant_type = type;
+
+	return obj;
+
+}
+
 static int yaffs_unlink_worker(struct yaffs_obj *obj)
 {
 	int del_now = 0;
