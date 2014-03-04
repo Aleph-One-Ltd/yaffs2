@@ -3300,6 +3300,40 @@ void dir_fd_test(const char *mountpt)
 
 }
 
+
+
+void create_delete_many_files_test(const char *mountpt)
+{
+
+	char fn[100];
+	int i;
+	int fsize;
+	char buffer[1000];
+	int h;
+	int wrote;
+
+
+	yaffs_start_up();
+	yaffs_mount(mountpt);
+
+	for(i = 1; i < 2000; i++) {
+		sprintf(fn,"%s/f%d",mountpt, i);
+		fsize = (i%10) * 10000 + 20000;
+		h = yaffs_open(fn, O_CREAT | O_TRUNC | O_RDWR, 0666);
+		while (fsize > 0) {
+			wrote = yaffs_write(h, buffer, sizeof(buffer));
+			if (wrote != sizeof(buffer)) {
+				printf("Writing file %s, only wrote %d bytes\n", fn, wrote);
+				break;
+			}
+			fsize -= wrote;
+		}
+		yaffs_unlink(fn);
+		yaffs_close(h);
+	}
+
+}
+
 int random_seed;
 int simulate_power_failure;
 
@@ -3385,8 +3419,8 @@ int main(int argc, char *argv[])
 
 	//dir_fd_test("/nand");
 
-	format_test("/nand");
-
+	//format_test("/nand");
+	create_delete_many_files_test("/nand");
 	 return 0;
 
 }

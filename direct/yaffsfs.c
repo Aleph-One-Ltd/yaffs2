@@ -247,13 +247,11 @@ static void yaffsfs_ReleaseInode(struct yaffsfs_Inode *in)
 	struct yaffs_obj *obj;
 
 	obj = in->iObj;
-
-	if (obj->unlinked)
-		yaffs_del_obj(obj);
-
 	obj->my_inode = NULL;
 	in->iObj = NULL;
 
+	if (obj->unlinked)
+		yaffs_del_obj(obj);
 }
 
 static void yaffsfs_PutInode(int inodeId)
