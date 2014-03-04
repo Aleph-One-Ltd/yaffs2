@@ -2033,7 +2033,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	/* Get the device */
 	mtd = get_mtd_device(NULL, MINOR(sb->s_dev));
-	if (!mtd) {
+	if (IS_ERR(mtd)) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"MTD device #%u doesn't appear to exist",
 			MINOR(sb->s_dev));
@@ -2127,9 +2127,7 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 		kfree(context);
 		dev = NULL;
 		context = NULL;
-	}
 
-	if (!dev) {
 		/* Deep shit could not allocate device structure */
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"yaffs_read_super failed trying to allocate yaffs_dev");
