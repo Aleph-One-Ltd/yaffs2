@@ -4742,7 +4742,7 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 }
 
 
-int yaffs_format_dev(struct yaffs_dev *dev)
+int yaffs_guts_format_dev(struct yaffs_dev *dev)
 {
 	int i;
 	enum yaffs_block_state state;

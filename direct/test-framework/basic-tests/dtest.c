@@ -3074,7 +3074,7 @@ void large_file_test(const char *mountpt)
 	yaffs_unmount(mountpt);
 
 
-	yaffs_mount_common(mountpt, 0, 1);
+	yaffs_mount3(mountpt, 0, 1);
 	printf("mounted with no checkpt\n");
         dumpDir(mountpt);
 	handle = yaffs_open(fullname, O_RDONLY, 0);
@@ -3082,7 +3082,7 @@ void large_file_test(const char *mountpt)
 	yaffs_unmount(mountpt);
 
 	/* Check resize by adding to the end, resizing back and verifying. */
-	yaffs_mount_common(mountpt, 0, 1);
+	yaffs_mount3(mountpt, 0, 1);
 	printf("checking resize\n");
         dumpDir(mountpt);
 	handle = yaffs_open(fullname, O_RDWR, 0);
