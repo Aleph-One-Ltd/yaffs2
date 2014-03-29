@@ -78,8 +78,8 @@ struct yaffsfs_DirSearchContext {
 	struct yaffs_obj *dirObj;	/* ptr to directory being searched */
 	struct yaffs_obj *nextReturn;	/* obj  returned by next readddir */
 	struct list_head others;
-	int offset:20;
-	unsigned inUse:1;
+	s32 offset:20;
+	u8 inUse:1;
 };
 
 struct yaffsfs_FileDes {
@@ -89,8 +89,8 @@ struct yaffsfs_FileDes {
 	u8 append:1;
 	u8 shareRead:1;
 	u8 shareWrite:1;
-	int inodeId:12;		/* Index to corresponding yaffsfs_Inode */
-	int handleCount:10;	/* Number of handles for this fd */
+	s32 inodeId:12;		/* Index to corresponding yaffsfs_Inode */
+	s32 handleCount:10;	/* Number of handles for this fd */
 	union {
 		Y_LOFF_T position;	/* current position in file */
 		yaffs_DIR *dir;

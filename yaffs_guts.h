@@ -144,12 +144,12 @@ struct yaffs_cache {
  */
 
 struct yaffs_tags {
-	unsigned chunk_id:20;
-	unsigned serial_number:2;
-	unsigned n_bytes_lsb:10;
-	unsigned obj_id:18;
-	unsigned ecc:12;
-	unsigned n_bytes_msb:2;
+	u32 chunk_id:20;
+	u32 serial_number:2;
+	u32 n_bytes_lsb:10;
+	u32 obj_id:18;
+	u32 ecc:12;
+	u32 n_bytes_msb:2;
 };
 
 union yaffs_tags_union {
@@ -287,9 +287,9 @@ enum yaffs_block_state {
 
 struct yaffs_block_info {
 
-	int soft_del_pages:10;	/* number of soft deleted pages */
-	int pages_in_use:10;	/* number of pages in use */
-	unsigned block_state:4;	/* One of the above block states. */
+	s32 soft_del_pages:10;	/* number of soft deleted pages */
+	s32 pages_in_use:10;	/* number of pages in use */
+	u32 block_state:4;	/* One of the above block states. */
 				/* NB use unsigned because enum is sometimes
 				 * an int */
 	u32 needs_retiring:1;	/* Data has failed on this block, */
@@ -688,8 +688,8 @@ struct yaffs_dev {
 	/* Block Info */
 	struct yaffs_block_info *block_info;
 	u8 *chunk_bits;		/* bitmap of chunks in use */
-	unsigned block_info_alt:1;	/* allocated using alternative alloc */
-	unsigned chunk_bits_alt:1;	/* allocated using alternative alloc */
+	u8 block_info_alt:1;	/* allocated using alternative alloc */
+	u8 chunk_bits_alt:1;	/* allocated using alternative alloc */
 	int chunk_bit_stride;	/* Number of bytes of chunk_bits per block.
 				 * Must be consistent with chunks_per_block.
 				 */
