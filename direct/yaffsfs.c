@@ -2888,6 +2888,57 @@ int yaffs_sync(const YCHAR *path)
 	return yaffs_sync_common(NULL, path);
 }
 
+
+static int yaffsfs_bg_gc_common(struct yaffs_dev *dev,
+				const YCHAR *path,
+				int urgency)
+{
+	int retVal = -1;
+	YCHAR *dummy;
+
+	if (!dev) {
+		if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
+			yaffsfs_SetError(-EFAULT);
+			return -1;
+		}
+
+		if (yaffsfs_CheckPath(path) < 0) {
+			yaffsfs_SetError(-ENAMETOOLONG);
+			return -1;
+		}
+	}
+
+	yaffsfs_Lock();
+	if (!dev)
+		dev = yaffsfs_FindDevice(path, &dummy);
+
+	if (dev) {
+		if (!dev->is_mounted)
+			yaffsfs_SetError(-EINVAL);
+		else
+			retVal = yaffs_bg_gc(dev, urgency);
+	} else
+		yaffsfs_SetError(-ENODEV);
+
+	yaffsfs_Unlock();
+	return retVal;
+}
+
+/* Background gc functions.
+ * These return 0 when bg done or greater than 0 when gc has been
+ * done and there is still a lot of garbage to be cleaned up.
+ */
+
+int yaffs_do_background_gc(const YCHAR *path, int urgency)
+{
+	return yaffsfs_bg_gc_common(NULL, path, urgency);
+}
+
+int yaffs_do_background_gc_reldev(struct yaffs_dev *dev, int urgency)
+{
+	return yaffsfs_bg_gc_common(dev, NULL, urgency);
+}
+
 static int yaffsfs_IsDevBusy(struct yaffs_dev *dev)
 {
 	int i;

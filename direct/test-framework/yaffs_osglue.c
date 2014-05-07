@@ -11,7 +11,7 @@
  * published by the Free Software Foundation.
  */
 
-/* 
+/*
  * Example OS glue functions for running on a Linux/POSIX system.
  */
 
@@ -22,6 +22,7 @@
 #include <assert.h>
 
 #include <errno.h>
+#include <unistd.h>
 
 /*
  * yaffsfs_SetError() and yaffsfs_GetError()
@@ -62,12 +63,16 @@ int yaffsfs_CheckMemRegion(const void *addr, size_t size, int write_request)
  * yaffsfs_Unlock()
  * A single mechanism to lock and unlock yaffs. Hook up to a mutex or whatever.
  * Here are two examples, one using POSIX pthreads, the other doing nothing.
+ *
+ * If we use pthreads then we also start a background gc thread.
  */
 
-#ifdef CONFIG_YAFFS_USE_PTHREADS
-#include <pthread.h>
-static pthread_mutex_t mutex1;
+#if 1
 
+#include <pthread.h>
+
+static pthread_mutex_t mutex1;
+static pthread_t bc_gc_thread;
 
 void yaffsfs_Lock(void)
 {
@@ -79,9 +84,47 @@ void yaffsfs_Unlock(void)
 	pthread_mutex_unlock( &mutex1 );
 }
 
+static void *bg_gc_func(void *dummy)
+{
+	struct yaffs_dev *dev;
+	int urgent = 0;
+	int result;
+	int next_urgent;
+
+	/* Sleep for a bit to allow start up */
+	sleep(2);
+
+
+	while (1) {
+		/* Iterate through devices, do bg gc updating ungency */
+		yaffs_dev_rewind();
+		next_urgent = 0;
+
+		while ((dev = yaffs_next_dev()) != NULL) {
+			result = yaffs_do_background_gc_reldev(dev, urgent);
+			if (result > 0)
+				next_urgent = 1;
+		}
+
+		urgent = next_urgent;
+
+		if (next_urgent)
+			sleep(1);
+		else
+			sleep(5);
+	}
+
+	/* Don't ever return. */
+	return NULL;
+}
+
 void yaffsfs_LockInit(void)
 {
-	pthread_mutex_init( &mutex1, NULL);
+	/* Initialise lock */
+	pthread_mutex_init(&mutex1, NULL);
+
+	/* Sneak in starting a background gc thread too */
+	pthread_create(&bc_gc_thread, NULL, bg_gc_func, NULL);
 }
 
 #else
@@ -101,10 +144,10 @@ void yaffsfs_LockInit(void)
 
 /*
  * yaffsfs_CurrentTime() retrns a 32-bit timestamp.
- * 
+ *
  * Can return 0 if your system does not care about time.
  */
- 
+
 u32 yaffsfs_CurrentTime(void)
 {
 	return time(NULL);
@@ -117,7 +160,7 @@ u32 yaffsfs_CurrentTime(void)
  *
  * Functions to allocate and free memory.
  */
- 
+
 #ifdef CONFIG_YAFFS_TEST_MALLOC
 
 static int yaffs_kill_alloc = 0;
@@ -161,7 +204,7 @@ void yaffsfs_OSInitialisation(void)
  * yaffs_bug_fn()
  * Function to report a bug.
  */
- 
+
 void yaffs_bug_fn(const char *file_name, int line_no)
 {
 	printf("yaffs bug detected %s:%d\n",

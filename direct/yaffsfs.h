@@ -260,7 +260,11 @@ int yaffs_mknod_reldev(struct yaffs_dev *dev, const YCHAR *pathname,
 struct yaffs_dirent *yaffs_readdir_fd(int fd);
 void yaffs_rewinddir_fd(int fd);
 
+/* Non-standard functions to pump garbage collection. */
+int yaffs_do_background_gc(const YCHAR *path, int urgency);
+int yaffs_do_background_gc_reldev(struct yaffs_dev *dev, int urgency);
 
+/* Non-standard functions to get usage info */
 int yaffs_inodecount(const YCHAR *path);
 
 int yaffs_n_handles(const YCHAR *path);
@@ -269,7 +273,6 @@ int yaffs_n_handles_reldir(struct yaffs_obj *reldir, const YCHAR *path);
 int yaffs_dump_dev_reldir(struct yaffs_obj *reldir, const YCHAR *path);
 int yaffs_n_handles_reldev(struct yaffs_dev *dev, const YCHAR *path);
 int yaffs_dump_dev_reldev(struct yaffs_dev *dev, const YCHAR *path);
-
 
 #ifdef CONFIG_YAFFS_WINCE
 int yaffs_set_wince_times(int fd,

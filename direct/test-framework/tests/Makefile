@@ -29,9 +29,10 @@ ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(FUZZER_OBJS)
 
 include ../FrameworkRules.mk
 
+C_FLAGS += -DCONFIG_YAFFS_USE_PTHREADS
 
 yaffs_test: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLLAG) -o $@ $(YAFFS_TEST_OBJS)
+	gcc $(CFLLAG) -o $@ $(YAFFS_TEST_OBJS) -lpthread
 
 fuzzer: $(FUZZER_OBJS)
 	gcc $(CFLAGS) -o $@ $<
