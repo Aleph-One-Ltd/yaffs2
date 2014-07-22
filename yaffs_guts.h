@@ -876,10 +876,13 @@ struct yaffs_obj *yaffs_create_file(struct yaffs_obj *parent,
 				    const YCHAR *name, u32 mode, u32 uid,
 				    u32 gid);
 
-int yaffs_flush_file(struct yaffs_obj *obj, int update_time, int data_sync);
+int yaffs_flush_file(struct yaffs_obj *in,
+		     int update_time,
+		     int data_sync,
+		     int discard_cache);
 
 /* Flushing and checkpointing */
-void yaffs_flush_whole_cache(struct yaffs_dev *dev);
+void yaffs_flush_whole_cache(struct yaffs_dev *dev, int discard);
 
 int yaffs_checkpoint_save(struct yaffs_dev *dev);
 int yaffs_checkpoint_restore(struct yaffs_dev *dev);
