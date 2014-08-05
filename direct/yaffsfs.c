@@ -3464,6 +3464,12 @@ yaffs_DIR *yaffs_opendir_reldir(struct yaffs_obj *reldir, const YCHAR *dirname)
 	yaffsfs_Unlock();
 	return ret;
 }
+
+yaffs_DIR *yaffs_opendir_reldev(struct yaffs_dev *dev, const YCHAR *dirname)
+{
+	return yaffs_opendir_reldir(ROOT_DIR(dev), dirname);
+}
+
 yaffs_DIR *yaffs_opendir(const YCHAR *dirname)
 {
 	return yaffs_opendir_reldir(NULL, dirname);

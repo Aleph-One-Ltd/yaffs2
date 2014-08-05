@@ -258,6 +258,12 @@ int yaffs_mknod_reldev(struct yaffs_dev *dev, const YCHAR *pathname,
 Y_LOFF_T yaffs_freespace_reldev(struct yaffs_dev *dev);
 Y_LOFF_T yaffs_totalspace_reldev(struct yaffs_dev *dev);
 
+int yaffs_sync_reldev(struct yaffs_dev *dev);
+int yaffs_unmount_reldev(struct yaffs_dev *dev);
+int yaffs_unmount2_reldev(struct yaffs_dev *dev, int force);
+int yaffs_remount_reldev(struct yaffs_dev *dev, int force, int read_only);
+
+
 /* Some non-standard functions to use fds to access directories */
 struct yaffs_dirent *yaffs_readdir_fd(int fd);
 void yaffs_rewinddir_fd(int fd);
