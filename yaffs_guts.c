@@ -631,6 +631,78 @@ static void yaffs_retire_block(struct yaffs_dev *dev, int flash_block)
 
 /*---------------- Name handling functions ------------*/
 
+static void yaffs_load_name_from_oh(struct yaffs_dev *dev, YCHAR *name,
+				    const YCHAR *oh_name, int buff_size)
+{
+#ifdef CONFIG_YAFFS_AUTO_UNICODE
+	if (dev->param.auto_unicode) {
+		if (*oh_name) {
+			/* It is an ASCII name, do an ASCII to
+			 * unicode conversion */
+			const char *ascii_oh_name = (const char *)oh_name;
+			int n = buff_size - 1;
+			while (n > 0 && *ascii_oh_name) {
+				*name = *ascii_oh_name;
+				name++;
+				ascii_oh_name++;
+				n--;
+			}
+		} else {
+			strncpy(name, oh_name + 1, buff_size - 1);
+		}
+	} else {
+#else
+	(void) dev;
+	{
+#endif
+		strncpy(name, oh_name, buff_size - 1);
+	}
+}
+
+static void yaffs_load_oh_from_name(struct yaffs_dev *dev, YCHAR *oh_name,
+				    const YCHAR *name)
+{
+#ifdef CONFIG_YAFFS_AUTO_UNICODE
+
+	int is_ascii;
+	const YCHAR *w;
+
+	if (dev->param.auto_unicode) {
+
+		is_ascii = 1;
+		w = name;
+
+		/* Figure out if the name will fit in ascii character set */
+		while (is_ascii && *w) {
+			if ((*w) & 0xff00)
+				is_ascii = 0;
+			w++;
+		}
+
+		if (is_ascii) {
+			/* It is an ASCII name, so convert unicode to ascii */
+			char *ascii_oh_name = (char *)oh_name;
+			int n = YAFFS_MAX_NAME_LENGTH - 1;
+			while (n > 0 && *name) {
+				*ascii_oh_name = *name;
+				name++;
+				ascii_oh_name++;
+				n--;
+			}
+		} else {
+			/* Unicode name, so save starting at the second YCHAR */
+			*oh_name = 0;
+			strncpy(oh_name + 1, name, YAFFS_MAX_NAME_LENGTH - 2);
+		}
+	} else {
+#else
+	dev = dev;
+	{
+#endif
+		strncpy(oh_name, name, YAFFS_MAX_NAME_LENGTH - 1);
+	}
+}
+
 static u16 yaffs_calc_name_sum(const YCHAR *name)
 {
 	u16 sum = 0;
@@ -3174,78 +3246,6 @@ static void yaffs_check_obj_details_loaded(struct yaffs_obj *in)
 			alloc_failed = 1;	/* Not returned */
 	}
 	yaffs_release_temp_buffer(dev, buf);
-}
-
-static void yaffs_load_name_from_oh(struct yaffs_dev *dev, YCHAR *name,
-				    const YCHAR *oh_name, int buff_size)
-{
-#ifdef CONFIG_YAFFS_AUTO_UNICODE
-	if (dev->param.auto_unicode) {
-		if (*oh_name) {
-			/* It is an ASCII name, do an ASCII to
-			 * unicode conversion */
-			const char *ascii_oh_name = (const char *)oh_name;
-			int n = buff_size - 1;
-			while (n > 0 && *ascii_oh_name) {
-				*name = *ascii_oh_name;
-				name++;
-				ascii_oh_name++;
-				n--;
-			}
-		} else {
-			strncpy(name, oh_name + 1, buff_size - 1);
-		}
-	} else {
-#else
-	(void) dev;
-	{
-#endif
-		strncpy(name, oh_name, buff_size - 1);
-	}
-}
-
-static void yaffs_load_oh_from_name(struct yaffs_dev *dev, YCHAR *oh_name,
-				    const YCHAR *name)
-{
-#ifdef CONFIG_YAFFS_AUTO_UNICODE
-
-	int is_ascii;
-	YCHAR *w;
-
-	if (dev->param.auto_unicode) {
-
-		is_ascii = 1;
-		w = name;
-
-		/* Figure out if the name will fit in ascii character set */
-		while (is_ascii && *w) {
-			if ((*w) & 0xff00)
-				is_ascii = 0;
-			w++;
-		}
-
-		if (is_ascii) {
-			/* It is an ASCII name, so convert unicode to ascii */
-			char *ascii_oh_name = (char *)oh_name;
-			int n = YAFFS_MAX_NAME_LENGTH - 1;
-			while (n > 0 && *name) {
-				*ascii_oh_name = *name;
-				name++;
-				ascii_oh_name++;
-				n--;
-			}
-		} else {
-			/* Unicode name, so save starting at the second YCHAR */
-			*oh_name = 0;
-			strncpy(oh_name + 1, name, YAFFS_MAX_NAME_LENGTH - 2);
-		}
-	} else {
-#else
-	dev = dev;
-	{
-#endif
-		strncpy(oh_name, name, YAFFS_MAX_NAME_LENGTH - 1);
-	}
 }
 
 /* UpdateObjectHeader updates the header on NAND for an object.

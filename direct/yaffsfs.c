@@ -398,7 +398,7 @@ static void yaffsfs_BreakDeviceHandles(struct yaffs_dev *dev)
  *  Stuff to handle names.
  */
 #ifdef CONFIG_YAFFS_CASE_INSENSITIVE
-
+#ifndef CONFIG_YAFFS_WINCE
 static int yaffs_toupper(YCHAR a)
 {
 	if (a >= 'a' && a <= 'z')
@@ -406,6 +406,7 @@ static int yaffs_toupper(YCHAR a)
 	else
 		return a;
 }
+#endif
 
 static int yaffsfs_Match(YCHAR a, YCHAR b)
 {
@@ -432,7 +433,7 @@ static int yaffsfs_IsPathDivider(YCHAR ch)
 	return 0;
 }
 
-static int yaffsfs_CheckNameLength(const char *name)
+static int yaffsfs_CheckNameLength(const YCHAR *name)
 {
 	int retVal = 0;
 
@@ -1077,7 +1078,7 @@ static int yaffs_Dofsync(int handle, int datasync)
 	else if (obj->my_dev->read_only)
 		yaffsfs_SetError(-EROFS);
 	else {
-		yaffs_flush_file(obj, 1, datasync);
+		yaffs_flush_file(obj, 1, datasync, 0);
 		retVal = 0;
 	}
 
@@ -1119,7 +1120,7 @@ int yaffs_close(int handle)
 	else {
 		/* clean up */
 		if(!f->isDir)
-			yaffs_flush_file(obj, 1, 0);
+			yaffs_flush_file(obj, 1, 0, 1);
 		yaffsfs_PutHandle(handle);
 		retVal = 0;
 	}
@@ -1854,8 +1855,6 @@ static int yaffsfs_DoUtime(struct yaffs_obj *obj,
 			   const struct yaffs_utimbuf *buf)
 {
 	int retVal = -1;
-	int result;
-
 	struct yaffs_utimbuf local;
 
 	obj = yaffs_get_equivalent_obj(obj);
@@ -1865,6 +1864,7 @@ static int yaffsfs_DoUtime(struct yaffs_obj *obj,
 		return -1;
 	}
 
+#if !CONFIG_YAFFS_WINCE
 	if (!buf) {
 		local.actime = Y_CURRENT_TIME;
 		local.modtime = local.actime;
@@ -1872,12 +1872,15 @@ static int yaffsfs_DoUtime(struct yaffs_obj *obj,
 	}
 
 	if (obj) {
+		int result;
+
 		obj->yst_atime = buf->actime;
 		obj->yst_mtime = buf->modtime;
 		obj->dirty = 1;
-		result = yaffs_flush_file(obj, 0, 0);
+		result = yaffs_flush_file(obj, 0, 0, 0);
 		retVal = result == YAFFS_OK ? 0 : -1;
 	}
+#endif
 
 	return retVal;
 }
@@ -2460,7 +2463,7 @@ int yaffs_set_wince_times(int fd,
 		}
 
 		obj->dirty = 1;
-		result = yaffs_flush_file(obj, 0, 0);
+		result = yaffs_flush_file(obj, 0, 0, 0);
 		retVal = 0;
 	} else
 		/* bad handle */
@@ -2483,7 +2486,7 @@ static int yaffsfs_DoChMod(struct yaffs_obj *obj, mode_t mode)
 	if (obj) {
 		obj->yst_mode = mode;
 		obj->dirty = 1;
-		result = yaffs_flush_file(obj, 0, 0);
+		result = yaffs_flush_file(obj, 0, 0, 0);
 	}
 
 	return result == YAFFS_OK ? 0 : -1;
@@ -2866,7 +2869,7 @@ int yaffs_sync_common(struct yaffs_dev *dev, const YCHAR *path)
 			yaffsfs_SetError(-EROFS);
 		else {
 
-			yaffs_flush_whole_cache(dev);
+			yaffs_flush_whole_cache(dev, 0);
 			yaffs_checkpoint_save(dev);
 			retVal = 0;
 
@@ -2973,7 +2976,7 @@ int yaffs_remount_common(struct yaffs_dev *dev, const YCHAR *path,
 
 	if (dev) {
 		if (dev->is_mounted) {
-			yaffs_flush_whole_cache(dev);
+			yaffs_flush_whole_cache(dev, 0);
 
 			if (force || !yaffsfs_IsDevBusy(dev)) {
 				if (read_only)
@@ -3024,7 +3027,7 @@ int yaffs_unmount2_common(struct yaffs_dev *dev, const YCHAR *path, int force)
 	if (dev) {
 		if (dev->is_mounted) {
 			int inUse;
-			yaffs_flush_whole_cache(dev);
+			yaffs_flush_whole_cache(dev, 0);
 			yaffs_checkpoint_save(dev);
 			inUse = yaffsfs_IsDevBusy(dev);
 			if (!inUse || force) {
@@ -3097,7 +3100,7 @@ int yaffs_format_common(struct yaffs_dev *dev,
 
 		if (dev->is_mounted && unmount_flag) {
 			int inUse;
-			yaffs_flush_whole_cache(dev);
+			yaffs_flush_whole_cache(dev, 0);
 			yaffs_checkpoint_save(dev);
 			inUse = yaffsfs_IsDevBusy(dev);
 			if (!inUse || force_unmount_flag) {

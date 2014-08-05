@@ -255,6 +255,8 @@ int yaffs_link_reldev(struct yaffs_dev *dev,
 			const YCHAR *oldpath, const YCHAR *linkpath);
 int yaffs_mknod_reldev(struct yaffs_dev *dev, const YCHAR *pathname,
 		     mode_t mode, dev_t dev_val);
+Y_LOFF_T yaffs_freespace_reldev(struct yaffs_dev *dev);
+Y_LOFF_T yaffs_totalspace_reldev(struct yaffs_dev *dev);
 
 /* Some non-standard functions to use fds to access directories */
 struct yaffs_dirent *yaffs_readdir_fd(int fd);
