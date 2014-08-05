@@ -328,6 +328,7 @@ struct yaffs_dev *yaffs_nor_install_drv(const char *name)
 	param->start_block = 0; // Can use block 0
 	param->end_block = BLOCKS_IN_DEVICE - 1; // Last block
 	param->use_nand_ecc = 0; // use YAFFS's ECC
+	param->disable_soft_del = 1;
 
 	drv->drv_write_chunk_fn = nor_drv_WriteChunkToNAND;
 	drv->drv_read_chunk_fn = nor_drv_ReadChunkFromNAND;

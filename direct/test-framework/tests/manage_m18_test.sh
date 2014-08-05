@@ -1,7 +1,5 @@
 #! /bin/sh
 
-set -x
-
 dir_id=-none
 [ -z $1 ] || dir_id=$1
 
@@ -24,5 +22,5 @@ echo "!!!!!!!!!!!"
 echo "Tests done"
 while true
 do
-sleep 10
+sleep 10000
 done
