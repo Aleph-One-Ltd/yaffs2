@@ -32,5 +32,5 @@ ALL_UNSORTED_OBJS += $(DIRECTTESTOBJS)
 include ../FrameworkRules.mk
 
 directtest2k: $(FRAMEWORK_SOURCES) $(DIRECTTESTOBJS)
-	gcc -o $@ $(DIRECTTESTOBJS)
+	gcc -o $@ $(DIRECTTESTOBJS) -lpthread
 
