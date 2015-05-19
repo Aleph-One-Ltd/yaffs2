@@ -515,17 +515,17 @@ static struct yaffs_dev *yaffsfs_FindDevice(const YCHAR *path,
 		thisMatchLength = 0;
 		matching = 1;
 
+
 		if(!p)
 			continue;
 
-		while (matching && *p && *leftOver) {
-			/* Skip over any /s */
-			while (yaffsfs_IsPathDivider(*p))
-				p++;
+		/* Skip over any leading  /s */
+		while (yaffsfs_IsPathDivider(*p))
+			p++;
+		while (yaffsfs_IsPathDivider(*leftOver))
+			leftOver++;
 
-			/* Skip over any /s */
-			while (yaffsfs_IsPathDivider(*leftOver))
-				leftOver++;
+		while (matching && *p && *leftOver) {
 
 			/* Now match the text part */
 			while (matching &&
@@ -538,6 +538,16 @@ static struct yaffs_dev *yaffsfs_FindDevice(const YCHAR *path,
 				} else {
 					matching = 0;
 				}
+			}
+
+			if ((*p && !yaffsfs_IsPathDivider(*p)) ||
+			    (*leftOver && !yaffsfs_IsPathDivider(*leftOver)))
+				matching = 0;
+			else {
+				while (yaffsfs_IsPathDivider(*p))
+					p++;
+				while (yaffsfs_IsPathDivider(*leftOver))
+					leftOver++;
 			}
 		}
 
@@ -559,7 +569,6 @@ static struct yaffs_dev *yaffsfs_FindDevice(const YCHAR *path,
 			retval = dev;
 			longestMatch = thisMatchLength;
 		}
-
 	}
 	return retval;
 }
