@@ -3300,8 +3300,6 @@ void dir_fd_test(const char *mountpt)
 
 }
 
-
-
 void create_delete_many_files_test(const char *mountpt)
 {
 
@@ -3332,6 +3330,74 @@ void create_delete_many_files_test(const char *mountpt)
 		yaffs_close(h);
 	}
 
+}
+
+void find_device_check(void)
+{
+	char name[200];
+
+	yaffs_start_up();
+	yaffs_mount("/nand");
+	yaffs_mount("/");
+	yaffs_mkdir("/nandxxx", 0666);
+	yaffs_mkdir("/nand/xxx", 0666);
+}
+
+
+void try_opendir(const char *str)
+{
+	yaffs_DIR *d;
+
+	d = yaffs_opendir(str);
+
+	printf("%s --> %p\n", str, d);
+
+	if (d)
+		yaffs_closedir(d);
+}
+
+void opendir_test(void)
+{
+	yaffs_start_up();
+	yaffs_mount("/nand/");
+	yaffs_symlink("x", "/nand/sym");
+	yaffs_mkdir("/nand/x",0666);
+	yaffs_mkdir("/nand/y",0666);
+	yaffs_mkdir("/nand/x/r",0666);
+	yaffs_mkdir("/nand/x/s",0666);
+	yaffs_mkdir("/nand/x/t",0666);
+
+	try_opendir("nand/x/.");
+	try_opendir("nand/x/r/..");
+	try_opendir("nand/x/./");
+	try_opendir("nand/x/r/../");
+	try_opendir("/nand/x");
+	try_opendir("/nand/x/");
+	try_opendir("nand/x");
+	try_opendir("nand/sym");
+	try_opendir("nand/sym/");
+
+}
+
+void try_rmdir(const char *str)
+{
+	int ret;
+
+	ret= yaffs_rmdir(str);
+
+	printf("rmdir(\"%s\") --> %d, errno %d\n", str, ret, yaffs_get_error());
+
+}
+
+void rmdir_test2(void)
+{
+	yaffs_start_up();
+
+	yaffs_mount("/nand/");
+	yaffs_mkdir("/nand/z",0666);
+	try_rmdir("/nand/z");
+	yaffs_mkdir("/nand/z",0666);
+	try_rmdir("/nand/z/");
 }
 
 int random_seed;
@@ -3420,7 +3486,11 @@ int main(int argc, char *argv[])
 	//dir_fd_test("/nand");
 
 	//format_test("/nand");
-	create_delete_many_files_test("/nand");
+
+	//opendir_test();
+	rmdir_test2();
+
+	//create_delete_many_files_test("/nand");
 	 return 0;
 
 }
