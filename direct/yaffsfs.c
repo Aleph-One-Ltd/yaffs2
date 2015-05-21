@@ -747,7 +747,20 @@ static struct yaffs_obj *yaffsfs_FindObject(struct yaffs_obj *relDir,
 	if (dirOut)
 		*dirOut = dir;
 
-	if (dir && *name)
+	/* At this stage we have looked up directory part and have the name part
+	 * in name if there is one.
+	 *
+	 *  eg /nand/x/ will give us a name of ""
+	 *     /nand/x will give us a name of "x"
+	 *
+	 * Since the name part might be "." or ".." which need to be fixed.
+	 */
+	if (dir && (yaffs_strcmp(name, _Y("..")) == 0)) {
+		dir = dir->parent;
+		obj = dir;
+	} else if (dir && (yaffs_strcmp(name, _Y(".")) == 0))
+		obj = dir;
+	else if (dir && *name)
 		obj = yaffs_find_by_name(dir, name);
 	else
 		obj = dir;
