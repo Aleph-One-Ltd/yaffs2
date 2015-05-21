@@ -3428,6 +3428,7 @@ static yaffs_DIR *yaffsfs_opendir_reldir_no_lock(struct yaffs_obj *reldir,
 	}
 
 	obj = yaffsfs_FindObject(reldir, dirname, 0, 1, NULL, &notDir, &loop);
+	obj = yaffsfs_FollowLink(obj, 0, &loop);
 
 	if (!obj && notDir)
 		yaffsfs_SetError(-ENOTDIR);
