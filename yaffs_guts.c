@@ -1922,21 +1922,18 @@ static int yaffs_new_obj_id(struct yaffs_dev *dev)
 	struct list_head *i;
 	u32 n = (u32) bucket;
 
-	/* Now find an object value that has not already been taken
-	 * by scanning the list.
+	/*
+	 * Now find an object value that has not already been taken
+	 * by scanning the list, incrementing each time by number of buckets.
 	 */
-
 	while (!found) {
 		found = 1;
 		n += YAFFS_NOBJECT_BUCKETS;
-		if (1 || dev->obj_bucket[bucket].count > 0) {
-			list_for_each(i, &dev->obj_bucket[bucket].list) {
-				/* If there is already one in the list */
-				if (i && list_entry(i, struct yaffs_obj,
-						    hash_link)->obj_id == n) {
-					found = 0;
-				}
-			}
+		list_for_each(i, &dev->obj_bucket[bucket].list) {
+			/* Check if this value is already taken. */
+			if (i && list_entry(i, struct yaffs_obj,
+					    hash_link)->obj_id == n)
+				found = 0;
 		}
 	}
 	return n;
