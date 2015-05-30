@@ -853,7 +853,7 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 		oflag &= ~(O_EXCL);
 
 	/* O_TRUNC has no meaning if (O_CREAT | O_EXCL) is specified */
-	if ((oflag & O_CREAT) & (oflag & O_EXCL))
+	if ((oflag & O_CREAT) && (oflag & O_EXCL))
 		oflag &= ~(O_TRUNC);
 
 	/* Todo: Are there any more flag combos to sanitise ? */
