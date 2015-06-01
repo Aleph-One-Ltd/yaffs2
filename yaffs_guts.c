@@ -5019,8 +5019,15 @@ void yaffs_deinitialise(struct yaffs_dev *dev)
 
 		kfree(dev->gc_cleanup_list);
 
-		for (i = 0; i < YAFFS_N_TEMP_BUFFERS; i++)
+		for (i = 0; i < YAFFS_N_TEMP_BUFFERS; i++) {
 			kfree(dev->temp_buffer[i].buffer);
+			dev->temp_buffer[i].buffer = NULL;
+		}
+
+		kfree(dev->checkpt_buffer);
+		dev->checkpt_buffer = NULL;
+		kfree(dev->checkpt_block_list);
+		dev->checkpt_block_list = NULL;
 
 		dev->is_mounted = 0;
 

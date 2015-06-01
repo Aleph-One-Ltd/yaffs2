@@ -237,8 +237,9 @@ int yaffs2_checkpt_open(struct yaffs_dev *dev, int writing)
 	dev->blocks_in_checkpt = 0;
 	dev->checkpt_max_blocks =
 	    (dev->internal_end_block - dev->internal_start_block) / 16 + 2;
-	dev->checkpt_block_list =
-	    kmalloc(sizeof(int) * dev->checkpt_max_blocks, GFP_NOFS);
+	if (!dev->checkpt_block_list)
+		dev->checkpt_block_list =
+		      kmalloc(sizeof(int) * dev->checkpt_max_blocks, GFP_NOFS);
 
 	if (!dev->checkpt_block_list)
 		return 0;
@@ -441,8 +442,6 @@ int yaffs_checkpt_close(struct yaffs_dev *dev)
 			if (bi && bi->block_state == YAFFS_BLOCK_STATE_EMPTY)
 				bi->block_state = YAFFS_BLOCK_STATE_CHECKPOINT;
 		}
-		kfree(dev->checkpt_block_list);
-		dev->checkpt_block_list = NULL;
 	}
 
 	dev->n_free_chunks -=
@@ -452,14 +451,10 @@ int yaffs_checkpt_close(struct yaffs_dev *dev)
 	yaffs_trace(YAFFS_TRACE_CHECKPOINT, "checkpoint byte count %d",
 		dev->checkpt_byte_count);
 
-	if (dev->checkpt_buffer) {
-		/* free the buffer */
-		kfree(dev->checkpt_buffer);
-		dev->checkpt_buffer = NULL;
+	if (dev->checkpt_buffer)
 		return 1;
-	} else {
+	else
 		return 0;
-	}
 }
 
 int yaffs2_checkpt_invalidate_stream(struct yaffs_dev *dev)
