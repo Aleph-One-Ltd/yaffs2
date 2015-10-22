@@ -273,18 +273,27 @@ struct iattr {
 
 
 
-#ifndef S_IREAD
-#define S_IREAD		0000400
+#ifndef S_IRUSR
+#define S_IRUSR		0000400
 #endif
 
-#ifndef S_IWRITE
-#define	S_IWRITE	0000200
+#ifndef S_IWUSR
+#define	S_IWUSR		0000200
 #endif
 
 #ifndef S_IEXEC
 #define	S_IEXEC	0000100
 #endif
 
+#else
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#endif
+
+#endif
+
+/* Create some less common define values if they don't exist */
 #ifndef XATTR_CREATE
 #define XATTR_CREATE 1
 #endif
@@ -300,12 +309,8 @@ struct iattr {
 #define F_OK	0
 #endif
 
-#else
-#include <errno.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#endif
-
+#ifndef S_ISSOCK
+#define S_ISSOCK(m)	(((m) & S_IFMT) == S_IFSOCK)
 #endif
 
 #ifndef Y_DUMP_STACK

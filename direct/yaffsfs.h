@@ -101,12 +101,14 @@ int yaffs_write(int fd, const void *buf, unsigned int nbyte) ;
 int yaffs_pread(int fd, void *buf, unsigned int nbyte, Y_LOFF_T offset);
 int yaffs_pwrite(int fd, const void *buf, unsigned int nbyte, Y_LOFF_T offset);
 
-Y_LOFF_T yaffs_lseek(int fd, Y_LOFF_T offset, int whence) ;
+Y_LOFF_T yaffs_lseek(int fd, Y_LOFF_T offset, int whence);
 
 int yaffs_truncate(const YCHAR *path, Y_LOFF_T new_size);
 int yaffs_ftruncate(int fd, Y_LOFF_T new_size);
 
-int yaffs_unlink(const YCHAR *path) ;
+int yaffs_unlink(const YCHAR *path);
+int yaffs_funlink(int fd);
+
 int yaffs_rename(const YCHAR *oldPath, const YCHAR *newPath) ;
 
 int yaffs_stat(const YCHAR *path, struct yaffs_stat *buf) ;
@@ -163,7 +165,12 @@ int yaffs_format(const YCHAR *path,
 		int force_unmount_flag,
 		int remount_flag);
 
-int yaffs_sync(const YCHAR *path) ;
+/*
+ * yaffs_sync() does a full sync, including checkpoint.
+ * yaffs_sync_files() just flushes the cache and does not write a checkpoint.
+ */
+int yaffs_sync(const YCHAR *path);
+int yaffs_sync_files(const YCHAR *path) ;
 
 int yaffs_symlink(const YCHAR *oldpath, const YCHAR *newpath);
 int yaffs_readlink(const YCHAR *path, YCHAR *buf, int bufsiz);
@@ -217,6 +224,7 @@ int yaffs_mknod_reldir(struct yaffs_obj *reldir, const YCHAR *pathname,
 
 /* Function variants that use a relative device */
 struct yaffs_dev;
+int yaffs_mount_reldev(struct yaffs_dev *dev);
 int yaffs_open_sharing_reldev(struct yaffs_dev *dev, const YCHAR *path, int oflag, int mode, int sharing);
 int yaffs_open_reldev(struct yaffs_dev *dev,const YCHAR *path, int oflag, int mode);
 int yaffs_truncate_reldev(struct yaffs_dev *dev, const YCHAR *path, Y_LOFF_T new_size);
@@ -258,11 +266,21 @@ int yaffs_mknod_reldev(struct yaffs_dev *dev, const YCHAR *pathname,
 Y_LOFF_T yaffs_freespace_reldev(struct yaffs_dev *dev);
 Y_LOFF_T yaffs_totalspace_reldev(struct yaffs_dev *dev);
 
+/*
+ * yaffs_sync_reldev() does a full sync, including checkpoint.
+ * yaffs_sync_files_reldev() just flushes the cache and does not write a checkpoint.
+ */
 int yaffs_sync_reldev(struct yaffs_dev *dev);
+int yaffs_sync_files_reldev(struct yaffs_dev *dev);
+
 int yaffs_unmount_reldev(struct yaffs_dev *dev);
 int yaffs_unmount2_reldev(struct yaffs_dev *dev, int force);
 int yaffs_remount_reldev(struct yaffs_dev *dev, int force, int read_only);
 
+/*
+ *  Non standard function to get at objects.
+ */
+struct yaffs_obj * yaffs_get_obj_from_fd(int handle);
 
 /* Some non-standard functions to use fds to access directories */
 struct yaffs_dirent *yaffs_readdir_fd(int fd);

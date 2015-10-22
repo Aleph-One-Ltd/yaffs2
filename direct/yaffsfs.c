@@ -919,10 +919,10 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 			}
 
 			/* Check file permissions */
-			if (readRequested && !(obj->yst_mode & S_IREAD))
+			if (readRequested && !(obj->yst_mode & S_IRUSR))
 				openDenied = 1;
 
-			if (writeRequested && !(obj->yst_mode & S_IWRITE))
+			if (writeRequested && !(obj->yst_mode & S_IWUSR))
 				openDenied = 1;
 
 			if (!errorReported && writeRequested &&
@@ -1588,6 +1588,35 @@ int yaffs_unlink(const YCHAR *path)
 {
 	return yaffs_unlink_reldir(NULL, path);
 }
+
+int yaffs_funlink(int fd)
+{
+	struct yaffs_obj *obj;
+	int retVal = -1;
+
+	yaffsfs_Lock();
+	obj = yaffsfs_HandleToObject(fd);
+
+	if (!obj)
+		yaffsfs_SetError(-EBADF);
+	else if (obj->my_dev->read_only)
+		yaffsfs_SetError(-EROFS);
+	else if (!isDirectory &&
+		 obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY)
+		yaffsfs_SetError(-EISDIR);
+	else if (isDirectory &&
+		 obj->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
+		yaffsfs_SetError(-ENOTDIR);
+	else if (isDirectory && obj == obj->my_dev->root_dir)
+		yaffsfs_SetError(-EBUSY);	/* Can't rmdir a root */
+	else if (yaffs_unlink_obj(oobj) == YAFFS_OK)
+			retVal = 0;
+
+	yaffsfs_Unlock();
+
+	return retVal;
+}
+
 
 static int rename_file_over_dir(struct yaffs_obj *obj, struct yaffs_obj *newobj)
 {
@@ -2553,11 +2582,11 @@ int yaffs_access_reldir(struct yaffs_obj *reldir, const YCHAR *path, int amode)
 	else {
 		int access_ok = 1;
 
-		if ((amode & R_OK) && !(obj->yst_mode & S_IREAD))
+		if ((amode & R_OK) && !(obj->yst_mode & S_IRUSR))
 			access_ok = 0;
-		if ((amode & W_OK) && !(obj->yst_mode & S_IWRITE))
+		if ((amode & W_OK) && !(obj->yst_mode & S_IWUSR))
 			access_ok = 0;
-		if ((amode & X_OK) && !(obj->yst_mode & S_IEXEC))
+		if ((amode & X_OK) && !(obj->yst_mode & S_IXUSR))
 			access_ok = 0;
 
 		if (!access_ok)
@@ -2863,7 +2892,9 @@ int yaffs_mount(const YCHAR *path)
 	return yaffs_mount_common(NULL, path, 0, 0);
 }
 
-int yaffs_sync_common(struct yaffs_dev *dev, const YCHAR *path)
+static int yaffs_sync_common(struct yaffs_dev *dev,
+			     const YCHAR *path,
+			     int do_checkpt)
 {
 	int retVal = -1;
 	YCHAR *dummy;
@@ -2892,7 +2923,8 @@ int yaffs_sync_common(struct yaffs_dev *dev, const YCHAR *path)
 		else {
 
 			yaffs_flush_whole_cache(dev, 0);
-			yaffs_checkpoint_save(dev);
+			if (do_checkpt)
+				yaffs_checkpoint_save(dev);
 			retVal = 0;
 
 		}
@@ -2903,14 +2935,24 @@ int yaffs_sync_common(struct yaffs_dev *dev, const YCHAR *path)
 	return retVal;
 }
 
+int yaffs_sync_files_reldev(struct yaffs_dev *dev)
+{
+	return yaffs_sync_common(dev, NULL, 0);
+}
+
+int yaffs_sync_files(const YCHAR *path)
+{
+	return yaffs_sync_common(NULL, path, 0);
+}
+
 int yaffs_sync_reldev(struct yaffs_dev *dev)
 {
-	return yaffs_sync_common(dev, NULL);
+	return yaffs_sync_common(dev, NULL, 1);
 }
 
 int yaffs_sync(const YCHAR *path)
 {
-	return yaffs_sync_common(NULL, path);
+	return yaffs_sync_common(NULL, path, 1);
 }
 
 
@@ -3601,6 +3643,7 @@ static int yaffsfs_closedir_no_lock(yaffs_DIR *dirp)
 
 	return 0;
 }
+
 int yaffs_closedir(yaffs_DIR *dirp)
 {
 	int ret;
@@ -3845,6 +3888,11 @@ int yaffs_set_error(int error)
 {
 	yaffsfs_SetError(error);
 	return 0;
+}
+
+struct yaffs_obj * yaffs_get_obj_from_fd(int handle)
+{
+	return yaffsfs_HandleToObject(handle);
 }
 
 int yaffs_dump_dev_reldir(struct yaffs_obj *reldir, const YCHAR *path)

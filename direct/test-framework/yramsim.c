@@ -19,7 +19,7 @@
 
 #include "yramsim.h"
 
-#include "yaffs_nandif.h"
+#include "yaffs_guts.h"
 
 
 #define DATA_SIZE	2048
@@ -43,10 +43,7 @@ SimData *simDevs[N_RAM_SIM_DEVS];
 
 static SimData *DevToSim(struct yaffs_dev *dev)
 {
-	struct ynandif_Geometry *geom = 
-		(struct ynandif_Geometry *)(dev->driver_context);
-	SimData * sim = (SimData*)(geom->privateData);
-	return sim;
+	return (SimData*)(dev->driver_context);
 }
 
 
@@ -121,7 +118,7 @@ static int yramsim_rd_chunk (struct yaffs_dev *dev, unsigned pageId,
 	if(spare)
 		memcpy(spare,s,spareLength);
 
-	*eccStatus = 0; // 0 = no error, -1 = unfixable error, 1 = fixable
+	*eccStatus = 0; /* 0 = no error, -1 = unfixable error, 1 = fixable */
 
 	return 1;
 }
@@ -166,15 +163,15 @@ static int yramsim_erase(struct yaffs_dev *dev,unsigned blockId)
 	return yramsim_erase_internal(sim,blockId,0);
 }
 
-static int yramsim_check_block_ok(struct yaffs_dev *dev,unsigned blockId)
+static int yramsim_check_block_bad(struct yaffs_dev *dev,unsigned blockId)
 {
 	SimData *sim = DevToSim(dev);
 	Block **blockList = sim->blockList;
 	if(blockId >= sim->nBlocks){
-		return 0;
+		return YAFFS_FAIL;
 	}
 
-	return blockList[blockId]->blockOk ? 1 : 0;
+	return blockList[blockId]->blockOk ? YAFFS_OK : YAFFS_FAIL;
 }
 
 static int yramsim_mark_block_bad(struct yaffs_dev *dev,unsigned blockId)
@@ -257,40 +254,49 @@ struct yaffs_dev *yramsim_CreateRamSim(const YCHAR *name,
 				u32 start_block, u32 end_block)
 {
 	SimData *sim;
-	struct ynandif_Geometry *g;
+	struct yaffs_dev *dev;
+	struct yaffs_param *p;
+	struct yaffs_driver *d;
 
 	sim = yramsim_alloc_sim_data(devId, nBlocks);
 
-	g = malloc(sizeof(*g));
+	dev = malloc(sizeof(*dev));
 
-	if(!sim || !g){
-		if(g)
-			free(g);
+	if(!sim || !dev){
+		free(sim);
+		free(dev);
 		return NULL;
 	}
+	
+	memset(dev, 0, sizeof(*dev));
 
 	if(start_block >= sim->nBlocks)
 		start_block = 0;
 	if(end_block == 0 || end_block >= sim->nBlocks)
 		end_block = sim->nBlocks - 1;
 
-	memset(g,0,sizeof(*g));
-	g->start_block = start_block;
-	g->end_block = end_block;
-	g->dataSize = DATA_SIZE;
-	g->spareSize= SPARE_SIZE;
-	g->pagesPerBlock = PAGES_PER_BLOCK;
-	g->hasECC = 1;
-	g->inband_tags = 0;
-	g->useYaffs2 = 1;
-	g->initialise = yramsim_initialise;
-	g->deinitialise = yramsim_deinitialise;
-	g->readChunk = yramsim_rd_chunk,
-	g->writeChunk = yramsim_wr_chunk,
-	g->eraseBlock = yramsim_erase,
-	g->checkBlockOk = yramsim_check_block_ok,
-	g->markBlockBad = yramsim_mark_block_bad,
-	g->privateData = (void *)sim;
+	p = &dev->param;
+	p->name = strdup(name);
+	p->start_block = start_block;
+	p->end_block = end_block;
+	p->total_bytes_per_chunk = DATA_SIZE;
+	p->spare_bytes_per_chunk= SPARE_SIZE;
+	p->chunks_per_block = PAGES_PER_BLOCK;
+	p->n_reserved_blocks = 2;
+	p->use_nand_ecc = 1;
+	p->inband_tags = 0;
+	p->is_yaffs2 = 1;
+	
+	d= &dev->drv;
+	d->drv_initialise_fn = yramsim_initialise;
+	d->drv_deinitialise_fn = yramsim_deinitialise;
+	d->drv_read_chunk_fn = yramsim_rd_chunk;
+	d->drv_write_chunk_fn = yramsim_wr_chunk;
+	d->drv_erase_fn = yramsim_erase;
+	d->drv_check_bad_fn = yramsim_check_block_bad;
+	d->drv_mark_bad_fn = yramsim_mark_block_bad;
+	
+	dev->driver_context= (void *)sim;
 
-	return yaffs_add_dev_from_geometry(name,g);
+	return dev;
 }
