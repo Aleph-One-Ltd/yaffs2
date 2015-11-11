@@ -4080,7 +4080,7 @@ static int yaffs_unlink_worker(struct yaffs_obj *obj)
 	}
 }
 
-static int yaffs_unlink_obj(struct yaffs_obj *obj)
+int yaffs_unlink_obj(struct yaffs_obj *obj)
 {
 	if (obj && obj->unlink_allowed)
 		return yaffs_unlink_worker(obj);

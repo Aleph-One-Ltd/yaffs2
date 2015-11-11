@@ -15,11 +15,12 @@
  * NAND Simulator for testing YAFFS
  */
 
-#include <string.h>
 
 #include "yramsim.h"
 
 #include "yaffs_guts.h"
+#include <string.h>
+
 
 
 #define DATA_SIZE	2048
@@ -88,10 +89,10 @@ static int yramsim_deinitialise(struct yaffs_dev *dev)
 	return 1;
 }
 
-static int yramsim_rd_chunk (struct yaffs_dev *dev, unsigned pageId,
-					  unsigned char *data, unsigned dataLength,
-					  unsigned char *spare, unsigned spareLength,
-					  int *eccStatus)
+static int yramsim_rd_chunk (struct yaffs_dev *dev, int pageId,
+					  u8 *data, int dataLength,
+					  u8 *spare, int spareLength,
+					  enum yaffs_ecc_result *ecc_result)
 {
 	SimData *sim = DevToSim(dev);
 	Block **blockList = sim->blockList;
@@ -104,9 +105,8 @@ static int yramsim_rd_chunk (struct yaffs_dev *dev, unsigned pageId,
 	   pageOffset >= PAGES_PER_BLOCK ||
 	   dataLength >DATA_SIZE ||
 	   spareLength > SPARE_SIZE ||
-	   !eccStatus ||
 	   !blockList[blockId]->blockOk){
-		   return 0;
+		   return YAFFS_FAIL;
 	}
 
 	d = blockList[blockId]->page[pageOffset];
@@ -118,14 +118,15 @@ static int yramsim_rd_chunk (struct yaffs_dev *dev, unsigned pageId,
 	if(spare)
 		memcpy(spare,s,spareLength);
 
-	*eccStatus = 0; /* 0 = no error, -1 = unfixable error, 1 = fixable */
+	if (ecc_result) 
+		*ecc_result  = YAFFS_ECC_RESULT_NO_ERROR;
 
-	return 1;
+	return YAFFS_OK;
 }
 
-static int yramsim_wr_chunk (struct yaffs_dev *dev,unsigned pageId,
-					   const unsigned char *data, unsigned dataLength,
-					   const unsigned char *spare, unsigned spareLength)
+static int yramsim_wr_chunk (struct yaffs_dev *dev, int pageId,
+					   const u8 *data, int dataLength,
+					   const u8 *spare, int spareLength)
 {
 	SimData *sim = DevToSim(dev);
 	Block **blockList = sim->blockList;
@@ -139,7 +140,7 @@ static int yramsim_wr_chunk (struct yaffs_dev *dev,unsigned pageId,
 	   dataLength >DATA_SIZE ||
 	   spareLength > SPARE_SIZE ||
 	   !blockList[blockId]->blockOk){
-		   return 0;
+		   return YAFFS_FAIL;
 	}
 
 	d = blockList[blockId]->page[pageOffset];
@@ -151,11 +152,11 @@ static int yramsim_wr_chunk (struct yaffs_dev *dev,unsigned pageId,
 	if(spare)
 		memcpy(s,spare,spareLength);
 
-	return 1;
+	return YAFFS_OK;
 }
 
 
-static int yramsim_erase(struct yaffs_dev *dev,unsigned blockId)
+static int yramsim_erase(struct yaffs_dev *dev, int blockId)
 {
 	SimData *sim = DevToSim(dev);
 
@@ -163,7 +164,7 @@ static int yramsim_erase(struct yaffs_dev *dev,unsigned blockId)
 	return yramsim_erase_internal(sim,blockId,0);
 }
 
-static int yramsim_check_block_bad(struct yaffs_dev *dev,unsigned blockId)
+static int yramsim_check_block_bad(struct yaffs_dev *dev, int blockId)
 {
 	SimData *sim = DevToSim(dev);
 	Block **blockList = sim->blockList;
@@ -174,17 +175,17 @@ static int yramsim_check_block_bad(struct yaffs_dev *dev,unsigned blockId)
 	return blockList[blockId]->blockOk ? YAFFS_OK : YAFFS_FAIL;
 }
 
-static int yramsim_mark_block_bad(struct yaffs_dev *dev,unsigned blockId)
+static int yramsim_mark_block_bad(struct yaffs_dev *dev, int blockId)
 {
 	SimData *sim = DevToSim(dev);
 	Block **blockList = sim->blockList;
 	if(blockId >= sim->nBlocks){
-		return 0;
+		return YAFFS_FAIL;
 	}
 
 	blockList[blockId]->blockOk = 0;
 
-	return 1;
+	return YAFFS_OK;
 }
 
 

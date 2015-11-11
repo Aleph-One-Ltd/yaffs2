@@ -95,6 +95,8 @@ int yaffs_access(const YCHAR *path, int amode);
 
 int yaffs_dup(int fd);
 
+int yaffs_fgetfl(int fd, int *flags);
+
 int yaffs_read(int fd, void *buf, unsigned int nbyte) ;
 int yaffs_write(int fd, const void *buf, unsigned int nbyte) ;
 

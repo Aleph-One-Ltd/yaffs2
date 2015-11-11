@@ -346,8 +346,10 @@ static int yaffsfs_PutFileDes(int fdId)
 		fd = &yaffsfs_fd[fdId];
 		fd->handleCount--;
 		if (fd->handleCount < 1) {
-			if (fd->isDir)
+			if (fd->isDir) {
 				yaffsfs_closedir_no_lock(fd->v.dir);
+				fd->v.dir = NULL;
+			}
 			if (fd->inodeId >= 0) {
 				yaffsfs_PutInode(fd->inodeId);
 				fd->inodeId = -1;
@@ -836,7 +838,7 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 	int notDir = 0;
 	int loop = 0;
 	int is_dir = 0;
-	yaffs_DIR *dsc;
+	yaffs_DIR *dsc = NULL;
 
 	if (yaffsfs_CheckMemRegion(path, 0, 0)< 0) {
 		yaffsfs_SetError(-EFAULT);
@@ -869,7 +871,7 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 
 	if (handle < 0) {
 		yaffsfs_SetError(-ENFILE);
-		errorReported = 1;
+		errorReported = __LINE__;
 	} else {
 
 		fd = yaffsfs_HandleToFileDes(handle);
@@ -892,19 +894,18 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 
 			/* A directory can't be opened except for read */
 			if ( is_dir &&
-			    (writeRequested || !readRequested ||
-				(oflag & ~O_RDONLY))) {
-				openDenied = 1;
+			    (writeRequested || !readRequested || rwflags != O_RDONLY)) {
+				openDenied = __LINE__;
 				yaffsfs_SetError(-EISDIR);
-				errorReported = 1;
+				errorReported = __LINE__;
 			}
 
 			if(is_dir) {
 				dsc = yaffsfs_opendir_reldir_no_lock(reldir, path);
 				if (!dsc) {
-					openDenied = 1;
+					openDenied = __LINE__;
 					yaffsfs_SetError(-ENFILE);
-					errorReported = 1;
+					errorReported = __LINE__;
 				}
 			}
 
@@ -913,28 +914,28 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 			 */
 			if (!errorReported &&
 			    (oflag & O_EXCL) && (oflag & O_CREAT)) {
-				openDenied = 1;
+				openDenied = __LINE__;
 				yaffsfs_SetError(-EEXIST);
-				errorReported = 1;
+				errorReported = __LINE__;
 			}
 
 			/* Check file permissions */
 			if (readRequested && !(obj->yst_mode & S_IRUSR))
-				openDenied = 1;
+				openDenied = __LINE__;
 
 			if (writeRequested && !(obj->yst_mode & S_IWUSR))
-				openDenied = 1;
+				openDenied = __LINE__;
 
 			if (!errorReported && writeRequested &&
 			    obj->my_dev->read_only) {
-				openDenied = 1;
+				openDenied = __LINE__;
 				yaffsfs_SetError(-EROFS);
-				errorReported = 1;
+				errorReported = __LINE__;
 			}
 
 			if (openDenied && !errorReported) {
 				yaffsfs_SetError(-EACCES);
-				errorReported = 1;
+				errorReported = __LINE__;
 			}
 
 			/* Check sharing of an existing object. */
@@ -967,9 +968,9 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 				    (!shareRead && alreadyReading) ||
 				    (!sharedWriteAllowed && writeRequested) ||
 				    (!shareWrite && alreadyWriting)) {
-					openDenied = 1;
+					openDenied = __LINE__;
 					yaffsfs_SetError(-EBUSY);
-					errorReported = 1;
+					errorReported = __LINE__;
 				}
 			}
 
@@ -983,13 +984,13 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 						    &notDir, &loop);
 			if (!dir && notDir) {
 				yaffsfs_SetError(-ENOTDIR);
-				errorReported = 1;
+				errorReported = __LINE__;
 			} else if (loop) {
 				yaffsfs_SetError(-ELOOP);
-				errorReported = 1;
+				errorReported = __LINE__;
 			} else if (!dir) {
 				yaffsfs_SetError(-ENOENT);
-				errorReported = 1;
+				errorReported = __LINE__;
 			}
 		}
 
@@ -997,22 +998,22 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 			/* Let's see if we can create this file */
 			if (dir->my_dev->read_only) {
 				yaffsfs_SetError(-EROFS);
-				errorReported = 1;
+				errorReported = __LINE__;
 			} else if (yaffsfs_TooManyObjects(dir->my_dev)) {
 				yaffsfs_SetError(-ENFILE);
-				errorReported = 1;
+				errorReported = __LINE__;
 			} else
 				obj = yaffs_create_file(dir, name, mode, 0, 0);
 
 			if (!obj && !errorReported) {
 				yaffsfs_SetError(-ENOSPC);
-				errorReported = 1;
+				errorReported = __LINE__;
 			}
 		}
 
 		if (!obj && dir && !errorReported && !(oflag & O_CREAT)) {
 			yaffsfs_SetError(-ENOENT);
-			errorReported = 1;
+			errorReported = __LINE__;
 		}
 
 		if (obj && !openDenied) {
@@ -1045,6 +1046,9 @@ int yaffs_open_sharing_reldir(struct yaffs_obj *reldir, const YCHAR *path,
 			if (!is_dir && (oflag & O_TRUNC) && fd->writing)
 				yaffs_resize_file(obj, 0);
 		} else {
+			if (dsc)
+				yaffsfs_closedir_no_lock(dsc);
+			dsc = NULL;
 			yaffsfs_PutHandle(handle);
 			if (!errorReported)
 				yaffsfs_SetError(0);	/* Problem */
@@ -1601,19 +1605,40 @@ int yaffs_funlink(int fd)
 		yaffsfs_SetError(-EBADF);
 	else if (obj->my_dev->read_only)
 		yaffsfs_SetError(-EROFS);
-	else if (!isDirectory &&
-		 obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY)
-		yaffsfs_SetError(-EISDIR);
-	else if (isDirectory &&
-		 obj->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
-		yaffsfs_SetError(-ENOTDIR);
-	else if (isDirectory && obj == obj->my_dev->root_dir)
+	else if (obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY &&
+			!(list_empty(&obj->variant.dir_variant.children)))
+		yaffsfs_SetError(-ENOTEMPTY);
+	else if (obj == obj->my_dev->root_dir)
 		yaffsfs_SetError(-EBUSY);	/* Can't rmdir a root */
-	else if (yaffs_unlink_obj(oobj) == YAFFS_OK)
+	else if (yaffs_unlink_obj(obj) == YAFFS_OK)
 			retVal = 0;
 
 	yaffsfs_Unlock();
 
+	return retVal;
+}
+
+int yaffs_fgetfl(int fd, int *flags)
+{
+	struct yaffsfs_FileDes *fdp = yaffsfs_HandleToFileDes(fd);
+	int retVal;
+	
+	yaffsfs_Lock();
+
+	if(!flags || !fdp) {
+		yaffsfs_SetError(-EINVAL);
+		retVal = -1;
+	} else {
+		if (fdp->reading && fdp->writing)
+			*flags = O_RDWR;
+		else if (fdp->writing)
+			*flags = O_WRONLY;
+		else
+			*flags = O_RDONLY;
+		retVal = 0;
+	}
+	
+	yaffsfs_Unlock();
 	return retVal;
 }
 
