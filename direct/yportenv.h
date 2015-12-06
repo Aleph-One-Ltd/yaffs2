@@ -272,7 +272,6 @@ struct iattr {
 #endif
 
 
-
 #ifndef S_IRUSR
 #define S_IRUSR		0000400
 #endif
@@ -281,9 +280,22 @@ struct iattr {
 #define	S_IWUSR		0000200
 #endif
 
+#ifndef S_IXUSR
+#define	S_IXUSR		0000100
+#endif
+
+#ifndef S_IREAD
+#define S_IREAD		0000400
+#endif
+
+#ifndef S_IWRITE
+#define	S_IWRITE	0000200
+#endif
+
 #ifndef S_IEXEC
 #define	S_IEXEC	0000100
 #endif
+
 
 #else
 #include <errno.h>
