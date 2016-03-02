@@ -167,6 +167,12 @@ enum yaffs_ecc_result {
 	YAFFS_ECC_RESULT_UNFIXED
 };
 
+/*
+ * Object type enum:
+ * When this is stored in flash we store it as a u32 instead
+ * to prevent any alignment change issues as compiler variants change.
+ */
+
 enum yaffs_obj_type {
 	YAFFS_OBJECT_TYPE_UNKNOWN,
 	YAFFS_OBJECT_TYPE_FILE,
@@ -310,7 +316,7 @@ struct yaffs_block_info {
 /* This is the object structure as stored on NAND */
 
 struct yaffs_obj_hdr {
-	enum yaffs_obj_type type;
+	u32 type;  /* enum yaffs_obj_type  */
 
 	/* Apply to everything  */
 	int parent_obj_id;
@@ -470,7 +476,7 @@ struct yaffs_obj {
 
 	void *my_inode;
 
-	enum yaffs_obj_type variant_type;
+	u32 variant_type; /* enum yaffs_object_type */
 
 	union yaffs_obj_var variant;
 
@@ -490,7 +496,7 @@ struct yaffs_checkpt_obj {
 	u32 obj_id;
 	u32 parent_id;
 	int hdr_chunk;
-	enum yaffs_obj_type variant_type:3;
+	u32 variant_type:3; /* enum yaffs_obj_type */
 	u8 deleted:1;
 	u8 soft_del:1;
 	u8 unlinked:1;
