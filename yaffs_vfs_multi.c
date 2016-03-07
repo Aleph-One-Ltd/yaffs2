@@ -776,15 +776,26 @@ static int yaffs_sync_object(struct file *file, struct dentry *dentry,
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
 static const struct file_operations yaffs_file_operations = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
+	.read = new_sync_read,
+	.write = new_sync_write,
+	.read_iter = generic_file_read_iter,
+	.write_iter = generic_file_write_iter,
+#else
 	.read = do_sync_read,
 	.write = do_sync_write,
 	.aio_read = generic_file_aio_read,
 	.aio_write = generic_file_aio_write,
+#endif
 	.mmap = generic_file_mmap,
 	.flush = yaffs_file_flush,
 	.fsync = yaffs_sync_object,
 	.splice_read = generic_file_splice_read,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
+	.splice_write = iter_file_splice_write,
+#else
 	.splice_write = generic_file_splice_write,
+#endif
 	.llseek = generic_file_llseek,
 };
 
@@ -3249,9 +3260,7 @@ static int yaffs_proc_read(char *page,
 	/* Print header first */
 	if (step == 0)
 		buf +=
-		    sprintf(buf,
-			    "Multi-version YAFFS built:" __DATE__ " " __TIME__
-			    "\n");
+		    sprintf(buf, "Multi-version YAFFS\n");
 	else if (step == 1)
 		buf += sprintf(buf, "\n");
 	else {
@@ -3601,7 +3610,7 @@ static int __init init_yaffs_fs(void)
 	struct file_system_to_install *fsinst;
 
 	yaffs_trace(YAFFS_TRACE_ALWAYS,
-		"yaffs built " __DATE__ " " __TIME__ " Installing.");
+		"yaffs Installing.");
 
 	mutex_init(&yaffs_context_lock);
 
@@ -3642,7 +3651,7 @@ static void __exit exit_yaffs_fs(void)
 	struct file_system_to_install *fsinst;
 
 	yaffs_trace(YAFFS_TRACE_ALWAYS,
-		"yaffs built " __DATE__ " " __TIME__ " removing.");
+		"yaffs removing.");
 
 	remove_proc_entry("yaffs", YPROC_ROOT);
 
