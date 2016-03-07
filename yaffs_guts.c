@@ -2001,7 +2001,7 @@ static struct yaffs_obj *yaffs_new_obj(struct yaffs_dev *dev, int number,
 	switch (type) {
 	case YAFFS_OBJECT_TYPE_FILE:
 		the_obj->variant.file_variant.file_size = 0;
-		the_obj->variant.file_variant.scanned_size = 0;
+		the_obj->variant.file_variant.stored_size = 0;
 		the_obj->variant.file_variant.shrink_size =
 						yaffs_max_file_size(dev);
 		the_obj->variant.file_variant.top_level = 0;
@@ -2547,9 +2547,9 @@ static inline int yaffs_gc_process_chunk(struct yaffs_dev *dev,
 			/* Update file size */
 			if (object->variant_type == YAFFS_OBJECT_TYPE_FILE) {
 				yaffs_oh_size_load(oh,
-				    object->variant.file_variant.file_size);
+				    object->variant.file_variant.stored_size);
 				tags.extra_file_size =
-				    object->variant.file_variant.file_size;
+				    object->variant.file_variant.stored_size;
 			}
 
 			yaffs_verify_oh(object, oh, &tags, 1);
@@ -3050,6 +3050,7 @@ static int yaffs_wr_data_obj(struct yaffs_obj *in, int inode_chunk,
 	int new_chunk_id;
 	struct yaffs_ext_tags new_tags;
 	struct yaffs_dev *dev = in->my_dev;
+	loff_t endpos;
 
 	yaffs_check_gc(dev, 0);
 
@@ -3071,11 +3072,22 @@ static int yaffs_wr_data_obj(struct yaffs_obj *in, int inode_chunk,
 	    (prev_chunk_id > 0) ? prev_tags.serial_number + 1 : 1;
 	new_tags.n_bytes = n_bytes;
 
-	if (n_bytes < 1 || n_bytes > dev->param.total_bytes_per_chunk) {
+	if (n_bytes < 1 || n_bytes > dev->data_bytes_per_chunk) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
 		  "Writing %d bytes to chunk!!!!!!!!!",
 		   n_bytes);
 		BUG();
+	}
+
+	/*
+	 * If this is a data chunk and the write goes past the end of the stored
+	 * size then update the stored_size.
+	 */
+	if (inode_chunk > 0) {
+		endpos =  (inode_chunk - 1) * dev->data_bytes_per_chunk +
+				n_bytes;
+		if (in->variant.file_variant.stored_size < endpos)
+			in->variant.file_variant.stored_size = endpos;
 	}
 
 	new_chunk_id =
@@ -3090,7 +3102,6 @@ static int yaffs_wr_data_obj(struct yaffs_obj *in, int inode_chunk,
 		yaffs_verify_file_sane(in);
 	}
 	return new_chunk_id;
-
 }
 
 
@@ -3319,7 +3330,7 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 	case YAFFS_OBJECT_TYPE_FILE:
 		if (oh->parent_obj_id != YAFFS_OBJECTID_DELETED &&
 		    oh->parent_obj_id != YAFFS_OBJECTID_UNLINKED)
-			file_size = in->variant.file_variant.file_size;
+			file_size = in->variant.file_variant.stored_size;
 		yaffs_oh_size_load(oh, file_size);
 		break;
 	case YAFFS_OBJECT_TYPE_HARDLINK:
@@ -3740,6 +3751,7 @@ void yaffs_resize_file_down(struct yaffs_obj *obj, loff_t new_size)
 	}
 
 	obj->variant.file_variant.file_size = new_size;
+	obj->variant.file_variant.stored_size = new_size;
 
 	yaffs_prune_tree(dev, &obj->variant.file_variant);
 }

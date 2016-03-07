@@ -432,11 +432,12 @@ static int yaffs2_checkpt_obj_to_obj(struct yaffs_obj *obj,
 	obj->serial = cp->serial;
 	obj->n_data_chunks = cp->n_data_chunks;
 
-	if (obj->variant_type == YAFFS_OBJECT_TYPE_FILE)
+	if (obj->variant_type == YAFFS_OBJECT_TYPE_FILE) {
 		obj->variant.file_variant.file_size = cp->size_or_equiv_obj;
-	else if (obj->variant_type == YAFFS_OBJECT_TYPE_HARDLINK)
+		obj->variant.file_variant.stored_size = cp->size_or_equiv_obj;
+	} else if (obj->variant_type == YAFFS_OBJECT_TYPE_HARDLINK) {
 		obj->variant.hardlink_variant.equiv_id = cp->size_or_equiv_obj;
-
+	}
 	if (obj->hdr_chunk > 0)
 		obj->lazy_loaded = 1;
 	return 1;
@@ -1068,9 +1069,9 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 			endpos = chunk_base + tags.n_bytes;
 
 			if (!in->valid &&
-			    in->variant.file_variant.scanned_size < endpos) {
+			    in->variant.file_variant.stored_size < endpos) {
 				in->variant.file_variant.
-				    scanned_size = endpos;
+				    stored_size = endpos;
 				in->variant.file_variant.
 				    file_size = endpos;
 			}
@@ -1299,7 +1300,7 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 				break;
 			case YAFFS_OBJECT_TYPE_FILE:
 				file_var = &in->variant.file_variant;
-				if (file_var->scanned_size < file_size) {
+				if (file_var->stored_size < file_size) {
 					/* This covers the case where the file
 					 * size is greater than the data held.
 					 * This will happen if the file is
@@ -1307,7 +1308,7 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 					 * current data extents.
 					 */
 					file_var->file_size = file_size;
-					file_var->scanned_size = file_size;
+					file_var->stored_size = file_size;
 				}
 
 				if (file_var->shrink_size > file_size)

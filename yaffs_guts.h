@@ -374,9 +374,19 @@ struct yaffs_tnode {
  * - a hard link
  */
 
+/* The file variant has three file sizes:
+ *  - file_size : size of file as written into Yaffs - including data in cache.
+ *  - stored_size - size of file as stored on media.
+ *  - shrink_size - size of file that has been shrunk back to.
+ *
+ * The stored_size and file_size might be different because the data written
+ * into the cache will increase the file_size but the stored_size will only
+ * change when the data is actually stored.
+ *
+ */
 struct yaffs_file_var {
 	loff_t file_size;
-	loff_t scanned_size;
+	loff_t stored_size;
 	loff_t shrink_size;
 	int top_level;
 	struct yaffs_tnode *top;

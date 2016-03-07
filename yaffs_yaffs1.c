@@ -162,15 +162,15 @@ int yaffs1_scan(struct yaffs_dev *dev)
 				if (in &&
 				    in->variant_type ==
 				     YAFFS_OBJECT_TYPE_FILE &&
-				    in->variant.file_variant.scanned_size <
+				    in->variant.file_variant.stored_size <
 				      endpos) {
-					in->variant.file_variant.scanned_size =
+					in->variant.file_variant.stored_size =
 					    endpos;
 					if (!dev->param.use_header_file_size) {
 						in->variant.
 						    file_variant.file_size =
 						    in->variant.
-						    file_variant.scanned_size;
+						    file_variant.stored_size;
 					}
 
 				}
