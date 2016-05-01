@@ -34,7 +34,7 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o yaffs_error.o\
 		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
 		 yaffs_tagscompat.o yaffs_tagsmarshall.o \
 		 yaffs_packedtags2.o yaffs_nand.o \
-		 yaffs_checkptrw.o  yaffs_qsort.o\
+		 yaffs_checkptrw.o  \
 		 yaffs_nameval.o yaffs_attribs.o \
 		 yaffs_m18_drv.o  yaffs_nor_drv.o ynorsim.o \
 		 yaffs_nand_drv.o \
@@ -54,7 +54,7 @@ ALLOBJS = $(sort $(ALL_UNSORTED_OBJS))
 YAFFSDIRECTSYMLINKS =  \
           yaffsfs.c yaffs_flashif.h yaffs_flashif2.h\
           yaffsfs.h yaffs_osglue.h ydirectenv.h \
-          yaffscfg.h yaffs_qsort.c \
+          yaffscfg.h \
           yaffs_nandemul2k.h yaffs_list.h \
           yaffs_attribs.c \
           yportenv.h \

@@ -27,8 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#include "yportenv.h"
-/* #include <linux/string.h> */
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
@@ -80,7 +80,7 @@ med3(char *a, char *b, char *c, int (*cmp)(const void *, const void *))
 #endif
 
 void
-yaffs_qsort(void *aa, size_t n, size_t es,
+qsort(void *aa, size_t n, size_t es,
 	int (*cmp)(const void *, const void *))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;

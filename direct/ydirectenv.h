@@ -54,10 +54,7 @@ void yaffs_bug_fn(const char *file_name, int line_no);
 #define hweight8(x)	yaffs_hweight8(x)
 #define hweight32(x)	yaffs_hweight32(x)
 
-void yaffs_qsort(void *aa, size_t n, size_t es,
-		int (*cmp)(const void *, const void *));
-
-#define sort(base, n, sz, cmp_fn, swp) yaffs_qsort(base, n, sz, cmp_fn)
+#define sort(base, n, sz, cmp_fn, swp) qsort(base, n, sz, cmp_fn)
 
 #define YAFFS_PATH_DIVIDERS  "/"
 
