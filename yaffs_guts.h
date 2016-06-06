@@ -579,6 +579,8 @@ struct yaffs_param {
 				 * 0 = no limit.
 				*/
 
+	int hide_lost_n_found;  /* Set non-zero to hide the lost-n-found dir. */
+
 	/* The remove_obj_fn function must be supplied by OS flavours that
 	 * need it.
 	 * yaffs direct uses it to implement the faster readdir.

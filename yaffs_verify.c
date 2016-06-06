@@ -470,11 +470,25 @@ void yaffs_verify_dir(struct yaffs_obj *directory)
 {
 	struct list_head *lh;
 	struct yaffs_obj *list_obj;
+	struct yaffs_dev *dev;
 
 	if (!directory) {
 		BUG();
 		return;
 	}
+
+	dev = directory->my_dev;
+
+	if (!dev) {
+		BUG();
+		return;
+	}
+
+	if (directory == dev->root_dir ||
+	    directory == dev->lost_n_found ||
+	    directory == dev->unlinked_dir ||
+	    directory == dev->del_dir)
+		return;
 
 	if (yaffs_skip_full_verification(directory->my_dev))
 		return;

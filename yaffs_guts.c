@@ -4635,8 +4635,11 @@ static int yaffs_check_dev_fns(struct yaffs_dev *dev)
 static int yaffs_create_initial_dir(struct yaffs_dev *dev)
 {
 	/* Initialise the unlinked, deleted, root and lost+found directories */
-	dev->lost_n_found = dev->root_dir = NULL;
-	dev->unlinked_dir = dev->del_dir = NULL;
+	dev->lost_n_found = NULL;
+	dev->root_dir = NULL;
+	dev->unlinked_dir = NULL;
+	dev->del_dir = NULL;
+
 	dev->unlinked_dir =
 	    yaffs_create_fake_dir(dev, YAFFS_OBJECTID_UNLINKED, S_IFDIR);
 	dev->del_dir =
@@ -4648,9 +4651,15 @@ static int yaffs_create_initial_dir(struct yaffs_dev *dev)
 	    yaffs_create_fake_dir(dev, YAFFS_OBJECTID_LOSTNFOUND,
 				  YAFFS_LOSTNFOUND_MODE | S_IFDIR);
 
-	if (dev->lost_n_found && dev->root_dir && dev->unlinked_dir
-	    && dev->del_dir) {
-		yaffs_add_obj_to_dir(dev->root_dir, dev->lost_n_found);
+	if (dev->lost_n_found &&
+		dev->root_dir &&
+		dev->unlinked_dir &&
+		dev->del_dir) {
+			/* If lost-n-found is hidden then yank it out of the directory tree. */
+			if (dev->param.hide_lost_n_found)
+				list_del_init(&dev->lost_n_found->siblings);
+			else
+				yaffs_add_obj_to_dir(dev->root_dir, dev->lost_n_found);
 		return YAFFS_OK;
 	}
 	return YAFFS_FAIL;
