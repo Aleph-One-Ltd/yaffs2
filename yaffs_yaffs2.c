@@ -365,20 +365,47 @@ static int yaffs2_rd_checkpt_dev(struct yaffs_dev *dev)
 	return ok ? 1 : 0;
 }
 
+
+static void yaffs2_checkpt_obj_bit_assign(struct yaffs_checkpt_obj *cp,
+					  int bit_offset,
+					  int bit_width,
+					  u32 value)
+{
+	u32 and_mask;
+
+	and_mask = ((1<<bit_width)-1) << bit_offset;
+
+	cp->bit_field &= ~and_mask;
+	cp->bit_field |= ((value << bit_offset) & and_mask);
+}
+
+static u32 yaffs2_checkpt_obj_bit_get(struct yaffs_checkpt_obj *cp,
+				      int bit_offset,
+				      int bit_width)
+{
+	u32 and_mask;
+
+	and_mask = ((1<<bit_width)-1);
+
+	return (cp->bit_field >> bit_offset) & and_mask;
+}
+
 static void yaffs2_obj_checkpt_obj(struct yaffs_checkpt_obj *cp,
 				   struct yaffs_obj *obj)
 {
 	cp->obj_id = obj->obj_id;
 	cp->parent_id = (obj->parent) ? obj->parent->obj_id : 0;
 	cp->hdr_chunk = obj->hdr_chunk;
-	cp->variant_type = obj->variant_type;
-	cp->deleted = obj->deleted;
-	cp->soft_del = obj->soft_del;
-	cp->unlinked = obj->unlinked;
-	cp->fake = obj->fake;
-	cp->rename_allowed = obj->rename_allowed;
-	cp->unlink_allowed = obj->unlink_allowed;
-	cp->serial = obj->serial;
+
+	yaffs2_checkpt_obj_bit_assign(cp, CHECKPOINT_VARIANT_BITS, obj->variant_type);
+	yaffs2_checkpt_obj_bit_assign(cp, CHECKPOINT_DELETED_BITS, obj->deleted);
+	yaffs2_checkpt_obj_bit_assign(cp, CHECKPOINT_SOFT_DEL_BITS, obj->soft_del);
+	yaffs2_checkpt_obj_bit_assign(cp, CHECKPOINT_UNLINKED_BITS, obj->unlinked);
+	yaffs2_checkpt_obj_bit_assign(cp, CHECKPOINT_FAKE_BITS, obj->fake);
+	yaffs2_checkpt_obj_bit_assign(cp, CHECKPOINT_RENAME_ALLOWED_BITS, obj->rename_allowed);
+	yaffs2_checkpt_obj_bit_assign(cp, CHECKPOINT_UNLINK_ALLOWED_BITS, obj->unlink_allowed);
+	yaffs2_checkpt_obj_bit_assign(cp, CHECKPOINT_SERIAL_BITS, obj->serial);
+
 	cp->n_data_chunks = obj->n_data_chunks;
 
 	if (obj->variant_type == YAFFS_OBJECT_TYPE_FILE)
@@ -391,11 +418,12 @@ static int yaffs2_checkpt_obj_to_obj(struct yaffs_obj *obj,
 				     struct yaffs_checkpt_obj *cp)
 {
 	struct yaffs_obj *parent;
+	u32 cp_variant_type = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_VARIANT_BITS);
 
-	if (obj->variant_type != cp->variant_type) {
+	if (obj->variant_type != cp_variant_type) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
 			"Checkpoint read object %d type %d chunk %d does not match existing object type %d",
-			cp->obj_id, cp->variant_type, cp->hdr_chunk,
+			cp->obj_id, cp_variant_type, cp->hdr_chunk,
 			obj->variant_type);
 		return 0;
 	}
@@ -414,7 +442,7 @@ static int yaffs2_checkpt_obj_to_obj(struct yaffs_obj *obj,
 			yaffs_trace(YAFFS_TRACE_ALWAYS,
 				"Checkpoint read object %d parent %d type %d chunk %d Parent type, %d, not directory",
 				cp->obj_id, cp->parent_id,
-				cp->variant_type, cp->hdr_chunk,
+				cp_variant_type, cp->hdr_chunk,
 				parent->variant_type);
 			return 0;
 		}
@@ -422,14 +450,16 @@ static int yaffs2_checkpt_obj_to_obj(struct yaffs_obj *obj,
 	}
 
 	obj->hdr_chunk = cp->hdr_chunk;
-	obj->variant_type = cp->variant_type;
-	obj->deleted = cp->deleted;
-	obj->soft_del = cp->soft_del;
-	obj->unlinked = cp->unlinked;
-	obj->fake = cp->fake;
-	obj->rename_allowed = cp->rename_allowed;
-	obj->unlink_allowed = cp->unlink_allowed;
-	obj->serial = cp->serial;
+
+	obj->variant_type = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_VARIANT_BITS);
+	obj->deleted = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_DELETED_BITS);
+	obj->soft_del = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_SOFT_DEL_BITS);
+	obj->unlinked = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_UNLINKED_BITS);
+	obj->fake = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_FAKE_BITS);
+	obj->rename_allowed = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_RENAME_ALLOWED_BITS);
+	obj->unlink_allowed = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_UNLINK_ALLOWED_BITS);
+	obj->serial = yaffs2_checkpt_obj_bit_get(cp, CHECKPOINT_SERIAL_BITS);
+
 	obj->n_data_chunks = cp->n_data_chunks;
 
 	if (obj->variant_type == YAFFS_OBJECT_TYPE_FILE) {
@@ -546,6 +576,7 @@ static int yaffs2_wr_checkpt_objs(struct yaffs_dev *dev)
 	int i;
 	int ok = 1;
 	struct list_head *lh;
+	u32 cp_variant_type;
 
 	/* Iterate through the objects in each hash entry,
 	 * dumping them to the checkpointing stream.
@@ -557,11 +588,12 @@ static int yaffs2_wr_checkpt_objs(struct yaffs_dev *dev)
 			if (!obj->defered_free) {
 				yaffs2_obj_checkpt_obj(&cp, obj);
 				cp.struct_type = sizeof(cp);
-
+				cp_variant_type = yaffs2_checkpt_obj_bit_get(
+						&cp, CHECKPOINT_VARIANT_BITS);
 				yaffs_trace(YAFFS_TRACE_CHECKPOINT,
 					"Checkpoint write object %d parent %d type %d chunk %d obj addr %p",
 					cp.obj_id, cp.parent_id,
-					cp.variant_type, cp.hdr_chunk, obj);
+					cp_variant_type, cp.hdr_chunk, obj);
 
 				ok = (yaffs2_checkpt_wr(dev, &cp,
 						sizeof(cp)) == sizeof(cp));
@@ -590,6 +622,7 @@ static int yaffs2_rd_checkpt_objs(struct yaffs_dev *dev)
 	struct yaffs_checkpt_obj cp;
 	int ok = 1;
 	int done = 0;
+	u32 cp_variant_type;
 	LIST_HEAD(hard_list);
 
 
@@ -602,9 +635,11 @@ static int yaffs2_rd_checkpt_objs(struct yaffs_dev *dev)
 			ok = 0;
 		}
 
+		cp_variant_type = yaffs2_checkpt_obj_bit_get(
+						&cp, CHECKPOINT_VARIANT_BITS);
 		yaffs_trace(YAFFS_TRACE_CHECKPOINT,
 			"Checkpoint read object %d parent %d type %d chunk %d ",
-			cp.obj_id, cp.parent_id, cp.variant_type,
+			cp.obj_id, cp.parent_id, cp_variant_type,
 			cp.hdr_chunk);
 
 		if (ok && cp.obj_id == ~0) {
@@ -612,7 +647,7 @@ static int yaffs2_rd_checkpt_objs(struct yaffs_dev *dev)
 		} else if (ok) {
 			obj =
 			    yaffs_find_or_create_by_number(dev, cp.obj_id,
-							   cp.variant_type);
+							   cp_variant_type);
 			if (obj) {
 				ok = yaffs2_checkpt_obj_to_obj(obj, &cp);
 				if (!ok)

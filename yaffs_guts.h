@@ -79,7 +79,6 @@
 
 /* Binary data version stamps */
 #define YAFFS_SUMMARY_VERSION		1
-#define YAFFS_CHECKPOINT_VERSION	7
 
 #ifdef CONFIG_YAFFS_UNICODE
 #define YAFFS_MAX_NAME_LENGTH		127
@@ -497,26 +496,6 @@ struct yaffs_obj_bucket {
 	int count;
 };
 
-/* yaffs_checkpt_obj holds the definition of an object as dumped
- * by checkpointing.
- */
-
-struct yaffs_checkpt_obj {
-	int struct_type;
-	u32 obj_id;
-	u32 parent_id;
-	int hdr_chunk;
-	u32 variant_type:3; /* enum yaffs_obj_type */
-	u8 deleted:1;
-	u8 soft_del:1;
-	u8 unlinked:1;
-	u8 fake:1;
-	u8 rename_allowed:1;
-	u8 unlink_allowed:1;
-	u8 serial;
-	int n_data_chunks;
-	loff_t size_or_equiv_obj;
-};
 
 /*--------------------- Temporary buffers ----------------
  *
@@ -816,6 +795,37 @@ struct yaffs_dev {
 	u32 tags_used;
 	u32 summary_used;
 
+};
+
+/*
+ * Checkpointing definitions.
+ */
+
+#define YAFFS_CHECKPOINT_VERSION	8
+
+/* yaffs_checkpt_obj holds the definition of an object as dumped
+ * by checkpointing.
+ */
+
+
+/*  Checkpint object bits in bitfield: offset, length */
+#define CHECKPOINT_VARIANT_BITS		0, 3
+#define CHECKPOINT_DELETED_BITS		3, 1
+#define CHECKPOINT_SOFT_DEL_BITS	4, 1
+#define CHECKPOINT_UNLINKED_BITS	5, 1
+#define CHECKPOINT_FAKE_BITS		6, 1
+#define CHECKPOINT_RENAME_ALLOWED_BITS	7, 1
+#define CHECKPOINT_UNLINK_ALLOWED_BITS	8, 1
+#define CHECKPOINT_SERIAL_BITS		9, 8
+
+struct yaffs_checkpt_obj {
+	int struct_type;
+	u32 obj_id;
+	u32 parent_id;
+	int hdr_chunk;
+	u32 bit_field;
+	int n_data_chunks;
+	loff_t size_or_equiv_obj;
 };
 
 /* The CheckpointDevice structure holds the device information that changes
