@@ -13,6 +13,7 @@
 
 #include "yaffs_checkptrw.h"
 #include "yaffs_getblockinfo.h"
+#include "yaffs_endian.h"
 
 struct yaffs_checkpt_chunk_hdr {
 	int version;
@@ -32,6 +33,18 @@ static int apply_block_offset(struct yaffs_dev *dev, int block)
 	return block - dev->block_offset;
 }
 
+
+static void yaffs2_do_endian_hdr(struct yaffs_dev *dev,
+				 struct yaffs_checkpt_chunk_hdr *hdr)
+{
+	if (!dev->swap_endian)
+		return;
+	hdr->version = swap_s32(hdr->version);
+	hdr->seq     = swap_s32(hdr->seq);
+	hdr->sum     = swap_u32(hdr->sum);
+	hdr->xor     = swap_u32(hdr->xor);
+}
+
 static void yaffs2_checkpt_init_chunk_hdr(struct yaffs_dev *dev)
 {
 	struct yaffs_checkpt_chunk_hdr hdr;
@@ -43,6 +56,7 @@ static void yaffs2_checkpt_init_chunk_hdr(struct yaffs_dev *dev)
 
 	dev->checkpt_byte_offs = sizeof(hdr);
 
+	yaffs2_do_endian_hdr(dev, &hdr);
 	memcpy(dev->checkpt_buffer, &hdr, sizeof(hdr));
 }
 
@@ -51,6 +65,7 @@ static int yaffs2_checkpt_check_chunk_hdr(struct yaffs_dev *dev)
 	struct yaffs_checkpt_chunk_hdr hdr;
 
 	memcpy(&hdr, dev->checkpt_buffer, sizeof(hdr));
+	yaffs2_do_endian_hdr(dev, &hdr);
 
 	dev->checkpt_byte_offs = sizeof(hdr);
 

@@ -35,6 +35,7 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o yaffs_error.o\
 		 yaffs_tagscompat.o yaffs_tagsmarshall.o \
 		 yaffs_packedtags2.o yaffs_nand.o \
 		 yaffs_checkptrw.o  \
+		 yaffs_endian.o \
 		 yaffs_nameval.o yaffs_attribs.o \
 		 yaffs_m18_drv.o  yaffs_nor_drv.o ynorsim.o \
 		 yaffs_nand_drv.o \
@@ -59,6 +60,7 @@ YAFFSDIRECTSYMLINKS =  \
           yaffs_attribs.c \
           yportenv.h \
           yaffs_hweight.c yaffs_hweight.h \
+          yaffs_endian.c yaffs_endian.h \
 	  yaffs_error.c \
           yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
           yaffs_tagscompat.c yaffs_tagscompat.h \

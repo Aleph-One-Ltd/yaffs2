@@ -15,6 +15,7 @@
 #include "yaffs_trace.h"
 
 #include "yaffs_guts.h"
+#include "yaffs_endian.h"
 #include "yaffs_getblockinfo.h"
 #include "yaffs_tagscompat.h"
 #include "yaffs_tagsmarshall.h"
@@ -755,7 +756,7 @@ void yaffs_set_obj_name_from_oh(struct yaffs_obj *obj,
 
 loff_t yaffs_max_file_size(struct yaffs_dev *dev)
 {
-	if(sizeof(loff_t) < 8)
+	if (sizeof(loff_t) < 8)
 		return YAFFS_MAX_FILE_SIZE_32;
 	else
 		return ((loff_t) YAFFS_MAX_CHUNK_ID) * dev->data_bytes_per_chunk;
@@ -2529,12 +2530,14 @@ static inline int yaffs_gc_process_chunk(struct yaffs_dev *dev,
 
 		if (tags.chunk_id == 0) {
 			/* It is an object Id,
-			 * We need to nuke the
-			 * shrinkheader flags since its
+			 * We need to nuke the shrinkheader flags since its
 			 * work is done.
-			 * Also need to clean up
-			 * shadowing.
+			 * Also need to clean up shadowing.
+			 * NB We don't want to do all the work of translating
+			 * object header endianism back and forth so we leave
+			 * the oh endian in its stored order.
 			 */
+
 			struct yaffs_obj_hdr *oh;
 			oh = (struct yaffs_obj_hdr *) buffer;
 
@@ -2546,8 +2549,8 @@ static inline int yaffs_gc_process_chunk(struct yaffs_dev *dev,
 
 			/* Update file size */
 			if (object->variant_type == YAFFS_OBJECT_TYPE_FILE) {
-				yaffs_oh_size_load(oh,
-				    object->variant.file_variant.stored_size);
+				yaffs_oh_size_load(dev, oh,
+				    object->variant.file_variant.stored_size, 1);
 				tags.extra_file_size =
 				    object->variant.file_variant.stored_size;
 			}
@@ -3139,12 +3142,12 @@ static int yaffs_apply_xattrib_mod(struct yaffs_obj *obj, char *buffer,
 
 	if (xmod->set)
 		retval =
-		    nval_set(x_buffer, x_size, xmod->name, xmod->data,
+		    nval_set(dev, x_buffer, x_size, xmod->name, xmod->data,
 			     xmod->size, xmod->flags);
 	else
-		retval = nval_del(x_buffer, x_size, xmod->name);
+		retval = nval_del(dev, x_buffer, x_size, xmod->name);
 
-	obj->has_xattr = nval_hasvalues(x_buffer, x_size);
+	obj->has_xattr = nval_hasvalues(dev, x_buffer, x_size);
 	obj->xattr_known = 1;
 	xmod->result = retval;
 
@@ -3189,14 +3192,15 @@ static int yaffs_do_xattrib_fetch(struct yaffs_obj *obj, const YCHAR *name,
 		x_buffer = buffer + x_offs;
 
 		if (!obj->xattr_known) {
-			obj->has_xattr = nval_hasvalues(x_buffer, x_size);
+			obj->has_xattr = nval_hasvalues(dev, x_buffer, x_size);
 			obj->xattr_known = 1;
 		}
 
 		if (name)
-			retval = nval_get(x_buffer, x_size, name, value, size);
+			retval = nval_get(dev, x_buffer, x_size,
+						name, value, size);
 		else
-			retval = nval_list(x_buffer, x_size, value, size);
+			retval = nval_list(dev, x_buffer, x_size, value, size);
 	}
 	yaffs_release_temp_buffer(dev, (u8 *) buffer);
 	return retval;
@@ -3243,6 +3247,8 @@ static void yaffs_check_obj_details_loaded(struct yaffs_obj *in)
 	result = yaffs_rd_chunk_tags_nand(dev, in->hdr_chunk, buf, &tags);
 	oh = (struct yaffs_obj_hdr *)buf;
 
+	yaffs_do_endian_oh(dev, oh);
+
 	in->yst_mode = oh->yst_mode;
 	yaffs_load_attribs(in, oh);
 	yaffs_set_obj_name_from_oh(in, oh);
@@ -3258,7 +3264,18 @@ static void yaffs_check_obj_details_loaded(struct yaffs_obj *in)
 
 /* UpdateObjectHeader updates the header on NAND for an object.
  * If name is not NULL, then that new name is used.
+ *
+ * We're always creating the obj header from scratch (except reading
+ * the old name) so first set up in cpu endianness then run it through
+ * endian fixing at the end.
+ *
+ * However, a twist: If there are xattribs we leave them as they were.
+ *
+ * Careful! The buffer holds the whole chunk. Part of the chunk holds the
+ * object header and the rest holds the xattribs, therefore we use a buffer
+ * pointer and an oh pointer to point to the same memory.
  */
+
 int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 		    int is_shrink, int shadows, struct yaffs_xattr_mod *xmod)
 {
@@ -3291,12 +3308,18 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 	prev_chunk_id = in->hdr_chunk;
 
 	if (prev_chunk_id > 0) {
+		/* Access the old obj header just to read the name. */
 		result = yaffs_rd_chunk_tags_nand(dev, prev_chunk_id,
 						  buffer, &old_tags);
 
 		yaffs_verify_oh(in, oh, &old_tags, 0);
 		memcpy(old_name, oh->name, sizeof(oh->name));
-		memset(buffer, 0xff, sizeof(struct yaffs_obj_hdr));
+
+		/*
+		 * NB We only wipe the object header area because the rest of
+		 * the buffer might contain xattribs.
+		 */
+		memset(oh, 0xff, sizeof(*oh));
 	} else {
 		memset(buffer, 0xff, dev->data_bytes_per_chunk);
 	}
@@ -3331,7 +3354,7 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 		if (oh->parent_obj_id != YAFFS_OBJECTID_DELETED &&
 		    oh->parent_obj_id != YAFFS_OBJECTID_UNLINKED)
 			file_size = in->variant.file_variant.stored_size;
-		yaffs_oh_size_load(oh, file_size);
+		yaffs_oh_size_load(dev, oh, file_size, 0);
 		break;
 	case YAFFS_OBJECT_TYPE_HARDLINK:
 		oh->equiv_id = in->variant.hardlink_variant.equiv_id;
@@ -3370,6 +3393,10 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 	new_tags.extra_equiv_id = oh->equiv_id;
 	new_tags.extra_shadows = (oh->shadows_obj > 0) ? 1 : 0;
 	new_tags.extra_obj_type = in->variant_type;
+
+	/* Now endian swizzle the oh if needed. */
+	yaffs_do_endian_oh(dev, oh);
+
 	yaffs_verify_oh(in, oh, &new_tags, 1);
 
 	/* Create new chunk in NAND */
@@ -4872,11 +4899,13 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 	dev->n_erase_failures = 0;
 	dev->n_erased_blocks = 0;
 	dev->gc_disable = 0;
-	dev->has_pending_prioritised_gc = 1;
-		/* Assume the worst for now, will get fixed on first GC */
+	dev->has_pending_prioritised_gc = 1; /* Assume the worst for now,
+					      * will get fixed on first GC */
 	INIT_LIST_HEAD(&dev->dirty_dirs);
 	dev->oldest_dirty_seq = 0;
 	dev->oldest_dirty_block = 0;
+
+	yaffs_endian_config(dev);
 
 	/* Initialise temporary buffers and caches. */
 	if (!yaffs_init_tmp_buffers(dev))
@@ -5116,26 +5145,47 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev)
 }
 
 
-
 /*
  * Marshalling functions to get loff_t file sizes into and out of
  * object headers.
  */
-void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize)
+void yaffs_oh_size_load(struct yaffs_dev *dev,
+			struct yaffs_obj_hdr *oh,
+			loff_t fsize,
+			int do_endian)
 {
 	oh->file_size_low = (fsize & 0xFFFFFFFF);
 	oh->file_size_high = ((fsize >> 32) & 0xFFFFFFFF);
+
+	if (do_endian) {
+		yaffs_do_endian_u32(dev, &oh->file_size_low);
+		yaffs_do_endian_u32(dev, &oh->file_size_high);
+	}
 }
 
-loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh)
+loff_t yaffs_oh_to_size(struct yaffs_dev *dev, struct yaffs_obj_hdr *oh,
+			int do_endian)
 {
 	loff_t retval;
 
-	if (sizeof(loff_t) >= 8 && ~(oh->file_size_high))
-		retval = (((loff_t) oh->file_size_high) << 32) |
-			(((loff_t) oh->file_size_low) & 0xFFFFFFFF);
-	else
-		retval = (loff_t) oh->file_size_low;
+
+	if (sizeof(loff_t) >= 8 && ~(oh->file_size_high)) {
+		u32 low = oh->file_size_low;
+		u32 high = oh->file_size_high;
+
+		if (do_endian) {
+			yaffs_do_endian_u32 (dev, &low);
+			yaffs_do_endian_u32 (dev, &high);
+		}
+		retval = (((loff_t) high) << 32) |
+			(((loff_t) low) & 0xFFFFFFFF);
+	} else {
+		u32 low = oh->file_size_low;
+
+		if (do_endian)
+			yaffs_do_endian_u32(dev, &low);
+		retval = (loff_t)low;
+	}
 
 	return retval;
 }

@@ -14,6 +14,7 @@
 #include "yaffs_packedtags2.h"
 #include "yportenv.h"
 #include "yaffs_trace.h"
+#include "yaffs_endian.h"
 
 /* This code packs a set of extended tags into a binary structure for
  * NAND storage
@@ -72,7 +73,8 @@ static int yaffs_check_tags_extra_packable(const struct yaffs_ext_tags *t)
 	return 1;
 }
 
-void yaffs_pack_tags2_tags_only(struct yaffs_packed_tags2_tags_only *ptt,
+void yaffs_pack_tags2_tags_only(struct yaffs_dev *dev,
+				struct yaffs_packed_tags2_tags_only *ptt,
 				const struct yaffs_ext_tags *t)
 {
 	ptt->chunk_id = t->chunk_id;
@@ -106,12 +108,14 @@ void yaffs_pack_tags2_tags_only(struct yaffs_packed_tags2_tags_only *ptt,
 
 	yaffs_dump_packed_tags2_tags_only(ptt);
 	yaffs_dump_tags2(t);
+	yaffs_do_endian_packed_tags2(dev, ptt);
 }
 
-void yaffs_pack_tags2(struct yaffs_packed_tags2 *pt,
+void yaffs_pack_tags2(struct yaffs_dev *dev,
+		      struct yaffs_packed_tags2 *pt,
 		      const struct yaffs_ext_tags *t, int tags_ecc)
 {
-	yaffs_pack_tags2_tags_only(&pt->t, t);
+	yaffs_pack_tags2_tags_only(dev, &pt->t, t);
 
 	if (tags_ecc)
 		yaffs_ecc_calc_other((unsigned char *)&pt->t,
@@ -119,45 +123,52 @@ void yaffs_pack_tags2(struct yaffs_packed_tags2 *pt,
 				    &pt->ecc);
 }
 
-void yaffs_unpack_tags2_tags_only(struct yaffs_ext_tags *t,
-				  struct yaffs_packed_tags2_tags_only *ptt)
+void yaffs_unpack_tags2_tags_only(struct yaffs_dev *dev,
+				  struct yaffs_ext_tags *t,
+				  struct yaffs_packed_tags2_tags_only *ptt_ptr)
 {
+	struct yaffs_packed_tags2_tags_only ptt_copy = *ptt_ptr;
+
 	memset(t, 0, sizeof(struct yaffs_ext_tags));
 
-	if (ptt->seq_number == 0xffffffff)
+	if (ptt_copy.seq_number == 0xffffffff)
 		return;
+
+	yaffs_do_endian_packed_tags2(dev, &ptt_copy);
 
 	t->block_bad = 0;
 	t->chunk_used = 1;
-	t->obj_id = ptt->obj_id;
-	t->chunk_id = ptt->chunk_id;
-	t->n_bytes = ptt->n_bytes;
+	t->obj_id = ptt_copy.obj_id;
+	t->chunk_id = ptt_copy.chunk_id;
+	t->n_bytes = ptt_copy.n_bytes;
 	t->is_deleted = 0;
 	t->serial_number = 0;
-	t->seq_number = ptt->seq_number;
+	t->seq_number = ptt_copy.seq_number;
 
 	/* Do extra header info stuff */
-	if (ptt->chunk_id & EXTRA_HEADER_INFO_FLAG) {
+	if (ptt_copy.chunk_id & EXTRA_HEADER_INFO_FLAG) {
 		t->chunk_id = 0;
 		t->n_bytes = 0;
 
 		t->extra_available = 1;
-		t->extra_parent_id = ptt->chunk_id & (~(ALL_EXTRA_FLAGS));
-		t->extra_is_shrink = ptt->chunk_id & EXTRA_SHRINK_FLAG ? 1 : 0;
-		t->extra_shadows = ptt->chunk_id & EXTRA_SHADOWS_FLAG ? 1 : 0;
-		t->extra_obj_type = ptt->obj_id >> EXTRA_OBJECT_TYPE_SHIFT;
+		t->extra_parent_id = ptt_copy.chunk_id & (~(ALL_EXTRA_FLAGS));
+		t->extra_is_shrink = ptt_copy.chunk_id & EXTRA_SHRINK_FLAG ? 1 : 0;
+		t->extra_shadows = ptt_copy.chunk_id & EXTRA_SHADOWS_FLAG ? 1 : 0;
+		t->extra_obj_type = ptt_copy.obj_id >> EXTRA_OBJECT_TYPE_SHIFT;
 		t->obj_id &= ~EXTRA_OBJECT_TYPE_MASK;
 
 		if (t->extra_obj_type == YAFFS_OBJECT_TYPE_HARDLINK)
-			t->extra_equiv_id = ptt->n_bytes;
+			t->extra_equiv_id = ptt_copy.n_bytes;
 		else
-			t->extra_file_size = ptt->n_bytes;
+			t->extra_file_size = ptt_copy.n_bytes;
 	}
-	yaffs_dump_packed_tags2_tags_only(ptt);
+	yaffs_dump_packed_tags2_tags_only(ptt_ptr);
 	yaffs_dump_tags2(t);
 }
 
-void yaffs_unpack_tags2(struct yaffs_ext_tags *t, struct yaffs_packed_tags2 *pt,
+void yaffs_unpack_tags2(struct yaffs_dev *dev,
+			struct yaffs_ext_tags *t,
+			struct yaffs_packed_tags2 *pt,
 			int tags_ecc)
 {
 	enum yaffs_ecc_result ecc_result = YAFFS_ECC_RESULT_NO_ERROR;
@@ -188,7 +199,7 @@ void yaffs_unpack_tags2(struct yaffs_ext_tags *t, struct yaffs_packed_tags2 *pt,
 			ecc_result = YAFFS_ECC_RESULT_UNKNOWN;
 		}
 	}
-	yaffs_unpack_tags2_tags_only(t, &pt->t);
+	yaffs_unpack_tags2_tags_only(dev, t, &pt->t);
 
 	t->ecc_result = ecc_result;
 

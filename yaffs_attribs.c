@@ -22,6 +22,10 @@
 #define IATTR_GID ia_gid.val
 #endif
 
+/*
+ * Loading attibs from/to object header assumes the object header
+ * is in cpu endian.
+ */
 void yaffs_load_attribs(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh)
 {
 	obj->yst_uid = oh->yst_uid;

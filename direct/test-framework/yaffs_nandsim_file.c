@@ -54,7 +54,7 @@ struct yaffs_dev *yaffs_nandsim_install_drv(const char *dev_name,
 	param->is_yaffs2 = 1;
 	param->use_nand_ecc = 1;
 	param->n_caches = 10;
-	/* param->hide_lost_n_found = 1; */
+	param->stored_endian = 2;
 
 	if(yaffs_nand_install_drv(dev, chip) != YAFFS_OK)
 		goto fail;

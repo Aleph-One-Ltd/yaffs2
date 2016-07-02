@@ -259,8 +259,9 @@ int yaffs_summary_add(struct yaffs_dev *dev,
 		return YAFFS_OK;
 
 	if (chunk_in_block >= 0 && chunk_in_block < dev->chunks_per_summary) {
-		yaffs_pack_tags2_tags_only(&tags_only, tags);
+		yaffs_pack_tags2_tags_only(dev, &tags_only, tags);
 		sum_tags = &dev->sum_tags[chunk_in_block];
+
 		sum_tags->chunk_id = tags_only.chunk_id;
 		sum_tags->n_bytes = tags_only.n_bytes;
 		sum_tags->obj_id = tags_only.obj_id;
@@ -286,7 +287,7 @@ int yaffs_summary_fetch(struct yaffs_dev *dev,
 		tags_only.chunk_id = sum_tags->chunk_id;
 		tags_only.n_bytes = sum_tags->n_bytes;
 		tags_only.obj_id = sum_tags->obj_id;
-		yaffs_unpack_tags2_tags_only(tags, &tags_only);
+		yaffs_unpack_tags2_tags_only(dev, tags, &tags_only);
 		return YAFFS_OK;
 	}
 	return YAFFS_FAIL;

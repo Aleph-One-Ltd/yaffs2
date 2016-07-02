@@ -153,7 +153,8 @@ struct yaffs_tags {
 
 union yaffs_tags_union {
 	struct yaffs_tags as_tags;
-	u8 as_bytes[8];
+	u8  as_bytes[8];
+	u32 as_u32[2];
 };
 
 
@@ -309,6 +310,11 @@ struct yaffs_block_info {
 	u32 has_shrink_hdr:1;	/* This block has at least one shrink header */
 	u32 seq_number;		/* block sequence number for yaffs2 */
 
+};
+
+union yaffs_block_info_union {
+	struct yaffs_block_info bi;
+	u32	as_u32[2];
 };
 
 /* -------------------------- Object structure -------------------------------*/
@@ -560,6 +566,8 @@ struct yaffs_param {
 
 	int hide_lost_n_found;  /* Set non-zero to hide the lost-n-found dir. */
 
+	int stored_endian; /* 0=cpu endian, 1=little endian, 2=big endian */
+
 	/* The remove_obj_fn function must be supplied by OS flavours that
 	 * need it.
 	 * yaffs direct uses it to implement the faster readdir.
@@ -644,6 +652,8 @@ struct yaffs_dev {
 				 */
 	u16 chunk_grp_size;	/* == 2^^chunk_grp_bits */
 
+	struct yaffs_tnode *tn_swap_buffer;
+
 	/* Stuff to support wide tnodes */
 	u32 tnode_width;
 	u32 tnode_mask;
@@ -657,6 +667,7 @@ struct yaffs_dev {
 	int is_mounted;
 	int read_only;
 	int is_checkpointed;
+	int swap_endian;	/* Stored endian needs endian swap. */
 
 	/* Stuff to support block offsetting to support start block zero */
 	int internal_start_block;
@@ -1018,11 +1029,13 @@ int yaffs_guts_format_dev(struct yaffs_dev *dev);
 void yaffs_addr_to_chunk(struct yaffs_dev *dev, loff_t addr,
 				int *chunk_out, u32 *offset_out);
 /*
- * Marshalling functions to get loff_t file sizes into aand out of
+ * Marshalling functions to get loff_t file sizes into and out of
  * object headers.
  */
-void yaffs_oh_size_load(struct yaffs_obj_hdr *oh, loff_t fsize);
-loff_t yaffs_oh_to_size(struct yaffs_obj_hdr *oh);
+void yaffs_oh_size_load(struct yaffs_dev *dev, struct yaffs_obj_hdr *oh,
+			loff_t fsize, int do_endian);
+loff_t yaffs_oh_to_size(struct yaffs_dev *dev, struct yaffs_obj_hdr *oh,
+			int do_endian);
 loff_t yaffs_max_file_size(struct yaffs_dev *dev);
 
 /*

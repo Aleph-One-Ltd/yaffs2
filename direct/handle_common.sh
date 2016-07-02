@@ -14,6 +14,7 @@ YAFFS_COMMON_SOURCES="\
           yaffs_yaffs1.c yaffs_yaffs1.h \
           yaffs_yaffs2.c yaffs_yaffs2.h \
           yaffs_bitmap.c yaffs_bitmap.h \
+          yaffs_endian.c yaffs_endian.h \
           yaffs_verify.c yaffs_verify.h \
           yaffs_summary.c yaffs_summary.h \
           "

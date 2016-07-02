@@ -39,6 +39,7 @@ ifneq ($(KERNELRELEASE),)
 	yaffs2-objs += yaffs_yaffs1.o
 	yaffs2-objs += yaffs_yaffs2.o
 	yaffs2-objs += yaffs_verify.o
+	yaffs2-objs += yaffs_endian.o
 	yaffs2-objs += yaffs_summary.o
 
 	yaffs2multi-objs := yaffs_mtdif_multi.o
@@ -53,6 +54,7 @@ ifneq ($(KERNELRELEASE),)
 	yaffs2multi-objs += yaffs_yaffs1.o
 	yaffs2multi-objs += yaffs_yaffs2.o
 	yaffs2multi-objs += yaffs_verify.o
+	yaffs2multi-objs += yaffs_endian.o
 	yaffs2multi-objs += yaffs_summary.o
 
 else
