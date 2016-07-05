@@ -5,7 +5,7 @@ iterations=100000
 [ -z $1 ]  || iterations=$1
 
 
-rm iteration-max-*
+rm -f iteration-max-*
 touch iteration-max-$iterations
 
 echo " Running $iterations iterations"
