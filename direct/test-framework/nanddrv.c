@@ -75,7 +75,6 @@ int nanddrv_read_tr(struct nand_chip *this, int page,
 {
 	unsigned char status;
 	int ncycles;
-	unsigned char *buffer;
 
 	if(n_tr < 1)
 		return 0;
@@ -98,7 +97,7 @@ int nanddrv_read_tr(struct nand_chip *this, int page,
 				buffer++;
 			}
 		} else {
-			unsigned short *buffer = tr->buffer;
+			unsigned short *buffer = (unsigned short *)tr->buffer;
 
 			ncycles = tr->nbytes >> 1;
 			while (ncycles> 0) {
@@ -145,7 +144,7 @@ int nanddrv_write_tr(struct nand_chip *this, int page,
 				buffer++;
 			}
 		} else {
-			unsigned short *buffer = tr->buffer;
+			unsigned short *buffer = (unsigned short *)tr->buffer;
 
 			ncycles = tr->nbytes >> 1;
 			while (ncycles> 0) {

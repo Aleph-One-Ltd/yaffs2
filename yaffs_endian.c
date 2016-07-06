@@ -37,7 +37,7 @@ void yaffs_do_endian_oh(struct yaffs_dev *dev, struct yaffs_obj_hdr *oh)
 		return;
 	/* Change every field */
 	oh->type = swap_u32(oh->type);
-	oh->parent_obj_id = swap_s32(oh->parent_obj_id);
+	oh->parent_obj_id = swap_u32(oh->parent_obj_id);
 
 	oh->yst_mode = swap_u32(oh->yst_mode);
 

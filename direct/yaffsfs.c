@@ -19,6 +19,7 @@
 
 #include "string.h"
 
+#define YAFFS_MAX_RW_SIZE	0x70000000
 #define YAFFSFS_MAX_SYMLINK_DEREFERENCES 5
 
 #ifndef NULL
@@ -1187,7 +1188,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 		/* Not a reading handle */
 		yaffsfs_SetError(-EINVAL);
 		totalRead = -1;
-	} else if (nbyte > YAFFS_MAX_FILE_SIZE) {
+	} else if (nbyte > YAFFS_MAX_RW_SIZE) {
 		yaffsfs_SetError(-EINVAL);
 		totalRead = -1;
 	} else {
@@ -1211,7 +1212,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 		endPos = pos + nbyte;
 
 		if (pos < 0 || pos > YAFFS_MAX_FILE_SIZE ||
-		    nbyte > YAFFS_MAX_FILE_SIZE ||
+		    nbyte > YAFFS_MAX_RW_SIZE ||
 		    endPos < 0 || endPos > YAFFS_MAX_FILE_SIZE) {
 			totalRead = -1;
 			nbyte = 0;
@@ -1220,7 +1221,7 @@ static int yaffsfs_do_read(int handle, void *vbuf, unsigned int nbyte,
 		while (nbyte > 0) {
 			nToRead = YAFFSFS_RW_SIZE -
 			    (pos & (YAFFSFS_RW_SIZE - 1));
-			if (nToRead > nbyte)
+			if (nToRead > (int)nbyte)
 				nToRead = nbyte;
 
 			/* Tricky bit...
@@ -1324,7 +1325,7 @@ static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 		endPos = pos + nbyte;
 
 		if (pos < 0 || pos > YAFFS_MAX_FILE_SIZE ||
-		    nbyte > YAFFS_MAX_FILE_SIZE ||
+		    nbyte > YAFFS_MAX_RW_SIZE ||
 		    endPos < 0 || endPos > YAFFS_MAX_FILE_SIZE) {
 			totalWritten = -1;
 			nbyte = 0;
@@ -1334,7 +1335,7 @@ static int yaffsfs_do_write(int handle, const void *vbuf, unsigned int nbyte,
 
 			nToWrite = YAFFSFS_RW_SIZE -
 			    (pos & (YAFFSFS_RW_SIZE - 1));
-			if (nToWrite > nbyte)
+			if (nToWrite > (int)nbyte)
 				nToWrite = nbyte;
 
 			/* Tricky bit...
@@ -1622,7 +1623,7 @@ int yaffs_fgetfl(int fd, int *flags)
 {
 	struct yaffsfs_FileDes *fdp = yaffsfs_HandleToFileDes(fd);
 	int retVal;
-	
+
 	yaffsfs_Lock();
 
 	if(!flags || !fdp) {
@@ -1637,7 +1638,7 @@ int yaffs_fgetfl(int fd, int *flags)
 			*flags = O_RDONLY;
 		retVal = 0;
 	}
-	
+
 	yaffsfs_Unlock();
 	return retVal;
 }
@@ -1790,7 +1791,7 @@ static int yaffsfs_DoStat(struct yaffs_obj *obj, struct yaffs_stat *buf)
 	obj = yaffs_get_equivalent_obj(obj);
 
 	if (obj && buf) {
-		buf->st_dev = (int)obj->my_dev->os_context;
+		buf->st_dev = 0;
 		buf->st_ino = obj->obj_id;
 		buf->st_mode = obj->yst_mode & ~S_IFMT;
 
@@ -3578,7 +3579,7 @@ struct yaffs_dirent *yaffsfs_readdir_no_lock(yaffs_DIR * dirp)
 		if (dsc->nextReturn) {
 			dsc->de.d_ino =
 			    yaffs_get_equivalent_obj(dsc->nextReturn)->obj_id;
-			dsc->de.d_dont_use = (unsigned)dsc->nextReturn;
+			dsc->de.d_dont_use = 0;
 			dsc->de.d_off = dsc->offset++;
 			yaffs_get_obj_name(dsc->nextReturn,
 					   dsc->de.d_name, NAME_MAX);

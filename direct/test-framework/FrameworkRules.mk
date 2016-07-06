@@ -19,7 +19,7 @@
 
 CFLAGS =      -DCONFIG_YAFFS_DIRECT -DCONFIG_YAFFS_YAFFS2  -DCONFIG_YAFFS_DEFINES_TYPES
 CFLAGS +=     -DCONFIG_YAFFS_PROVIDE_DEFS -DCONFIG_YAFFSFS_PROVIDE_VALUES
-CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Wstrict-aliasing
+CFLAGS +=    -Wall -g $(EXTRA_COMPILE_FLAGS) -Wstrict-aliasing -Werror
 #CFLAGS +=    -fno-strict-aliasing
 CFLAGS +=    -O0
 CFLAGS +=    -Wextra -Wpointer-arith

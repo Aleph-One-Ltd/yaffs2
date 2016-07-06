@@ -19,6 +19,7 @@
 #include "yaffs_fsx.h"
 
 #include <stdio.h>
+#include <unistd.h>
 
 
 extern int fuzz_test;

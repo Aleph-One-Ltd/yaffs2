@@ -87,22 +87,3 @@ void yaffs_load_current_time(struct yaffs_obj *obj, int do_a, int do_c)
 		obj->yst_ctime = obj->yst_atime;
 #endif
 }
-
-static Y_LOFF_T yaffs_get_file_size(struct yaffs_obj *obj)
-{
-	YCHAR *alias = NULL;
-	obj = yaffs_get_equivalent_obj(obj);
-
-	switch (obj->variant_type) {
-	case YAFFS_OBJECT_TYPE_FILE:
-		return obj->variant.file_variant.file_size;
-	case YAFFS_OBJECT_TYPE_SYMLINK:
-		alias = obj->variant.symlink_variant.alias;
-		if (!alias)
-			return 0;
-		return yaffs_strnlen(alias, YAFFS_MAX_ALIAS_LENGTH);
-	default:
-		return 0;
-	}
-}
-

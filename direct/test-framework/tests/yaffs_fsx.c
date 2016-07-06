@@ -24,12 +24,12 @@
  *      yaffs direct. Seek out the original fsx.c if you want to do anything
  *	else.
  *
- *	
+ *
  *
  *	File:	fsx.c
  *	Author:	Avadis Tevanian, Jr.
  *
- *	File system exerciser. 
+ *	File system exerciser.
  *
  *	Rewrite and enhancements 1998-2001 Conrad Minshall -- conrad@mac.com
  *
@@ -120,7 +120,7 @@ char		state[256];
 unsigned long	testcalls = 0;		/* calls to function "test" */
 
 unsigned long	simulatedopcount = 0;	/* -b flag */
-int	closeprob = 0;			/* -c flag */
+unsigned	closeprob = 0;		/* -c flag */
 int	debug = 0;			/* -d flag */
 unsigned long	debugstart = 0;		/* -D flag */
 unsigned long	maxfilelen = 256 * 1024;	/* -l flag */
@@ -243,7 +243,7 @@ logdump(void)
 		lp = &oplog[i];
 		if ((closeopen = lp->operation < 0))
 			lp->operation = ~ lp->operation;
-			
+
 		switch (lp->operation) {
 		case OP_MAPREAD:
 			prt("MAPREAD\t0x%x thru 0x%x\t(0x%x bytes)",
@@ -333,7 +333,7 @@ save_buffer(char *buffer, off_t bufferlength, int fd)
 	ret = yaffs_lseek(fd, (off_t)0, SEEK_SET);
 	if (ret == (off_t)-1)
 		prterr("save_buffer: lseek 0");
-	
+
 	byteswritten = yaffs_write(fd, buffer, (size_t)bufferlength);
 	if (byteswritten != bufferlength) {
 		if (byteswritten == -1)
@@ -350,7 +350,7 @@ void
 report_failure(int status)
 {
 	logdump();
-	
+
 	if (fsxgoodfd) {
 		if (good_buf) {
 			save_buffer(good_buf, file_size, fsxgoodfd);
@@ -422,7 +422,8 @@ check_size(void)
 		statbuf.st_size = -1;
 	}
 	size_by_seek = yaffs_lseek(fd, (off_t)0, SEEK_END);
-	if (file_size != statbuf.st_size || file_size != size_by_seek) {
+	if (file_size != statbuf.st_size ||
+	   file_size != size_by_seek) {
 		prt("Size error: expected 0x%llx stat 0x%llx seek 0x%llx\n",
 		    (unsigned long long)file_size,
 		    (unsigned long long)statbuf.st_size,
@@ -461,7 +462,7 @@ doread(unsigned offset, unsigned size)
 		log4(OP_SKIPPED, OP_READ, offset, size);
 		return;
 	}
-	if (size + offset > file_size) {
+	if ((off_t)(size + offset) > file_size) {
 		if (!quiet && testcalls > simulatedopcount)
 			prt("skipping seek/read past end of file\n");
 		log4(OP_SKIPPED, OP_READ, offset, size);
@@ -488,7 +489,7 @@ doread(unsigned offset, unsigned size)
 	}
 	iret = yaffs_read(fd, temp_buf, size);
 	if (iret != size) {
-		if (iret == -1)
+		if (iret == (unsigned)(-1))
 			prterr("doread: read");
 		else
 			prt("short read: 0x%x bytes instead of 0x%x\n",
@@ -506,7 +507,7 @@ void
 gendata(char *original_buf, char *good_buf, unsigned offset, unsigned size)
 {
 	while (size--) {
-		good_buf[offset] = testcalls % 256; 
+		good_buf[offset] = testcalls % 256;
 		if (offset % 2)
 			good_buf[offset] += original_buf[offset];
 		offset++;
@@ -559,7 +560,7 @@ dowrite(unsigned offset, unsigned size)
 	}
 	iret = yaffs_write(fd, good_buf + offset, size);
 	if (iret != size) {
-		if (iret == -1)
+		if (iret == (unsigned)(-1))
 			prterr("dowrite: write");
 		else
 			prt("short write: 0x%x bytes instead of 0x%x\n",
@@ -590,7 +591,7 @@ dotruncate(unsigned size)
 
 	if (testcalls <= simulatedopcount)
 		return;
-	
+
 	if ((progressinterval && testcalls % progressinterval == 0) ||
 	    (debug && (monitorstart == -1 || monitorend == -1 ||
 		       size <= monitorend)))
@@ -631,7 +632,7 @@ writefileimage()
 
 void
 docloseopen(void)
-{ 
+{
 	if (testcalls <= simulatedopcount)
 		return;
 
@@ -668,7 +669,7 @@ yaffs_fsx_do_op(void)
 	testcalls++;
 
 	if (closeprob)
-		closeopen = (rv >> 3) < (1 << 28) / closeprob;
+		closeopen = (rv >> 3) < (1U << 28) / closeprob;
 
 	if (debugstart > 0 && testcalls >= debugstart)
 		debug = 1;
@@ -702,7 +703,7 @@ yaffs_fsx_do_op(void)
 					offset %= file_size;
 				else
 					offset = 0;
-				if (offset + size > file_size)
+				if ((ssize_t)(offset + size) > file_size)
 					size = file_size - offset;
 				doread(offset, size);
 			}
@@ -799,7 +800,7 @@ int mounted_by_fsx = 0;
 int
 yaffs_fsx_init(const char *mount_pt)
 {
-	int	i;
+	unsigned	i;
 
 	goodfile[0] = 0;
 	logfile[0] = 0;
@@ -812,7 +813,7 @@ yaffs_fsx_init(const char *mount_pt)
 	strcpy(mount_name,mount_pt);
 	strcpy(fname,mount_name);
 	strcat(fname,"/fsxdata");
-	
+
 #if 0
 	signal(SIGHUP,	cleanup);
 	signal(SIGINT,	cleanup);
@@ -873,7 +874,7 @@ yaffs_fsx_init(const char *mount_pt)
 		ssize_t written;
 
 		written = yaffs_write(fd, good_buf, (size_t)maxfilelen);
-		if (written != maxfilelen) {
+		if (written != (ssize_t)maxfilelen) {
 			if (written == -1) {
 				prterr(fname);
 				warn("main: error on write");
@@ -882,11 +883,11 @@ yaffs_fsx_init(const char *mount_pt)
 				     (unsigned)written, maxfilelen);
 			EXIT(98);
 		}
-	} else 
+	} else
 		check_trunc_hack();
-		
+
 	printf("yaffs_fsx_init done\n");
-		
+
 	return 0;
 }
 
@@ -897,9 +898,9 @@ int yaffs_fsx_complete(void)
 		prterr("close");
 		report_failure(99);
 	}
-	
+
 	yaffs_close(fsxgoodfd);
-	
+
 	prt("All operations completed A-OK!\n");
 
 	EXIT(0);
@@ -913,6 +914,6 @@ yaffs_fsx_main(const char *mount_pt, int numops)
 	while (numops == -1 || numops--)
 		yaffs_fsx_do_op();
 	yaffs_fsx_complete();
-	
+
 	return 0;
 }

@@ -224,6 +224,8 @@ static int m18_drv_ReadChunkFromNAND(struct yaffs_dev *dev,int nand_chunk,
 	u32 *dataAddr = Chunk2DataAddr(dev,nand_chunk);
 	u32 *spareAddr = Chunk2SpareAddr(dev,nand_chunk);
 
+	(void) data_len;
+
 	if(data)
 	{
 		m18_drv_FlashRead32(dataAddr,(u32 *)data,dev->param.total_bytes_per_chunk / 4);
@@ -305,7 +307,7 @@ static int m18_drv_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
 
 static int m18_drv_InitialiseNAND(struct yaffs_dev *dev)
 {
-	int i;
+	u32 i;
 
 	m18_drv_FlashInit();
 	/* Go through the blocks formatting them if they are not formatted */

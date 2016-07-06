@@ -93,7 +93,6 @@ static int nops_so_far;
 
 int ops_multiplier;
 
-
 static void yflash2_MaybePowerFail(unsigned int nand_chunk, int failPoint)
 {
 
@@ -109,12 +108,6 @@ static void yflash2_MaybePowerFail(unsigned int nand_chunk, int failPoint)
     	exit(0);
   }
 }
-
-
-
-
-
-static u8 localBuffer[PAGE_SIZE];
 
 static char *NToName(char *buf,int n)
 {
@@ -277,7 +270,7 @@ static int yflash2_ReadChunk(struct yaffs_dev *dev, int nand_chunk,
 
 static int yflash2_EraseBlock(struct yaffs_dev *dev, int block_no)
 {
-	int i;
+	u32 i;
 	int h;
 
 	CheckInit();
@@ -292,7 +285,6 @@ static int yflash2_EraseBlock(struct yaffs_dev *dev, int block_no)
 
 		u8 pg[PAGE_SIZE];
 		int syz = PAGE_SIZE;
-		int pos;
 
 		memset(pg,0xff,syz);
 
@@ -303,7 +295,6 @@ static int yflash2_EraseBlock(struct yaffs_dev *dev, int block_no)
 		{
 			write(h,pg,PAGE_SIZE);
 		}
-		pos = lseek(h, 0,SEEK_CUR);
 
 		return YAFFS_OK;
 	}

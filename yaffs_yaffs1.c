@@ -22,10 +22,10 @@
 int yaffs1_scan(struct yaffs_dev *dev)
 {
 	struct yaffs_ext_tags tags;
-	int blk;
+	u32 blk;
 	int result;
 	int chunk;
-	int c;
+	u32 c;
 	int deleted;
 	enum yaffs_block_state state;
 	LIST_HEAD(hard_list);
@@ -98,6 +98,8 @@ int yaffs1_scan(struct yaffs_dev *dev)
 			result = yaffs_rd_chunk_tags_nand(dev, chunk, NULL,
 							  &tags);
 
+			if (result != YAFFS_OK)
+				continue;
 			/* Let's have a good look at this chunk... */
 
 			if (tags.ecc_result == YAFFS_ECC_RESULT_UNFIXED ||

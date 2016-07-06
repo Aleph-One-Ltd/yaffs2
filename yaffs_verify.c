@@ -77,10 +77,10 @@ void yaffs_verify_blk(struct yaffs_dev *dev, struct yaffs_block_info *bi, int n)
 	actually_used = bi->pages_in_use - bi->soft_del_pages;
 
 	if (bi->pages_in_use < 0 ||
-	    bi->pages_in_use > dev->param.chunks_per_block ||
+	    bi->pages_in_use > (int)dev->param.chunks_per_block ||
 	    bi->soft_del_pages < 0 ||
-	    bi->soft_del_pages > dev->param.chunks_per_block ||
-	    actually_used < 0 || actually_used > dev->param.chunks_per_block)
+	    bi->soft_del_pages > (int)dev->param.chunks_per_block ||
+	    actually_used < 0 || actually_used > (int)dev->param.chunks_per_block)
 		yaffs_trace(YAFFS_TRACE_VERIFY,
 			"Block %d has illegal values pages_in_used %d soft_del_pages %d",
 			n, bi->pages_in_use, bi->soft_del_pages);
@@ -110,8 +110,8 @@ void yaffs_verify_collected_blk(struct yaffs_dev *dev,
 
 void yaffs_verify_blocks(struct yaffs_dev *dev)
 {
-	int i;
-	int state_count[YAFFS_NUMBER_OF_BLOCK_STATES];
+	u32 i;
+	u32 state_count[YAFFS_NUMBER_OF_BLOCK_STATES];
 	int illegal_states = 0;
 
 	if (yaffs_skip_verification(dev))
@@ -149,7 +149,7 @@ void yaffs_verify_blocks(struct yaffs_dev *dev)
 			dev->blocks_in_checkpt,
 			state_count[YAFFS_BLOCK_STATE_CHECKPOINT]);
 
-	if (dev->n_erased_blocks != state_count[YAFFS_BLOCK_STATE_EMPTY])
+	if (dev->n_erased_blocks != (int)state_count[YAFFS_BLOCK_STATE_EMPTY])
 		yaffs_trace(YAFFS_TRACE_VERIFY,
 			"Erased block count wrong dev %d count %d",
 			dev->n_erased_blocks,
@@ -201,7 +201,7 @@ void yaffs_verify_oh(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh,
 			tags->obj_id, oh->parent_obj_id);
 
 	if (parent_check && obj->parent &&
-	    oh->parent_obj_id != obj->parent->obj_id &&
+	    oh->parent_obj_id !=  obj->parent->obj_id &&
 	    (oh->parent_obj_id != YAFFS_OBJECTID_UNLINKED ||
 	     obj->parent->obj_id != YAFFS_OBJECTID_DELETED))
 		yaffs_trace(YAFFS_TRACE_VERIFY,
@@ -224,12 +224,11 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 {
 	u32 x;
 	int required_depth;
-	int actual_depth;
 	int last_chunk;
 	u32 offset_in_chunk;
 	u32 the_chunk;
 
-	u32 i;
+	int i;
 	struct yaffs_dev *dev;
 	struct yaffs_ext_tags tags;
 	struct yaffs_tnode *tn;
@@ -256,8 +255,6 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 		required_depth++;
 	}
 
-	actual_depth = obj->variant.file_variant.top_level;
-
 	/* Check that the chunks in the tnode tree are all correct.
 	 * We do this by scanning through the tnode tree and
 	 * checking the tags for every chunk match.
@@ -276,7 +273,7 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 		if (the_chunk > 0) {
 			yaffs_rd_chunk_tags_nand(dev, the_chunk, NULL,
 						 &tags);
-			if (tags.obj_id != obj_id || tags.chunk_id != i)
+			if (tags.obj_id != obj_id || tags.chunk_id != (u32)i)
 				yaffs_trace(YAFFS_TRACE_VERIFY,
 					"Object %d chunk_id %d NAND mismatch chunk %d tags (%d:%d)",
 					obj_id, i, the_chunk,

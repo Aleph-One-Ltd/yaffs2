@@ -25,6 +25,7 @@
 #include "yaffs_nandemul2k.h"
 #include "yaffs_trace.h"
 #include "yaffs_osglue.h"
+#include "yaffs_nandsim_file.h"
 
 
 #include <errno.h>

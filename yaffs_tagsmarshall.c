@@ -101,6 +101,9 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 		BUG();
 
 
+	if (retval == YAFFS_FAIL)
+		return YAFFS_FAIL;
+
 	if (dev->param.inband_tags) {
 		if (tags) {
 			struct yaffs_packed_tags2_tags_only *pt2tp;
@@ -122,7 +125,7 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 		dev->n_ecc_unfixed++;
 	}
 
-	if (tags && ecc_result == -YAFFS_ECC_RESULT_FIXED) {
+	if (tags && ecc_result == YAFFS_ECC_RESULT_FIXED) {
 		if (tags->ecc_result <= YAFFS_ECC_RESULT_NO_ERROR)
 			tags->ecc_result = YAFFS_ECC_RESULT_FIXED;
 		dev->n_ecc_fixed++;

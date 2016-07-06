@@ -28,6 +28,7 @@
 #include "yaffs_nameval.h"
 #include "yaffs_guts.h"
 #include "yportenv.h"
+#include "yaffs_endian.h"
 
 static int nval_find(struct yaffs_dev *dev,
 		     const char *xb, int xb_size, const YCHAR *name,
@@ -47,7 +48,7 @@ static int nval_find(struct yaffs_dev *dev,
 			return pos;
 		}
 		pos += size;
-		if (pos < xb_size - sizeof(size)) {
+		if (pos < (int)(xb_size - sizeof(size))) {
 			memcpy(&size, xb + pos, sizeof(size));
 			yaffs_do_endian_s32(dev, &size);
 
@@ -69,7 +70,7 @@ static int nval_used(struct yaffs_dev *dev, const char *xb, int xb_size)
 
 	while (size > 0 && (size < xb_size) && (pos + size < xb_size)) {
 		pos += size;
-		if (pos < xb_size - sizeof(size)) {
+		if (pos < (int)(xb_size - sizeof(size))) {
 			memcpy(&size, xb + pos, sizeof(size));
 			yaffs_do_endian_s32(dev, &size);
 		} else
@@ -192,7 +193,7 @@ int nval_list(struct yaffs_dev *dev, const char *xb, int xb_size, char *buf, int
 	memcpy(&size, xb + pos, sizeof(size));
 	yaffs_do_endian_s32(dev, &size);
 
-	while (size > sizeof(size) &&
+	while (size > (int)(sizeof(size)) &&
 		size <= xb_size &&
 		(pos + size) < xb_size &&
 		!filled) {
@@ -213,7 +214,7 @@ int nval_list(struct yaffs_dev *dev, const char *xb, int xb_size, char *buf, int
 			filled = 1;
 		}
 		pos += size;
-		if (pos < xb_size - sizeof(size)) {
+		if (pos < (int)(xb_size - sizeof(size))) {
 			memcpy(&size, xb + pos, sizeof(size));
 			yaffs_do_endian_s32(dev, &size);
 		}

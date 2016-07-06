@@ -53,6 +53,9 @@ int yaffsfs_GetLastError(void)
  */
 int yaffsfs_CheckMemRegion(const void *addr, size_t size, int write_request)
 {
+	(void) size;
+	(void) write_request;
+
 	if(!addr)
 		return -1;
 	return 0;
@@ -90,6 +93,8 @@ static void *bg_gc_func(void *dummy)
 	int urgent = 0;
 	int result;
 	int next_urgent;
+
+	(void)dummy;
 
 	/* Sleep for a bit to allow start up */
 	sleep(2);

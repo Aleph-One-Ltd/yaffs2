@@ -83,7 +83,7 @@ static int yaffs_nand_drv_WriteChunk(struct yaffs_dev *dev, int nand_chunk,
 
 	/* Set up and execute transfer */
 
-	tr[0].buffer = data;
+	tr[0].buffer = (u8 *)data;
 	tr[0].offset = 0;
 	tr[0].nbytes = data_len;
 
@@ -196,8 +196,6 @@ static int yaffs_nand_drv_CheckBad(struct yaffs_dev *dev, int block_no)
 	struct nand_chip *chip = dev_to_chip(dev);
 	u8 *buffer = dev_to_buffer(dev);
 	int nand_chunk = block_no * chip->pages_per_block;
-	int ret;
-
 	struct nanddrv_transfer tr[1];
 
 	memset(buffer, 0, chip->spare_bytes_per_page);
@@ -206,7 +204,7 @@ static int yaffs_nand_drv_CheckBad(struct yaffs_dev *dev, int block_no)
 	tr[0].offset = chip->data_bytes_per_page;
 	tr[0].nbytes = chip->spare_bytes_per_page;
 
-	ret = nanddrv_read_tr(chip, nand_chunk, tr, 1);
+	nanddrv_read_tr(chip, nand_chunk, tr, 1);
 
 	/* Check that bad block marker is not set */
 	if(yaffs_hweight8(buffer[0]) + yaffs_hweight8(buffer[1]) < 14)

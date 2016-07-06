@@ -13,7 +13,7 @@
 
 
 #include "yaffs_nandsim_file.h"
-
+#include "yaffs_nand_drv.h"
 #include "nandsim_file.h"
 #include "nand_chip.h"
 #include "yaffs_guts.h"

@@ -77,6 +77,7 @@ static int sizeInMB = EM_SIZE_IN_MEG;
 
 static void nandemul_yield(int n)
 {
+	(void)n;
 #ifdef __KERNEL__
 	if(n > 0) schedule_timeout(n);
 #endif
@@ -260,34 +261,9 @@ int nandemul2k_ReadChunkWithTagsFromNAND(struct yaffs_dev *dev,int nand_chunk, u
 	return YAFFS_OK;
 }
 
-
-static int nandemul2k_CheckChunkErased(struct yaffs_dev *dev,int nand_chunk)
-{
-	int blk;
-	int pg;
-	int i;
-
-
-
-	blk = nand_chunk/PAGES_PER_BLOCK;
-	pg = nand_chunk%PAGES_PER_BLOCK;
-
-
-	for(i = 0; i < PAGE_TOTAL_SIZE; i++)
-	{
-		if(ned.block[blk]->page[pg]->data[i] != 0xFF)
-		{
-			return YAFFS_FAIL;
-		}
-	}
-
-	return YAFFS_OK;
-
-}
-
 int nandemul2k_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
 {
-
+	(void) dev;
 
 	if(blockNumber < 0 || blockNumber >= ned.nBlocks)
 	{
@@ -311,6 +287,8 @@ int nandemul2k_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
 
 int nandemul2k_InitialiseNAND(struct yaffs_dev *dev)
 {
+	(void) dev;
+
 	CheckInit();
 	return YAFFS_OK;
 }
@@ -319,6 +297,8 @@ int nandemul2k_MarkNANDBlockBad(struct yaffs_dev *dev, int block_no)
 {
 
 	u8 *x;
+
+	(void) dev;
 
 	x = &ned.block[block_no]->page[0]->data[PAGE_DATA_SIZE];
 

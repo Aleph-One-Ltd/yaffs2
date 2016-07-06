@@ -324,7 +324,7 @@ struct yaffs_obj_hdr {
 	u32 type;  /* enum yaffs_obj_type  */
 
 	/* Apply to everything  */
-	int parent_obj_id;
+	u32 parent_obj_id;
 	u16 sum_no_longer_used;	/* checksum of name. No longer used */
 	YCHAR name[YAFFS_MAX_NAME_LENGTH + 1];
 
@@ -527,14 +527,14 @@ struct yaffs_param {
 	int inband_tags;	/* Use unband tags */
 	u32 total_bytes_per_chunk;	/* Should be >= 512, does not need to
 					 be a power of 2 */
-	int chunks_per_block;	/* does not need to be a power of 2 */
-	int spare_bytes_per_chunk;	/* spare area size */
-	int start_block;	/* Start block we're allowed to use */
-	int end_block;		/* End block we're allowed to use */
-	int n_reserved_blocks;	/* Tuneable so that we can reduce
+	u32 chunks_per_block;	/* does not need to be a power of 2 */
+	u32 spare_bytes_per_chunk;	/* spare area size */
+	u32 start_block;	/* Start block we're allowed to use */
+	u32 end_block;		/* End block we're allowed to use */
+	u32 n_reserved_blocks;	/* Tuneable so that we can reduce
 				 * reserved blocks on NOR and RAM. */
 
-	int n_caches;		/* If <= 0, then short op caching is disabled,
+	u32 n_caches;		/* If == 0, then short op caching is disabled,
 				 * else the number of short op caches.
 				 */
 	int cache_bypass_aligned; /* If non-zero then bypass the cache for
@@ -644,7 +644,7 @@ struct yaffs_dev {
 
 	int ll_init;
 	/* Runtime parameters. Set up by YAFFS. */
-	int data_bytes_per_chunk;
+	u32 data_bytes_per_chunk;
 
 	/* Non-wide tnode stuff */
 	u16 chunk_grp_bits;	/* Number of bits that need to be resolved if
@@ -670,8 +670,8 @@ struct yaffs_dev {
 	int swap_endian;	/* Stored endian needs endian swap. */
 
 	/* Stuff to support block offsetting to support start block zero */
-	int internal_start_block;
-	int internal_end_block;
+	u32 internal_start_block;
+	u32 internal_end_block;
 	int block_offset;
 	int chunk_offset;
 
@@ -681,12 +681,12 @@ struct yaffs_dev {
 	int checkpt_byte_offs;
 	u8 *checkpt_buffer;
 	int checkpt_open_write;
-	int blocks_in_checkpt;
+	u32 blocks_in_checkpt;
 	int checkpt_cur_chunk;
 	int checkpt_cur_block;
 	int checkpt_next_block;
 	int *checkpt_block_list;
-	int checkpt_max_blocks;
+	u32 checkpt_max_blocks;
 	u32 checkpt_sum;
 	u32 checkpt_xor;
 
@@ -891,6 +891,8 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev);
 
 int yaffs_rename_obj(struct yaffs_obj *old_dir, const YCHAR * old_name,
 		     struct yaffs_obj *new_dir, const YCHAR * new_name);
+
+int yaffs_unlink_obj(struct yaffs_obj *obj);
 
 int yaffs_unlinker(struct yaffs_obj *dir, const YCHAR * name);
 int yaffs_del_obj(struct yaffs_obj *obj);
