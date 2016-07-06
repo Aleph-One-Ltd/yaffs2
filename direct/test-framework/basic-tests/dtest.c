@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "yaffsfs.h"
 
@@ -215,6 +216,8 @@ void verify_file_of_size(const char *fn,int syze)
 		l = strlen(xx);
 
 		result = yaffs_read(h,yy,l);
+		if (result)
+			printf("result in line %d is %d", __LINE__, result);
 		yy[l] = 0;
 
 		if(strcmp(xx,yy)){
@@ -386,6 +389,8 @@ void scan_pattern_test(const char *path, int fsize, int niterations)
 			make_pattern_file(fn[j],fsize);
 			result = dump_file_data(fn[j]);
 			result = check_pattern_file(fn[j]);
+			if (result)
+				printf("result in line %d is %d", __LINE__, result);
 		}
 		yaffs_unmount(path);
 	}
@@ -396,7 +401,7 @@ void fill_disk(const char *path,int nfiles)
 	int h;
 	int n;
 	int result;
-	int f;
+	int f =0;
 
         static char xx[600];
 	char str[50];
@@ -413,8 +418,9 @@ void fill_disk(const char *path,int nfiles)
 		{
 			f = yaffs_freespace(path);
 		}
+		printf("last freespace was %d\n", f);
 		result = yaffs_close(h);
-		printf(" close %d\n",result);
+		printf(" close %d\n", result);
 	}
 }
 
@@ -433,7 +439,7 @@ void fill_disk_and_delete(const char *path, int nfiles, int ncycles)
 		{
 			sprintf(str,"%s/%d",path,j);
 			result = yaffs_unlink(str);
-			printf("unlinking file %s, result %d\n",str,result);
+			printf("unlinking file %s, result %d\n", str, result);
 		}
 	}
 }
@@ -530,7 +536,8 @@ void dumpDirFollow(const char *dname)
 
 			yaffs_lstat(str,&s);
 
-			printf("%s ino %lld length %d mode %X ",de->d_name,(int)s.st_ino,s.st_size,s.st_mode);
+			printf("%s ino %d length %d mode %X ",
+				de->d_name, (int)s.st_ino, (int)s.st_size, s.st_mode);
 			switch(s.st_mode & S_IFMT)
 			{
 				case S_IFREG: printf("data file"); break;
@@ -577,8 +584,8 @@ void dump_directory_tree_worker(const char *dname,int recursive)
 
 			yaffs_lstat(str,&s);
 
-			printf("%s inode %d obj %x length %lld mode %X ",
-				str,s.st_ino,de->d_dont_use, s.st_size,s.st_mode);
+			printf("%s inode %d length %d mode %X ",
+				str, s.st_ino, (int)s.st_size, s.st_mode);
 			switch(s.st_mode & S_IFMT)
 			{
 				case S_IFREG: printf("data file"); break;
@@ -634,8 +641,8 @@ void dump_directory_tree_worker_fd(const char *dname,int recursive)
 
 			yaffs_lstat(str,&s);
 
-			printf("%s inode %d obj %x length %lld mode %X ",
-				str,s.st_ino,de->d_dont_use, s.st_size,s.st_mode);
+			printf("%s inode %d length %d mode %X ",
+				str,s.st_ino, (int)s.st_size, s.st_mode);
 			switch(s.st_mode & S_IFMT)
 			{
 				case S_IFREG: printf("data file"); break;
@@ -710,6 +717,9 @@ int long_test(int argc, char *argv[])
 	int h;
 	mode_t temp_mode;
 	struct yaffs_stat ystat;
+
+	(void) argc;
+	(void) argv;
 
 	yaffs_start_up();
 
@@ -1007,6 +1017,8 @@ int huge_directory_test_on_path(char *path)
 
 int yaffs_scan_test(const char *path)
 {
+	(void) path;
+
 	return 0;
 }
 
@@ -1100,7 +1112,11 @@ int resize_stress_test(const char *path)
 			{
 				//expand
 				r = yaffs_lseek(a,i * 500,SEEK_SET);
+				if (r < 0)
+					printf("At line %d, r is %d\n", __LINE__, r);
 				r = yaffs_write(a,abuffer,1000);
+				if (r < 0)
+					printf("At line %d, r is %d\n", __LINE__, r);
 			}
 			x++;
 
@@ -1225,6 +1241,8 @@ int resize_stress_test_no_grow_complex(const char *path,int iters)
 				//expand
 				r = yaffs_lseek(a,500,SEEK_END);
 				r = yaffs_write(a,abuffer,1000);
+				if (r < 0)
+					printf("At line %d, r is %d\n", __LINE__, r);
 			}
 			x++;
 
@@ -1299,6 +1317,8 @@ int resize_stress_test_no_grow(const char *path,int iters)
 				//expand
 				r = yaffs_lseek(a,-500,SEEK_END);
 				r = yaffs_write(a,abuffer,1000);
+				if (r < 0)
+					printf("At line %d, r is %d\n", __LINE__, r);
 			}
 			x++;
 
@@ -1330,6 +1350,9 @@ int directory_rename_test(void)
 	printf("Do rename (should fail)\n");
 
 	r = yaffs_rename("/ram/a","/ram/a/b/d");
+	if (r < 0)
+		printf("At line %d, r is %d\n", __LINE__, r);
+
 	printf("\nDirectory look-up of /ram\n");
 	dumpDir("/ram");
 	dumpDir("/ram/a");
@@ -1434,13 +1457,13 @@ int free_space_check(void)
 {
 	int f;
 
-		yaffs_start_up();
-		yaffs_mount("/boot");
-	    fill_disk("/boot/",2);
-	    f = yaffs_freespace("/boot");
+	yaffs_start_up();
+	yaffs_mount("/boot");
+	fill_disk("/boot/",2);
+	f = yaffs_freespace("/boot");
 
-	    printf("%d free when disk full\n",f);
-	    return 1;
+	printf("%d free when disk full\n",f);
+	return 1;
 }
 
 int truncate_test(void)
@@ -1473,7 +1496,7 @@ int truncate_test(void)
 
 	r = yaffs_read(a,y,10);
 
-	printf("read %d bytes:",r);
+	printf("read %d bytes:", r);
 
 	for(i = 0; i < r; i++) printf("[%02X]",y[i]);
 
@@ -2042,10 +2065,7 @@ void multi_mount_test(const char *mountpt,int nmounts)
 	for(i = 0; i < nmounts; i++){
 		int h0;
 		int h1;
-		int len0;
-		int len1;
-
-		static char xx[1000];
+		char xx[1000];
 
 		printf("############### Iteration %d   Start\n",i);
 		if(1 || i == 0 || i == 5)
@@ -2073,8 +2093,8 @@ void multi_mount_test(const char *mountpt,int nmounts)
 		   yaffs_write(h1,xx,1000);
 		}
 #endif
-		len0 = yaffs_lseek(h0,0,SEEK_END);
-		len1 = yaffs_lseek(h1,0,SEEK_END);
+		yaffs_lseek(h0,0,SEEK_END);
+		yaffs_lseek(h1,0,SEEK_END);
 
 		yaffs_lseek(h0,0,SEEK_SET);
 		yaffs_lseek(h1,0,SEEK_SET);
@@ -2108,8 +2128,6 @@ void small_mount_test(const char *mountpt,int nmounts)
 
 	int h0;
 	int h1;
-	int len0;
-	int len1;
 	int nread;
 
 	sprintf(a,"%s/a",mountpt);
@@ -2120,7 +2138,7 @@ void small_mount_test(const char *mountpt,int nmounts)
 
 	for(i = 0; i < nmounts; i++){
 
-		static char xx[1000];
+		char xx[1000];
 
 		printf("############### Iteration %d   Start\n",i);
 		if(1 || i == 0 || i == 5)
@@ -2148,8 +2166,8 @@ void small_mount_test(const char *mountpt,int nmounts)
 			yaffs_write(h1,xx,nread);
 
 
-		len0 = yaffs_lseek(h0,0,SEEK_END);
-		len1 = yaffs_lseek(h1,0,SEEK_END);
+		yaffs_lseek(h0,0,SEEK_END);
+		yaffs_lseek(h1,0,SEEK_END);
 
 		yaffs_lseek(h0,0,SEEK_SET);
 		yaffs_lseek(h1,0,SEEK_SET);
@@ -2345,7 +2363,7 @@ int make_file2(const char *name1, const char *name2,int syz)
 
 extern void SetCheckpointReservedBlocks(int n);
 
-void checkpoint_upgrade_test(const char *mountpt,int nmounts)
+void checkpoint_upgrade_test(const char *mountpt, int nmounts)
 {
 
 	char a[50];
@@ -2355,10 +2373,9 @@ void checkpoint_upgrade_test(const char *mountpt,int nmounts)
 
 	int j;
 
+	(void) nmounts;
+
 	sprintf(a,"%s/a",mountpt);
-
-
-
 
 	printf("Create start condition\n");
 	yaffs_start_up();
@@ -2465,10 +2482,13 @@ void random_seek(int h)
 	yaffs_lseek(h,n,SEEK_SET);
 }
 
-void random_truncate(int h, char * name)
+void random_truncate(int h, char *name)
 {
 	int n;
 	int flen;
+
+	(void) name;
+
 	n = random() & 0xFFFFF;
 	flen = yaffs_lseek(h,0,SEEK_END);
 	if(n > flen)
@@ -2609,7 +2629,6 @@ void basic_utime_test(const char *mountpt)
 	char name[100];
 	int h;
 	int result;
-	int val1;
 	struct yaffs_utimbuf utb;
 	struct yaffs_stat st;
 
@@ -2626,24 +2645,32 @@ void basic_utime_test(const char *mountpt)
 	printf("created\n");
 	h = yaffs_open(name,O_CREAT | O_TRUNC | O_RDWR, S_IREAD | S_IWRITE);
 
-	yaffs_fstat(h,&st); printf(" times %u %u %u\n",st.yst_atime, st.yst_ctime, st.yst_mtime);
+	yaffs_fstat(h,&st);
+	printf(" times %lu %lu %lu\n",
+			st.yst_atime, st.yst_ctime, st.yst_mtime);
 
 	utb.actime = 1000;
 	utb.modtime = 2000;
 	result = yaffs_futime(h,&utb);
 	printf("futime to a 1000 m 2000 result %d\n",result);
-	yaffs_fstat(h,&st); printf(" times %u %u %u\n",st.yst_atime, st.yst_ctime, st.yst_mtime);
+	yaffs_fstat(h,&st);
+	printf(" times %lu %lu %lu\n",
+			st.yst_atime, st.yst_ctime, st.yst_mtime);
 
 
 	utb.actime = 5000;
 	utb.modtime = 8000;
 	result = yaffs_utime(name, &utb);
 	printf("utime to a 5000 m 8000 result %d\n",result);
-	yaffs_fstat(h,&st); printf(" times %u %u %u\n",st.yst_atime, st.yst_ctime, st.yst_mtime);
+	yaffs_fstat(h,&st);
+	printf(" times %lu %lu %lu\n",
+			st.yst_atime, st.yst_ctime, st.yst_mtime);
 
 	result = yaffs_utime(name, NULL);
 	printf("utime to NULL result %d\n",result);
-	yaffs_fstat(h,&st); printf(" times %u %u %u\n",st.yst_atime, st.yst_ctime, st.yst_mtime);
+	yaffs_fstat(h,&st);
+	printf(" times %lu %lu %lu\n",
+			st.yst_atime, st.yst_ctime, st.yst_mtime);
 
 
 }
@@ -2806,6 +2833,9 @@ void link_follow_test(const char *mountpt)
 	result = yaffs_symlink(fn,sn);
 	result = yaffs_link(sn,hn);
 
+	if (result < 0)
+		printf("At line %d result is %d\n", __LINE__, result);
+
 	h =yaffs_open(hn,O_RDWR,0);
 
 }
@@ -2813,8 +2843,7 @@ void link_follow_test(const char *mountpt)
 void max_files_test(const char *mountpt)
 {
 	char fn[100];
-	char sn[100];
-	char hn[100];
+
 	int result;
 	int h;
 	int i;
@@ -2848,11 +2877,12 @@ void max_files_test(const char *mountpt)
 		result = yaffs_close(h);
 	}
 
+	if (result < 0)
+		printf("At line %d result is %d\n", __LINE__, result);
+
 	yaffs_unmount(mountpt);
-
-	//h =yaffs_open(hn,O_RDWR,0);
-
 }
+
 void case_insensitive_test(const char *mountpt)
 {
         char fn[100];
@@ -2891,7 +2921,7 @@ void case_insensitive_test(const char *mountpt)
         h = yaffs_open(fn2, O_RDONLY, 0);
         ret = yaffs_read(h, buffer, 100);
 
-        if (ret != strlen(fn) + 1 || memcmp(buffer, fn, ret)){
+        if (ret != (int)(strlen(fn) + 1) || memcmp(buffer, fn, ret)){
 		printf("wrong file read\n");
         } else {
 		printf("File %s is the same as file %s\n", fn, fn2);
@@ -2924,7 +2954,6 @@ void start_twice(const char *mountpt)
 #define BUFFER_N 1100
 unsigned  xxbuffer[BUFFER_N];
 
-
 void set_buffer(int n)
 {
 	int i;
@@ -2941,12 +2970,12 @@ void write_big_sparse_file(int h)
 	int wrote;
 
 	for(i = 0; i < N_WRITES; i++) {
-		printf("writing at %lld\n", offset);
+		printf("writing at %d\n", (int)offset);
 		set_buffer(i);
 		pos = yaffs_lseek(h, offset, SEEK_SET);
 		if(pos != offset) {
-			printf("mismatched seek pos %lld offset %lld\n",
-				pos, offset);
+			printf("mismatched seek pos %d offset %d\n",
+				(int)pos, (int)offset);
 			perror("lseek64");
 			exit(1);
 		}
@@ -2964,9 +2993,6 @@ void write_big_sparse_file(int h)
 
 }
 
-
-
-
 void verify_big_sparse_file(int h)
 {
 	unsigned check_buffer[BUFFER_N];
@@ -2975,23 +3001,19 @@ void verify_big_sparse_file(int h)
 	loff_t pos;
 	int n = sizeof(check_buffer);
 	int result;
-	const char * check_type;
 	int checks_failed = 0;
 	int checks_passed = 0;
 
 	for(i = 0; i < N_WRITES * STRIDE; i++) {
 		if(i % STRIDE) {
-			check_type = "zero";
 			memset(xxbuffer,0, n);
 		} else {
-			check_type = "buffer";
 			set_buffer(i/STRIDE);
 		}
-		//printf("%s checking %lld\n", check_type, offset);
 		pos = yaffs_lseek(h, offset, SEEK_SET);
 		if(pos != offset) {
-			printf("mismatched seek pos %lld offset %lld\n",
-				pos, offset);
+			printf("mismatched seek pos %d offset %d\n",
+				(int)pos, (int)offset);
 			perror("lseek64");
 			exit(1);
 		}
@@ -3002,13 +3024,10 @@ void verify_big_sparse_file(int h)
 			exit(1);
 		}
 
-
-
-
 		if(memcmp(xxbuffer, check_buffer, n)) {
 			int j;
 
-			printf("buffer at %lld mismatches\n", pos);
+			printf("buffer at %d mismatches\n", (int)pos);
 			printf("xxbuffer ");
 			for(j = 0; j < 20; j++)
 				printf(" %d",xxbuffer[j]);
@@ -3088,7 +3107,7 @@ void large_file_test(const char *mountpt)
 	handle = yaffs_open(fullname, O_RDWR, 0);
 
 	file_end = yaffs_lseek(handle, 0, SEEK_END);
-	printf("file_end %lld\n", file_end);
+	printf("file_end %d\n", (int)file_end);
 	for(i = 0; i < 10000; i++)
 		yaffs_write(handle, xx_buffer, sizeof(xx_buffer));
 	yaffs_ftruncate(handle, file_end);
@@ -3125,8 +3144,6 @@ int  mk_file(const char *mp, const char *name)
 
 void xx_test(const char *mountpt)
 {
-	char xx_buffer[1000];
-
 	yaffs_start_up();
 
 	yaffs_format(mountpt,0,0,0);
@@ -3154,8 +3171,6 @@ void xx_test(const char *mountpt)
 
 void yy_test(const char *mountpt)
 {
-	char xx_buffer[1000];
-
 	yaffs_start_up();
 
 	yaffs_mount(mountpt);
@@ -3165,13 +3180,8 @@ void yy_test(const char *mountpt)
 
 void readdir_test(const char *mountpt)
 {
-	char xx_buffer[1000];
 	int i;
-	int handle;
-	char fullname[100];
-
 	yaffs_DIR *dirs[100];
-
 
 	yaffs_trace_mask = 0;
 
@@ -3268,7 +3278,6 @@ void dir_fd_test(const char *mountpt)
 {
 	char name[100];
 	int h;
-	int ret;
 	int i;
 
 	yaffs_start_up();
@@ -3334,8 +3343,6 @@ void create_delete_many_files_test(const char *mountpt)
 
 void find_device_check(void)
 {
-	char name[200];
-
 	yaffs_start_up();
 	yaffs_mount("/nand");
 	yaffs_mount("/");
@@ -3405,6 +3412,9 @@ int simulate_power_failure;
 
 int main(int argc, char *argv[])
 {
+	(void) argc;
+	(void) argv;
+
 	random_seed = time(NULL);
 	//return long_test(argc,argv);
 
@@ -3428,7 +3438,7 @@ int main(int argc, char *argv[])
 	//link_test0("/nand");
 	//link_test1("yaffs2");
 	 //scan_pattern_test("/flash",10000,10);
-	//short_scan_test("/flash/flash",40000,200);
+	short_scan_test("/yflash2",40000,200);
 	  //small_mount_test("/flash/flash",1000);
 	  //small_overwrite_test("/flash/flash",1000);
 	  //seek_overwrite_test("/flash/flash",1000);
@@ -3488,7 +3498,7 @@ int main(int argc, char *argv[])
 	//format_test("/nand");
 
 	//opendir_test();
-	rmdir_test2();
+	//rmdir_test2();
 
 	//create_delete_many_files_test("/nand");
 	 return 0;
