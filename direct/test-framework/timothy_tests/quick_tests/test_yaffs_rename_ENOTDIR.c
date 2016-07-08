@@ -29,7 +29,7 @@ int test_yaffs_rename_ENOTDIR(void)
 			return -1;
 		}
 	}
-	output = yaffs_rename("yaffs2/test_dir/foo/file" , RENAME_PATH);
+	output = yaffs_rename(FILE_PATH "/file" , RENAME_PATH);
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){
