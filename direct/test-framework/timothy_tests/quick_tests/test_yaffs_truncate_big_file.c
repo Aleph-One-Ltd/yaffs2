@@ -19,7 +19,7 @@ int test_yaffs_truncate_big_file(void)
 	int error=0;
 	int output=0;
 
-	output= yaffs_truncate("/yaffs2/foo",10000000000000000000000000000000000000000000 );
+	output= yaffs_truncate("/yaffs2/foo", YAFFS_TEST_LONG_VALUE);
 	if (output<0){
 		error=yaffs_get_error();
 		if (abs(error)==EINVAL){	/*in yaffs EINVAL is used instead of big_file */

@@ -12,6 +12,7 @@
  */
 
 #include "test_yaffs_flush.h"
+#include "test_yaffs_open.h"
 
 static int handle =-1;
 

@@ -19,7 +19,7 @@ int test_yaffs_fdatasync_NULL(void)
 {
 	int output = 0;
 	int error_code = 0;
-	output = yaffs_fdatasync(NULL);
+	output = yaffs_fdatasync(999);
 	if (output==-1){
 		error_code=yaffs_get_error();
 		if (abs(error_code)==EBADF){

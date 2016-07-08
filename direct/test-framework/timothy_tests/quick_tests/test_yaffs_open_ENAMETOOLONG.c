@@ -19,7 +19,6 @@ static int handle = -1;
 
 int test_yaffs_open_ENAMETOOLONG(void)
 {
-	int output = 0;
 	int x = 0;
 	int error_code = 0;
 	int file_name_length = 1000000;

@@ -19,7 +19,7 @@ int test_yaffs_fchmod_NULL(void)
 	int error = 0;
 	int output = 0;
 
-	output = yaffs_fchmod(NULL,S_IREAD|S_IWRITE);
+	output = yaffs_fchmod(999, S_IREAD|S_IWRITE);
 
 	if (output<0){
 		error=yaffs_get_error();

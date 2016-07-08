@@ -12,7 +12,7 @@
  */
 
 #include "test_yaffs_lstat.h"
-
+#include "test_yaffs_open.h"
 
 int test_yaffs_lstat(void)
 {

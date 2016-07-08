@@ -13,8 +13,6 @@
 
 #include "test_yaffs_ftruncate_EBADF.h"
 
-static int handle = 0;
-
 int test_yaffs_ftruncate_EBADF(void)
 {
 	int output = 0;

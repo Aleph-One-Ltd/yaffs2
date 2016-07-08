@@ -35,9 +35,8 @@ int test_yaffs_lseek(void)
 		}
 	} else {
 		print_message("error opening file\n", 2);
-		return -1;
 	}
-	
+	return -1;
 }
 
 int test_yaffs_lseek_clean(void)

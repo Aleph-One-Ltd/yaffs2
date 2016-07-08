@@ -22,7 +22,7 @@ int test_yaffs_dup(void)
 		handle2 =yaffs_dup(handle);
 		return handle2;
 	}
-	
+	return handle;	
 }
 
 

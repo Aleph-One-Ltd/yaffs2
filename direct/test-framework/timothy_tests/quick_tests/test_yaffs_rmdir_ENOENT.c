@@ -37,7 +37,6 @@ int test_yaffs_rmdir_ENOENT(void)
 
 int test_yaffs_rmdir_ENOENT_clean(void)
 {
-	int output = 0;
 	return 1;
 }
 

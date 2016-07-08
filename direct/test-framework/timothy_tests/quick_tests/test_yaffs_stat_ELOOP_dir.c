@@ -18,8 +18,6 @@ int test_yaffs_stat_ELOOP_dir(void)
 	int error_code=0;
 	struct yaffs_stat stat;
 	int output=0;
-	char text[100];
-	text[0] ='\0';
 
 	if (set_up_ELOOP()<0){
 		print_message("failed to setup symlinks\n",2);

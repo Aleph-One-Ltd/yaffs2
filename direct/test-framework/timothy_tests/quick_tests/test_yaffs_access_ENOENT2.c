@@ -13,8 +13,6 @@
 
 #include "test_yaffs_access_ENOENT2.h"
 
-static int handle=0;
-
 int test_yaffs_access_ENOENT2(void)
 {
 	int output=0;

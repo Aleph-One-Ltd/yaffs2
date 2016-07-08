@@ -19,7 +19,6 @@ int test_yaffs_rmdir_EBUSY(void)
 	int output=0;
 	int error_code =0;
 
-
 	output = yaffs_rmdir("/yaffs2/");
 	if (output<0){ 
 		error_code=yaffs_get_error();
@@ -38,9 +37,6 @@ int test_yaffs_rmdir_EBUSY(void)
 
 int test_yaffs_rmdir_EBUSY_clean(void)
 {
-	int output = 0;
-
 	return 1;
-
 }
 

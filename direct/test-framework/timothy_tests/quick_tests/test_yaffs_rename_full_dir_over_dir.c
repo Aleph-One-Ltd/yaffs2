@@ -20,7 +20,6 @@ int  test_yaffs_rename_full_dir_over_dir(void)
 {
 
 	int output=0;
-	int error_code =0;
 
 	if (yaffs_mkdir(DIR_PATH,O_CREAT | O_RDWR)==-1){
 		print_message("failed to create dir\n",1);

@@ -12,6 +12,8 @@
  */
 
 #include "test_yaffs_open_EROFS.h"
+#include "test_yaffs_open.h"
+
 static int output =0;
 
 int test_yaffs_unlink_EROFS(void)

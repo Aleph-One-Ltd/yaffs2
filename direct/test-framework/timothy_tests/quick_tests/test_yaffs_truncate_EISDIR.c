@@ -12,7 +12,6 @@
  */
 
 #include "test_yaffs_truncate.h"
-static int handle= -1;
 
 int test_yaffs_truncate_EISDIR(void)
 {

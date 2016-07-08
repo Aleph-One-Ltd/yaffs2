@@ -12,7 +12,7 @@
  */
 
 #include "test_yaffs_rename_EROFS.h"
-
+#include "test_yaffs_open.h"
 
 int test_yaffs_rename_EROFS(void)
 {

@@ -17,7 +17,6 @@
 int test_yaffs_rename(void)
 {
 	int output=0;
-	int error_code =0;
 
 	if (0 !=  yaffs_access(FILE_PATH,0)) {
 		output = test_yaffs_open();

@@ -16,8 +16,6 @@
 int test_yaffs_remount_force_off_read_only_off(void)
 {
 	int output = -1;
-	int error_code =0;
-
 
 	output = yaffs_remount(YAFFS_MOUNT_POINT,0,0);
 	if (output>=0){

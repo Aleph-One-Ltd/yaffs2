@@ -11,7 +11,7 @@
  * published by the Free Software Foundation.
  */
 
-/* generates a EBADF error by closing a handle twice */
+/* generates a EBADF error by closing a daft handle*/
 
 #include "test_yaffs_close_NULL.h"
 
@@ -23,7 +23,7 @@ int test_yaffs_close_NULL(void)
 	int error_code = 0;
 
 
-	output = yaffs_close(NULL);
+	output = yaffs_close(999);
 	if (output < 0){
 		error_code = yaffs_get_error();
 		if (abs(error_code) == EBADF){

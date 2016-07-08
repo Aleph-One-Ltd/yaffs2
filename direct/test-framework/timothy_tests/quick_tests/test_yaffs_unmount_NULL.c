@@ -33,6 +33,8 @@ int test_yaffs_unmount_NULL(void)
 		print_message("NULL path opened.(which is a bad thing)\n",2);
 		return -1;
 	}
+	
+	return -1;
 }
 
 int test_yaffs_unmount_NULL_clean(void)

@@ -18,8 +18,7 @@ int test_yaffs_stat_ENOENT2(void)
 	int error_code=0;
 	struct yaffs_stat stat;
 	int output=0;
-	char text[100];
-	text[0] ='\0';
+
 	output=yaffs_stat("/non-existing-dir/foo", &stat);;
 	if (output<0){ 
 		error_code=yaffs_get_error();

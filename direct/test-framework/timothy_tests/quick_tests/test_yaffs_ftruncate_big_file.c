@@ -22,7 +22,7 @@ int test_yaffs_ftruncate_big_file(void)
 	handle = test_yaffs_open();
 
 	if (handle >= 0){
-		output = yaffs_ftruncate(handle,10000000000000000000000000000000);
+		output = yaffs_ftruncate(handle,YAFFS_TEST_LONG_VALUE);
 		if (output < 0){
 			error_code = yaffs_get_error();
 			if (abs(error_code) == EINVAL){	/* yaffs uses the error EINVAL instead of big_file */

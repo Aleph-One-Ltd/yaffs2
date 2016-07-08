@@ -12,11 +12,12 @@
  */
 
 #include "test_yaffs_unmount2_with_handle_open_and_forced_mode_on.h"
+#include "test_yaffs_open.h"
 
 int test_yaffs_unmount2_with_handle_open_and_forced_mode_on(void)
 {
 	int output = -1;
-	int error_code =0;
+
 	output=test_yaffs_open();
 	if (output<0) {
 		print_message("failed to open file\n",2);

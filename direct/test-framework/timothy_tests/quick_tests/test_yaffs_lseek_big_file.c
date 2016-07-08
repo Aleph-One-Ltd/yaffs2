@@ -26,7 +26,7 @@ int test_yaffs_lseek_big_file(void)
 		return -1;
 	}
 	
-	output = yaffs_lseek(handle, 100000000000000000000000000000000000000, SEEK_SET);
+	output = yaffs_lseek(handle, YAFFS_TEST_LONG_VALUE, SEEK_SET);
 
 	if (output < 0){
 		error_code = yaffs_get_error();

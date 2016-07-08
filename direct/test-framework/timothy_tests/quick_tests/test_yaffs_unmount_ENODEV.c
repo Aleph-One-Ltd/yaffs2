@@ -31,8 +31,8 @@ int test_yaffs_unmount_ENODEV(void)
 		}
 	} else if (output >=0){
 		print_message("non existant directory opened.(which is a bad thing)\n",2);
-		return -1;
 	}
+	return -1;
 }
 
 int test_yaffs_unmount_ENODEV_clean(void)

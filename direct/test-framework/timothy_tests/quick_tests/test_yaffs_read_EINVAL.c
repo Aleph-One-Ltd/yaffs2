@@ -14,6 +14,7 @@
 /*this is no longer relevent because it is not possiable to read -1 bytes*/
 
 #include "test_yaffs_read_EINVAL.h"
+#include "test_yaffs_write.h"
 
 static int handle = -1;
 static char *file_name = NULL;

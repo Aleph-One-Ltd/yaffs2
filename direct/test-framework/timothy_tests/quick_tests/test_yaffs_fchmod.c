@@ -12,6 +12,7 @@
  */
 
 #include "test_yaffs_fchmod.h"
+#include "test_yaffs_open.h"
 
 static int handle = -1;
 

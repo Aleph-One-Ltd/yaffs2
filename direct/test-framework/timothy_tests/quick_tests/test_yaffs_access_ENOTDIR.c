@@ -13,8 +13,6 @@
 
 #include "test_yaffs_access_ENOTDIR.h"
 
-static int handle=0;
-
 int test_yaffs_access_ENOTDIR(void)
 {
 	int output=0;

@@ -12,11 +12,12 @@
  */
 
 #include "test_yaffs_remount_force_on_read_only_off.h"
+#include "test_yaffs_open.h"
 
 int test_yaffs_remount_force_on_read_only_off(void)
 {
 	int output = -1;
-	int error_code =0;
+
 	output=test_yaffs_open();
 	if (output<0) {
 		print_message("failed to open file\n",2);

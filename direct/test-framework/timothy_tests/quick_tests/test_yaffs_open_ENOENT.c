@@ -17,7 +17,6 @@ static int handle = -1;
 
 int test_yaffs_open_ENOENT(void)
 {
-	int output = 0;
 	int error_code = 0;
 	/*printf("path %s\n",path); */
 	handle = yaffs_open("/yaffs2/non_existant_file", O_TRUNC| O_RDWR,FILE_MODE );
