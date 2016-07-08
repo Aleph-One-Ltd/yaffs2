@@ -24,7 +24,7 @@ int test_yaffs_mkdir_EEXIST(void)
 		print_message("failed to create the directory the first time\n",2);
 		return -1;
 	}
-	output = yaffs_mkdir("/yaffs2/test_dir/new_directory/",O_CREAT | O_RDWR);
+	output = yaffs_mkdir(YAFFS_MOUNT_POINT "/test_dir/new_directory/",O_CREAT | O_RDWR);
 	if (output < 0){
 		error_code = yaffs_get_error();
 		if (abs(error_code) == EEXIST){

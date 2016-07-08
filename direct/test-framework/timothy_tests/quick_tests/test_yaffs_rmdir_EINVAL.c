@@ -26,7 +26,7 @@ int test_yaffs_rmdir_EINVAL(void)
 			return -1;
 		}
 	}
-	output = yaffs_rmdir("/yaffs2/.");
+	output = yaffs_rmdir(YAFFS_MOUNT_POINT "/.");
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==EINVAL){

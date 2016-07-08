@@ -19,7 +19,7 @@ int test_yaffs_unlink_ENOENT(void)
 {
 	int error_code=0;
 
-	handle=yaffs_unlink("/yaffs2/non_existant_file");
+	handle=yaffs_unlink(YAFFS_MOUNT_POINT "/non_existant_file");
 	if (handle==-1){
 		error_code=yaffs_get_error();
 		if (abs(error_code) == ENOENT){

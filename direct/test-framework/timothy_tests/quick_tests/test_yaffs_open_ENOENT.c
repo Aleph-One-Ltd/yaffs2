@@ -19,7 +19,7 @@ int test_yaffs_open_ENOENT(void)
 {
 	int error_code = 0;
 	/*printf("path %s\n",path); */
-	handle = yaffs_open("/yaffs2/non_existant_file", O_TRUNC| O_RDWR,FILE_MODE );
+	handle = yaffs_open(YAFFS_MOUNT_POINT "/non_existant_file", O_TRUNC| O_RDWR,FILE_MODE );
 	if (handle == -1){
 		error_code = yaffs_get_error();
 		if (abs(error_code) == ENOENT){

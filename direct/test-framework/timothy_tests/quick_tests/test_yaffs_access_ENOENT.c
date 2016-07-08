@@ -19,7 +19,7 @@ int test_yaffs_access_ENOENT(void)
 	int output=0;
 	int error_code=0;
 
-	output=yaffs_access("/yaffs2/non_existant_file",0);
+	output=yaffs_access(YAFFS_MOUNT_POINT "/non_existant_file",0);
 	if (output==-1){
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOENT){

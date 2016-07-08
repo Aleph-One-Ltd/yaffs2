@@ -26,7 +26,7 @@ int test_yaffs_rename_dir_ENOENT2(void)
 			return -1;
 		}
 	}
-	output = yaffs_rename( DIR_PATH , "/yaffs2/test_dir/nonexisting-dir/dir");
+	output = yaffs_rename( DIR_PATH , YAFFS_MOUNT_POINT "/test_dir/nonexisting-dir/dir");
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOENT){

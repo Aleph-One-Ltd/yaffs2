@@ -29,7 +29,7 @@ int test_yaffs_rename_EINVAL(void)
 			return -1;
 		}
 	}
-	output = yaffs_rename(DIR_PATH , "/yaffs2/test_dir/new_directory/dir/");
+	output = yaffs_rename(DIR_PATH , YAFFS_MOUNT_POINT "/test_dir/new_directory/dir/");
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==EINVAL){

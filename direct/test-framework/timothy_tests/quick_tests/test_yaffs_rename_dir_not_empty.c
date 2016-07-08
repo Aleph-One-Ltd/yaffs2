@@ -18,7 +18,7 @@ int test_yaffs_rename_dir(void)
 {
 	int output=0;
 	int error_code =0;
-	output = yaffs_open("/yaffs2/new_directory/file",O_CREAT | O_RDWR, S_IREAD | S_IWRITE);
+	output = yaffs_open(YAFFS_MOUNT_POINT "/new_directory/file",O_CREAT | O_RDWR, S_IREAD | S_IWRITE);
 	if (output < 0 )
 
 	if (0 !=  yaffs_access(FILE_PATH,0)) {
@@ -36,8 +36,8 @@ int test_yaffs_rename_dir(void)
 int test_yaffs_rename_dir_clean(void)
 {
 	int output = 0;
-	if (0 ==  yaffs_access("/yaffs2/new_directory/file",0)) {
-		output = yaffs_unlink("/yaffs2/new_directory/file");
+	if (0 ==  yaffs_access(YAFFS_MOUNT_POINT "/new_directory/file",0)) {
+		output = yaffs_unlink(YAFFS_MOUNT_POINT "/new_directory/file");
 		if (output < 0) {
 			print_message("failed to remove file\n",2);
 			return -1;

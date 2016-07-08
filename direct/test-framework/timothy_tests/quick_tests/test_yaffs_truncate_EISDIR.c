@@ -19,7 +19,7 @@ int test_yaffs_truncate_EISDIR(void)
 	int output = 0;
 
 
-	output = yaffs_truncate("/yaffs2/",10);
+	output = yaffs_truncate(YAFFS_MOUNT_POINT "/",10);
 	if (output < 0){
 		error = yaffs_get_error();
 		if (abs(error) == EISDIR){

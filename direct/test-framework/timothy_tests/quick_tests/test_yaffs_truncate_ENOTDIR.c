@@ -24,7 +24,7 @@ int test_yaffs_truncate_ENOTDIR(void)
 		return -1;
 	}
 
-	output= yaffs_truncate("/yaffs2/test_dir/foo/file",FILE_SIZE_TRUNCATED );
+	output= yaffs_truncate(YAFFS_MOUNT_POINT "/test_dir/foo/file",FILE_SIZE_TRUNCATED );
 	if (output<0){
 		error=yaffs_get_error();
 		if (abs(error)==ENOTDIR){

@@ -23,7 +23,7 @@ int test_yaffs_link_ENOTDIR(void)
 		print_message("failed to create file\n",1);
 		return -1;
 	}
-	output = yaffs_link("/yaffs2/test_dir/foo/file",HARD_LINK_PATH);
+	output = yaffs_link(YAFFS_MOUNT_POINT "/test_dir/foo/file",HARD_LINK_PATH);
 	if (output<0){
 		error=yaffs_get_error();
 		if (abs(error)==ENOTDIR){

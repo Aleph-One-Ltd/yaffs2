@@ -42,8 +42,8 @@ int test_yaffs_rename_EROFS(void)
 int test_yaffs_rename_EROFS_clean(void)
 {
 	int output = 0;
-	if (0 ==  yaffs_access("/yaffs2/dir2/file",0) ) {
-		output = yaffs_unlink("/yaffs2/dir2/file");
+	if (0 ==  yaffs_access(YAFFS_MOUNT_POINT "/dir2/file",0) ) {
+		output = yaffs_unlink(YAFFS_MOUNT_POINT "/dir2/file");
 		if (output < 0) {
 			print_message("failed to remove the file\n",2);
 			return -1;

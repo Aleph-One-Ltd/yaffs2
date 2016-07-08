@@ -16,7 +16,7 @@
 int test_yaffs_chmod_ENOENT(void)
 {
 	int error=0;
-	int output=yaffs_chmod("/yaffs2/non_existing_file",S_IREAD|S_IWRITE);
+	int output=yaffs_chmod(YAFFS_MOUNT_POINT "/non_existing_file",S_IREAD|S_IWRITE);
 
 	if (output<0){
 		error=yaffs_get_error();

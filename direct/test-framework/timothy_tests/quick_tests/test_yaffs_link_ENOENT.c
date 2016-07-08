@@ -19,7 +19,7 @@ int test_yaffs_link_ENOENT(void)
 {
 	int output=0;	
 	int error =0;
-	output = yaffs_link("/yaffs2/non-existing-file",HARD_LINK_PATH);
+	output = yaffs_link(YAFFS_MOUNT_POINT "/non-existing-file",HARD_LINK_PATH);
 	if (output<0){
 		error=yaffs_get_error();
 		if (abs(error)==ENOENT){

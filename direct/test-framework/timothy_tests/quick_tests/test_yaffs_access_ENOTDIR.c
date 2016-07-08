@@ -21,7 +21,7 @@ int test_yaffs_access_ENOTDIR(void)
 		print_message("failed to create file\n",1);
 		return -1;
 	}
-	output=yaffs_access("/yaffs2/test_dir/foo/file",0);
+	output=yaffs_access(YAFFS_MOUNT_POINT "/test_dir/foo/file",0);
 	if (output==-1){
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

@@ -22,7 +22,7 @@ int test_yaffs_symlink_ENOTDIR(void)
 		print_message("failed to create file\n",1);
 		return -1;
 	}
-	output = yaffs_symlink(FILE_PATH,"yaffs2/test_dir/foo/sym_link");
+	output = yaffs_symlink(FILE_PATH,"yaffs2/test_dir/no-such-dir/sym_link");
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

@@ -23,7 +23,7 @@ int test_yaffs_mkdir_ENOTDIR(void)
 		print_message("failed to create file\n",1);
 		return -1;
 	}
-	output = yaffs_mkdir("/yaffs2/test_dir/foo/new_directory/",O_CREAT | O_RDWR);
+	output = yaffs_mkdir(YAFFS_MOUNT_POINT "/test_dir/foo/new_directory/",O_CREAT | O_RDWR);
 	if (output < 0){
 		error_code = yaffs_get_error();
 		if (abs(error_code) == ENOTDIR){

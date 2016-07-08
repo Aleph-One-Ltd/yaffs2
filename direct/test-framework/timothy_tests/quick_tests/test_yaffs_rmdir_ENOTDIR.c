@@ -29,7 +29,7 @@ int test_yaffs_rmdir_ENOTDIR(void)
 			return -1;
 		}
 	}
-	output = yaffs_rmdir("/yaffs2/test_dir/foo/dir/");
+	output = yaffs_rmdir(YAFFS_MOUNT_POINT "/test_dir/foo/dir/");
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

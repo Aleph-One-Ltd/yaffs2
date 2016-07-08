@@ -22,7 +22,7 @@ int test_yaffs_unlink_ENOTDIR(void)
 		print_message("failed to create file before remounting\n",1);
 		return -1;
 	}
-	output=yaffs_unlink("/yaffs2/test_dir/foo/file");
+	output=yaffs_unlink(YAFFS_MOUNT_POINT "/test_dir/foo/file");
 	if (output==-1){
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

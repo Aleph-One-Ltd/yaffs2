@@ -29,8 +29,8 @@ int test_yaffs_rmdir_ENOTEMPTY(void)
 			return -1;
 		}
 	}
-	if (0 !=  yaffs_access("/yaffs2/test_dir/new_directory/dir",0)) {
-		output = yaffs_mkdir("/yaffs2/test_dir/new_directory/dir",S_IWRITE | S_IREAD);
+	if (0 !=  yaffs_access(YAFFS_MOUNT_POINT "/test_dir/new_directory/dir",0)) {
+		output = yaffs_mkdir(YAFFS_MOUNT_POINT "/test_dir/new_directory/dir",S_IWRITE | S_IREAD);
 		if (output < 0) {
 			print_message("failed to create directory\n",2);
 			return -1;
@@ -56,8 +56,8 @@ int test_yaffs_rmdir_ENOTEMPTY_clean(void)
 {
 	int output = -1;
 	int output2 = -1;
-	if (0 ==  yaffs_access("/yaffs2/test_dir/new_directory/dir",0)) {
-		output = yaffs_rmdir("/yaffs2/test_dir/new_directory/dir");
+	if (0 ==  yaffs_access(YAFFS_MOUNT_POINT "/test_dir/new_directory/dir",0)) {
+		output = yaffs_rmdir(YAFFS_MOUNT_POINT "/test_dir/new_directory/dir");
 		if (output < 0) {
 			print_message("failed to remove the directory\n",2);
 			output=1;

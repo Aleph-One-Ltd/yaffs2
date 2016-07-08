@@ -19,7 +19,7 @@ int test_yaffs_stat_ENOENT(void)
 	struct yaffs_stat stat;
 	int output=0;
 
-	output=yaffs_stat("/yaffs2/non-existing_file", &stat);
+	output=yaffs_stat(YAFFS_MOUNT_POINT "/non-existing_file", &stat);
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOENT){

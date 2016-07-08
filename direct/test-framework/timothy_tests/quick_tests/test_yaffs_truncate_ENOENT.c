@@ -20,7 +20,7 @@ int test_yaffs_truncate_ENOENT(void)
 	int output=0;
 
 
-	output= yaffs_truncate("/yaffs2/non_existing_file",FILE_SIZE_TRUNCATED );
+	output= yaffs_truncate(YAFFS_MOUNT_POINT "/non_existing_file",FILE_SIZE_TRUNCATED );
 	if (output<0){
 		error=yaffs_get_error();
 		if (abs(error)==ENOENT){

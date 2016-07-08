@@ -20,7 +20,7 @@ int test_yaffs_chmod_ENOTDIR(void)
 		print_message("failed to create file\n",1);
 		return -1;
 	}
-	int output=yaffs_chmod("/yaffs2/test_dir/foo/file",S_IREAD|S_IWRITE);
+	int output=yaffs_chmod(YAFFS_MOUNT_POINT "/test_dir/foo/file",S_IREAD|S_IWRITE);
 
 	if (output<0){
 		error=yaffs_get_error();

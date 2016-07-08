@@ -39,7 +39,7 @@ int test_yaffs_rename_EEXISTS(void)
 			}
 		}
 	}
-	output= yaffs_open("/yaffs2/test_dir/dir2/file",O_CREAT | O_RDWR, FILE_MODE);
+	output= yaffs_open(YAFFS_MOUNT_POINT "/test_dir/dir2/file",O_CREAT | O_RDWR, FILE_MODE);
 	if (output<0){
 		print_message("failed to open file in the second directory\n",2);
 		return -1;
@@ -63,8 +63,8 @@ int test_yaffs_rename_EEXISTS(void)
 int test_yaffs_rename_EEXISTS_clean(void)
 {
 	int output = 0;
-	if (0 ==  yaffs_access("/yaffs2/dir2/file",0) ) {
-		output = yaffs_unlink("/yaffs2/dir2/file");
+	if (0 ==  yaffs_access(YAFFS_MOUNT_POINT "/dir2/file",0) ) {
+		output = yaffs_unlink(YAFFS_MOUNT_POINT "/dir2/file");
 		if (output < 0) {
 			print_message("failed to remove the file\n",2);
 			return -1;

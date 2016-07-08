@@ -19,7 +19,7 @@ int test_yaffs_rmdir_ENOENT(void)
 	int output=0;
 	int error_code =0;
 
-	output = yaffs_rmdir("/yaffs2/non-existing-dir/");
+	output = yaffs_rmdir(YAFFS_MOUNT_POINT "/non-existing-dir/");
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOENT){

@@ -23,7 +23,7 @@ int test_yaffs_stat_ENOTDIR(void)
 		print_message("failed to create file\n",1);
 		return -1;
 	}
-	output=yaffs_stat("/yaffs2/test_dir/foo/file", &stat);;
+	output=yaffs_stat(YAFFS_MOUNT_POINT "/test_dir/foo/file", &stat);;
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOTDIR){

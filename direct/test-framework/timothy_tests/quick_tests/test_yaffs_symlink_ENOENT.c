@@ -18,7 +18,7 @@ static int output = 0;
 int test_yaffs_symlink_ENOENT(void)
 {
 	int error_code = 0;
-	output = yaffs_symlink(FILE_PATH,"/yaffs2//");
+	output = yaffs_symlink(FILE_PATH,YAFFS_MOUNT_POINT "//");
 	if (output<0){ 
 		error_code=yaffs_get_error();
 		if (abs(error_code)==ENOENT){
