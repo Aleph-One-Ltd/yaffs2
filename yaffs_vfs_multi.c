@@ -56,7 +56,8 @@
 #define YAFFS_HAS_EVICT_INODE
 #endif
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 13))
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 13)) && \
+    (LINUX_VERSION_CODE < KERNEL_VERSION(4, 8, 0))
 #define YAFFS_NEW_FOLLOW_LINK 1
 #else
 #define YAFFS_NEW_FOLLOW_LINK 0
@@ -245,6 +246,18 @@ MODULE_PARM(yaffs_gc_control, "i");
 #include <linux/seq_file.h>
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+#define PAGE_CACHE_SIZE PAGE_SIZE
+#define PAGE_CACHE_SHIFT PAGE_SHIFT
+#define Y_GET_DENTRY(f) ((f)->f_path.dentry)
+#define page_cache_release put_page
+#define YAFFS_NEW_XATTR 1
+#define YAFFS_NEW_GET_LINK 1
+#else
+#define Y_GET_DENTRY(f) ((f)->f_dentry)
+#define YAFFS_NEW_XATTR 0
+#define YAFFS_NEW_GET_LINK 0
+#endif
 
 #define update_dir_time(dir) do {\
 			(dir)->i_ctime = (dir)->i_mtime = CURRENT_TIME; \
@@ -275,15 +288,15 @@ static int yaffs_readpage_nolock(struct file *f, struct page *pg)
 	struct yaffs_obj *obj;
 	unsigned char *pg_buf;
 	int ret;
-	loff_t pos = ((loff_t) pg->index) << PAGE_CACHE_SHIFT;
+	loff_t pos = ((loff_t) pg->index) << PAGE_SHIFT;
 	struct yaffs_dev *dev;
 
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_readpage_nolock at %lld, size %08x",
 		(long long)pos,
-		(unsigned)PAGE_CACHE_SIZE);
+		(unsigned)PAGE_SIZE);
 
-	obj = yaffs_dentry_to_obj(f->f_dentry);
+	obj = yaffs_dentry_to_obj(Y_GET_DENTRY(f));
 
 	dev = obj->my_dev;
 
@@ -481,7 +494,7 @@ static ssize_t yaffs_hold_space(struct file *f)
 
 	int n_free_chunks;
 
-	obj = yaffs_dentry_to_obj(f->f_dentry);
+	obj = yaffs_dentry_to_obj(Y_GET_DENTRY(f));
 
 	dev = obj->my_dev;
 
@@ -499,7 +512,7 @@ static void yaffs_release_space(struct file *f)
 	struct yaffs_obj *obj;
 	struct yaffs_dev *dev;
 
-	obj = yaffs_dentry_to_obj(f->f_dentry);
+	obj = yaffs_dentry_to_obj(Y_GET_DENTRY(f));
 
 	dev = obj->my_dev;
 
@@ -591,7 +604,7 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 	struct inode *inode;
 	struct yaffs_dev *dev;
 
-	obj = yaffs_dentry_to_obj(f->f_dentry);
+	obj = yaffs_dentry_to_obj(Y_GET_DENTRY(f));
 
 	if (!obj) {
 		yaffs_trace(YAFFS_TRACE_OS,
@@ -603,7 +616,7 @@ static ssize_t yaffs_file_write(struct file *f, const char *buf, size_t n,
 
 	yaffs_gross_lock(dev);
 
-	inode = f->f_dentry->d_inode;
+	inode = Y_GET_DENTRY(f)->d_inode;
 
 	if (!S_ISBLK(inode->i_mode) && f->f_flags & O_APPEND)
 		ipos = inode->i_size;
@@ -727,7 +740,7 @@ static int yaffs_file_flush(struct file *file, fl_owner_t id)
 static int yaffs_file_flush(struct file *file)
 #endif
 {
-	struct yaffs_obj *obj = yaffs_dentry_to_obj(file->f_dentry);
+	struct yaffs_obj *obj = yaffs_dentry_to_obj(Y_GET_DENTRY(file));
 
 	struct yaffs_dev *dev = obj->my_dev;
 
@@ -777,8 +790,10 @@ static int yaffs_sync_object(struct file *file, struct dentry *dentry,
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
 static const struct file_operations yaffs_file_operations = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 8, 0)
 	.read = new_sync_read,
 	.write = new_sync_write,
+#endif
 	.read_iter = generic_file_read_iter,
 	.write_iter = generic_file_write_iter,
 #else
@@ -914,10 +929,16 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 	return error;
 }
 
+#if (YAFFS_NEW_XATTR > 0)
+static int yaffs_setxattr(struct dentry *dentry, struct inode *inode,
+		const char *name, const void *value, size_t size, int flags)
+{
+#else
 static int yaffs_setxattr(struct dentry *dentry, const char *name,
 		   const void *value, size_t size, int flags)
 {
 	struct inode *inode = dentry->d_inode;
+#endif
 	int error = 0;
 	struct yaffs_dev *dev;
 	struct yaffs_obj *obj = yaffs_inode_to_obj(inode);
@@ -941,10 +962,16 @@ static int yaffs_setxattr(struct dentry *dentry, const char *name,
 	return error;
 }
 
+#ifdef YAFFS_NEW_XATTR
+static ssize_t yaffs_getxattr(struct dentry * dentry, struct inode *inode,
+	const char *name, void *buff, size_t size)
+{
+#else
 static ssize_t yaffs_getxattr(struct dentry * dentry, const char *name,
 			void *buff, size_t size)
 {
 	struct inode *inode = dentry->d_inode;
+#endif
 	int error = 0;
 	struct yaffs_dev *dev;
 	struct yaffs_obj *obj = yaffs_inode_to_obj(inode);
@@ -1052,6 +1079,7 @@ static int yaffs_readlink(struct dentry *dentry, char __user * buffer,
 	return ret;
 }
 
+#if (YAFFS_NEW_GET_LINK == 0)
 #if (YAFFS_NEW_FOLLOW_LINK == 1)
 static void *yaffs_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
@@ -1090,7 +1118,28 @@ out:
 	return ret;
 #endif
 }
+#else
+static const char *yaffs_get_link(struct dentry *dentry, struct inode *inode, struct delayed_call *done)
+{
+	unsigned char *alias;
+	struct yaffs_dev *dev;
 
+	if (!dentry)
+		return ERR_PTR(-ECHILD);
+
+	dev = yaffs_dentry_to_obj(dentry)->my_dev;
+
+	yaffs_gross_lock(dev);
+
+	alias = yaffs_get_symlink_alias(yaffs_dentry_to_obj(dentry));
+	yaffs_gross_unlock(dev);
+
+	if (!alias)
+		return ERR_PTR(-ENOMEM);
+	set_delayed_call(done, kfree_link, alias);
+	return alias;
+}
+#endif
 
 #ifdef YAFFS_HAS_PUT_INODE
 
@@ -1115,7 +1164,11 @@ void yaffs_put_link(struct dentry *dentry, struct nameidata *nd, void *alias)
 
 static const struct inode_operations yaffs_symlink_inode_operations = {
 	.readlink = yaffs_readlink,
+#if (YAFFS_NEW_GET_LINK == 1)
+	.get_link = yaffs_get_link,
+#else
 	.follow_link = yaffs_follow_link,
+#endif
 #if (YAFFS_NEW_FOLLOW_LINK == 1)
 	.put_link = yaffs_put_link,
 #endif
@@ -1727,7 +1780,7 @@ static int yaffs_iterate(struct file *f, struct dir_context *dc)
 
 	char name[YAFFS_MAX_NAME_LENGTH + 1];
 
-	obj = yaffs_dentry_to_obj(f->f_dentry);
+	obj = yaffs_dentry_to_obj(Y_GET_DENTRY(f));
 	dev = obj->my_dev;
 
 	yaffs_gross_lock(dev);
@@ -1791,14 +1844,14 @@ static int yaffs_readdir(struct file *f, void *dirent, filldir_t filldir)
 	struct yaffs_obj *obj;
 	struct yaffs_dev *dev;
 	struct yaffs_search_context *sc;
-	struct inode *inode = f->f_dentry->d_inode;
+	struct inode *inode = Y_GET_DENTRY(f)->d_inode;
 	unsigned long offset, curoffs;
 	struct yaffs_obj *l;
 	int ret_val = 0;
 
 	char name[YAFFS_MAX_NAME_LENGTH + 1];
 
-	obj = yaffs_dentry_to_obj(f->f_dentry);
+	obj = yaffs_dentry_to_obj(Y_GET_DENTRY(f));
 	dev = obj->my_dev;
 
 	yaffs_gross_lock(dev);
