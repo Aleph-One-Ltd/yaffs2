@@ -1,14 +1,14 @@
 #!/bin/bash
 
 
-set -x
+#set -x
 
 iterations=100000
 
 [ -z $1 ]  || iterations=$1
 
 
-rm iteration-max-*
+rm -f iteration-max-*
 touch iteration-max-$iterations
 
 echo " Running $iterations iterations"
@@ -24,10 +24,10 @@ do
    echo $seed>seed-m18-for-run-$i
 
 
-   rm emfile-m18-*$j
+   rm -f emfile-m18-*$j
    cp emfile-m18 emfile-m18-$i
 
-   rm log-m18-*$j
+   rm -f log-m18-*$j
 
    echo "#########"
    echo "#########"
@@ -36,7 +36,6 @@ do
    echo "#########"
    echo "#########"
    echo "#########"
-   ./yaffs_test -u -f -p -s$seed -t0 M18-1
-   #>log-m18-$i
+   ./yaffs_test -u -f -p -s$seed -t0 M18-1 >log-m18-$i
 done
 

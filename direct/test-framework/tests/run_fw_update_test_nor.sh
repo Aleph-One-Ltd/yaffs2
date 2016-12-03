@@ -5,7 +5,7 @@ iterations=100000
 [ -z $1 ]  || iterations=$1
 
 
-rm iteration-max-*
+rm -f iteration-max-*
 touch iteration-max-$iterations
 
 echo " Running $iterations iterations"
@@ -17,14 +17,14 @@ do
    seed=$RANDOM   
    j=$(( $i % 10 ))
 
-   rm seed-nor-*$j
+   rm -f seed-nor-*$j
    echo $seed>seed-nor-for-run-$i
 
 
-   rm emfile-nor-*$j
+   rm -f emfile-nor-*$j
    cp emfile-nor emfile-nor-$i
 
-   rm log-nor-*$j
+   rm -f log-nor-*$j
 
    echo "#########"
    echo "#########"
@@ -33,7 +33,6 @@ do
    echo "#########"
    echo "#########"
    echo "#########"
-   ./yaffs_test -u -f -p -s$seed -t0 nor
-   #>log-nor-$i
+   ./yaffs_test -u -f -p -s$seed -t0 nor >log-nor-$i
 done
 
