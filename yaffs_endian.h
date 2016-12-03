@@ -29,19 +29,20 @@ static inline u32 swap_u32(u32 val)
 #define swap_s32(val) \
 	(s32)(swap_u32((u32)(val)))
 
-static inline Y_LOFF_T swap_loff_t(Y_LOFF_T lval)
+static inline loff_t swap_loff_t(loff_t lval)
 {
 	u32 vall = swap_u32((u32) (lval & 0xffffffff));
 	u32 valh;
 
-	if (sizeof(Y_LOFF_T) == sizeof(u32))
-		return (Y_LOFF_T) vall;
+	if (sizeof(loff_t) == sizeof(u32))
+		return (loff_t) vall;
 
 	valh = swap_u32((u32) ((lval >> 32) & 0xffffffff));
 
-	return (Y_LOFF_T)((((u64)vall) << 32) | valh);
+	return (loff_t)((((u64)vall) << 32) | valh);
 }
 
+struct yaffs_dev;
 void yaffs_do_endian_s32(struct yaffs_dev *dev, s32 *val);
 void yaffs_do_endian_u32(struct yaffs_dev *dev, u32 *val);
 void yaffs_do_endian_oh(struct yaffs_dev *dev, struct yaffs_obj_hdr *oh);
