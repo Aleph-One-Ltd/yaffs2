@@ -18,6 +18,8 @@
 
 #include "yportenv.h"
 
+struct yaffs_dev;
+
 int nval_del(struct yaffs_dev *dev, char *xb, int xb_size, const YCHAR * name);
 int nval_set(struct yaffs_dev *dev,
 	     char *xb, int xb_size, const YCHAR * name, const char *buf,
