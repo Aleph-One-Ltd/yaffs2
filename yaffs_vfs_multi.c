@@ -241,6 +241,10 @@ MODULE_PARM(yaffs_gc_control, "i");
 #define YAFFS_USE_DIR_ITERATE
 #endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
+#define YAFFS_USE_XATTR
+#endif
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,0))
 #define YAFFS_NEW_PROCFS
 #include <linux/seq_file.h>
@@ -262,6 +266,13 @@ MODULE_PARM(yaffs_gc_control, "i");
 #define update_dir_time(dir) do {\
 			(dir)->i_ctime = (dir)->i_mtime = CURRENT_TIME; \
 		} while (0)
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
+static inline int setattr_prepare(struct dentry *dentry, struct iattr *attr)
+{
+	return inode_change_ok(dentry->d_inode, attr);
+}
+#endif
 
 static void yaffs_fill_inode_from_obj(struct inode *inode,
 				      struct yaffs_obj *obj);
@@ -895,7 +906,7 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 #endif
 
 	if (error == 0)
-		error = inode_change_ok(inode, attr);
+		error = setattr_prepare(dentry, attr);
 	if (error == 0) {
 		int result;
 		if (!error) {
@@ -929,6 +940,7 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 	return error;
 }
 
+#ifdef YAFFS_USE_XATTR
 #if (YAFFS_NEW_XATTR > 0)
 static int yaffs_setxattr(struct dentry *dentry, struct inode *inode,
 		const char *name, const void *value, size_t size, int flags)
@@ -1019,6 +1031,7 @@ static int yaffs_removexattr(struct dentry *dentry, const char *name)
 
 	return error;
 }
+#endif
 
 static ssize_t yaffs_listxattr(struct dentry * dentry, char *buff, size_t size)
 {
@@ -1046,10 +1059,12 @@ static ssize_t yaffs_listxattr(struct dentry * dentry, char *buff, size_t size)
 
 static const struct inode_operations yaffs_file_inode_operations = {
 	.setattr = yaffs_setattr,
+#ifdef YAFFS_USE_XATTR
 	.setxattr = yaffs_setxattr,
 	.getxattr = yaffs_getxattr,
-	.listxattr = yaffs_listxattr,
 	.removexattr = yaffs_removexattr,
+#endif
+	.listxattr = yaffs_listxattr,
 };
 
 
@@ -1173,10 +1188,12 @@ static const struct inode_operations yaffs_symlink_inode_operations = {
 	.put_link = yaffs_put_link,
 #endif
 	.setattr = yaffs_setattr,
+#ifdef YAFFS_USE_XATTR
 	.setxattr = yaffs_setxattr,
 	.getxattr = yaffs_getxattr,
-	.listxattr = yaffs_listxattr,
 	.removexattr = yaffs_removexattr,
+#endif
+	.listxattr = yaffs_listxattr,
 };
 
 #ifdef YAFFS_USE_OWN_IGET
@@ -1558,8 +1575,13 @@ static int yaffs_symlink(struct inode *dir, struct dentry *dentry,
  *
  * NB: POSIX says you can rename an object over an old object of the same name
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
+static int yaffs_rename(struct inode *old_dir, struct dentry *old_dentry,
+			struct inode *new_dir, struct dentry *new_dentry, unsigned int unused)
+#else
 static int yaffs_rename(struct inode *old_dir, struct dentry *old_dentry,
 			struct inode *new_dir, struct dentry *new_dentry)
+#endif
 {
 	struct yaffs_dev *dev;
 	int ret_val = YAFFS_FAIL;
@@ -1647,10 +1669,12 @@ static const struct inode_operations yaffs_dir_inode_operations = {
 	.mknod = yaffs_mknod,
 	.rename = yaffs_rename,
 	.setattr = yaffs_setattr,
+	.listxattr = yaffs_listxattr,
+#ifdef YAFFS_USE_XATTR
 	.setxattr = yaffs_setxattr,
 	.getxattr = yaffs_getxattr,
-	.listxattr = yaffs_listxattr,
 	.removexattr = yaffs_removexattr,
+#endif
 };
 
 /*-----------------------------------------------------------------*/
