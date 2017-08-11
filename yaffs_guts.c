@@ -5158,8 +5158,9 @@ void yaffs_oh_size_load(struct yaffs_dev *dev,
 			loff_t fsize,
 			int do_endian)
 {
-	oh->file_size_low = (fsize & 0xFFFFFFFF);
-	oh->file_size_high = ((fsize >> 32) & 0xFFFFFFFF);
+	oh->file_size_low = FSIZE_LOW(fsize);
+
+	oh->file_size_high = FSIZE_HIGH(fsize);
 
 	if (do_endian) {
 		yaffs_do_endian_u32(dev, &oh->file_size_low);
@@ -5181,8 +5182,7 @@ loff_t yaffs_oh_to_size(struct yaffs_dev *dev, struct yaffs_obj_hdr *oh,
 			yaffs_do_endian_u32 (dev, &low);
 			yaffs_do_endian_u32 (dev, &high);
 		}
-		retval = (((loff_t) high) << 32) |
-			(((loff_t) low) & 0xFFFFFFFF);
+		retval = FSIZE_COMBINE(high, low);
 	} else {
 		u32 low = oh->file_size_low;
 

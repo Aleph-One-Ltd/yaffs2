@@ -36,6 +36,10 @@ struct list_head {
 
 
 /* Initialise a static list */
+#ifdef LIST_HEAD
+#undef LIST_HEAD
+#endif
+
 #define LIST_HEAD(name) \
 struct list_head name = { &(name), &(name)}
 

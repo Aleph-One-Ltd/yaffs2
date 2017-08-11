@@ -1050,4 +1050,21 @@ void yaffs_count_blocks_by_state(struct yaffs_dev *dev, int bs[10]);
 int yaffs_find_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 				    struct yaffs_ext_tags *tags);
 
+/*
+ * Define LOFF_T_32_BIT if a 32-bit LOFF_T is being used.
+ * Not serious if you get this wrong - you might just get some warnings.
+*/
+
+#ifdef  LOFF_T_32_BIT
+#define FSIZE_LOW(fsize) (fsize)
+#define FSIZE_HIGH(fsize) 0
+#define FSIZE_COMBINE(high, low) (low)
+#else
+#define FSIZE_LOW(fsize) ((fsize) & 0xffffffff)
+#define FSIZE_HIGH(fsize)(((fsize) >> 32) & 0xffffffff)
+#define FSIZE_COMBINE(high, low) ((((loff_t) (high)) << 32) | \
+					(((loff_t) (low)) & 0xFFFFFFFF))
+#endif
+
+
 #endif

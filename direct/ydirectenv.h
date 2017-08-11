@@ -39,6 +39,9 @@ void yaffs_bug_fn(const char *file_name, int line_no);
 #define Y_LOFF_T loff_t
 #endif
 
+/* Some RTOSs (eg. VxWorks) need strnlen. */
+size_t strnlen(const char *s, size_t maxlen);
+
 #define yaffs_strcat(a, b)	strcat(a, b)
 #define yaffs_strcpy(a, b)	strcpy(a, b)
 #define yaffs_strncpy(a, b, c)	strncpy(a, b, c)
