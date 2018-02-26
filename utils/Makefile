@@ -3,8 +3,7 @@
 # NB this is not yet suitable for putting into the kernel tree.
 # YAFFS: Yet another Flash File System. A NAND-flash specific file system. 
 #
-# Copyright (C) 2002 Aleph One Ltd.
-#   for Toby Churchill Ltd and Brightstar Engineering
+# Copyright (C) 2002-2018 Aleph One Ltd.
 #
 # Created by Charles Manning <charles@aleph1.co.uk>
 #

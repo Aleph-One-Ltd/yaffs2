@@ -1,8 +1,7 @@
 /*
  * YAFFS: Yet another FFS. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2011 Aleph One Ltd.
- *   for Toby Churchill Ltd and Brightstar Engineering
+ * Copyright (C) 2002-2018 Aleph One Ltd.
  *
  * Created by Timothy Manning <timothy@yaffs.net>
  *
