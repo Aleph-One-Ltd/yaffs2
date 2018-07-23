@@ -13,11 +13,11 @@
  */
 
 /*
- * makeyaffsimage.c 
+ * makeyaffsimage.c
  *
  * Makes a YAFFS file system image that can be used to load up a file system.
  */
- 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -57,15 +57,15 @@ static int convert_endian = 0;
 static int obj_compare(const void *a, const void * b)
 {
   objItem *oa, *ob;
-  
+
   oa = (objItem *)a;
   ob = (objItem *)b;
-  
+
   if(oa->dev < ob->dev) return -1;
   if(oa->dev > ob->dev) return 1;
   if(oa->ino < ob->ino) return -1;
   if(oa->ino > ob->ino) return 1;
-  
+
   return 0;
 }
 
@@ -79,7 +79,7 @@ static void add_obj_to_list(dev_t dev, ino_t ino, int obj)
 		obj_list[n_obj].obj = obj;
 		n_obj++;
 		qsort(obj_list,n_obj,sizeof(objItem),obj_compare);
-		
+
 	}
 	else
 	{
@@ -97,7 +97,7 @@ static int find_obj_in_list(dev_t dev, ino_t ino)
 
 	test.dev = dev;
 	test.ino = ino;
-	
+
 	if(n_obj > 0)
 	{
 		i = bsearch(&test,obj_list,n_obj,sizeof(objItem),obj_compare);
@@ -110,14 +110,15 @@ static int find_obj_in_list(dev_t dev, ino_t ino)
 	return -1;
 }
 
+#if 0
 // NCB added 10/9/2002
 static u16 yaffs_calc_name_sum(const char *name)
 {
 	u16 sum = 0;
 	u16 i = 1;
-	
+
 	u8 *bname = (u8 *)name;
-	
+
 	while (*bname)
 	{
 		sum += (*bname) * i;
@@ -126,7 +127,7 @@ static u16 yaffs_calc_name_sum(const char *name)
 	}
 	return sum;
 }
-
+#endif
 
 static void yaffs_calc_ecc(const u8 *data, struct yaffs_spare *spare)
 {
@@ -153,7 +154,7 @@ static void yaffs_calc_tags_ecc(struct yaffs_tags *tags)
         b[6] &= 0xC0;
         b[7] &= 0x03;
     }
-	
+
 	for(i = 0; i < 8; i++)
 	{
 // NCB modified 20-9-02		for(j = 1; j &0x7f; j<<=1)
@@ -166,7 +167,7 @@ static void yaffs_calc_tags_ecc(struct yaffs_tags *tags)
 			}
 		}
 	}
-	
+
 	// Write out ECC
     if (!convert_endian)
     {
@@ -182,9 +183,9 @@ static void yaffs_calc_tags_ecc(struct yaffs_tags *tags)
 static void yaffs_load_tags_to_spare(struct yaffs_spare *sparePtr, struct yaffs_tags *tagsPtr)
 {
 	union yaffs_tags_union *tu = (union yaffs_tags_union *)tagsPtr;
-	
+
 	//yaffs_calc_tags_ecc(tagsPtr);
-	
+
 	sparePtr->tb0 = tu->as_bytes[0];
 	sparePtr->tb1 = tu->as_bytes[1];
 	sparePtr->tb2 = tu->as_bytes[2];
@@ -236,7 +237,7 @@ static int write_chunk(u8 *data, u32 obj_id, u32 chunk_id, u32 n_bytes)
 
 	memset(&t,0xff,sizeof (struct yaffs_tags));
 	memset(&s,0xff,sizeof (struct yaffs_spare));
-	
+
 	t.chunk_id = chunk_id;
 	t.serial_number = 0;
 	t.n_bytes_lsb = n_bytes;
@@ -246,15 +247,15 @@ static int write_chunk(u8 *data, u32 obj_id, u32 chunk_id, u32 n_bytes)
     {
         little_to_big_endian(&t);
     }
-	
+
 	yaffs_calc_tags_ecc(&t);
 	yaffs_load_tags_to_spare(&s,&t);
 	yaffs_calc_ecc(data,&s);
-	
+
 	nPages++;
-	
+
 	return write(outFile,&s,sizeof(struct yaffs_spare));
-	
+
 }
 
 #define SWAP32(x)   ((((x) & 0x000000FF) << 24) | \
@@ -264,7 +265,7 @@ static int write_chunk(u8 *data, u32 obj_id, u32 chunk_id, u32 n_bytes)
 
 #define SWAP16(x)   ((((x) & 0x00FF) << 8) | \
                      (((x) & 0xFF00) >> 8))
-        
+
 // This one is easier, since the types are more standard. No funky shifts here.
 static void object_header_little_to_big_endian(struct yaffs_obj_hdr* oh)
 {
@@ -294,7 +295,6 @@ static void object_header_little_to_big_endian(struct yaffs_obj_hdr* oh)
     oh->win_mtime[1] = SWAP32(oh->win_mtime[1]);
 
     oh->reserved[0] = SWAP32(oh->reserved[0]);
-    oh->reserved[1] = SWAP32(oh->reserved[1]);
 
     oh->inband_shadowed_obj_id = SWAP32(oh->inband_shadowed_obj_id);
     oh->inband_is_shrink = SWAP32(oh->inband_is_shrink);
@@ -305,19 +305,19 @@ static void object_header_little_to_big_endian(struct yaffs_obj_hdr* oh)
 static int write_object_header(int obj_id, enum yaffs_obj_type t, struct stat *s, int parent, const char *name, int equivalentObj, const char * alias)
 {
 	u8 bytes[512];
-	
-	
+
+
 	struct yaffs_obj_hdr *oh = (struct yaffs_obj_hdr *)bytes;
-	
+
 	memset(bytes,0xff,512);
-	
+
 	oh->type = t;
 
 	oh->parent_obj_id = parent;
-	
+
 	strncpy(oh->name,name,YAFFS_MAX_NAME_LENGTH);
-	
-	
+
+
 	if(t != YAFFS_OBJECT_TYPE_HARDLINK)
 	{
 		oh->yst_mode = s->st_mode;
@@ -329,17 +329,17 @@ static int write_object_header(int obj_id, enum yaffs_obj_type t, struct stat *s
 		oh->yst_ctime = s->st_ctime;
 		oh->yst_rdev  = s->st_rdev;
 	}
-	
+
 	if(t == YAFFS_OBJECT_TYPE_FILE)
 	{
 		oh->file_size_low = s->st_size;
 	}
-	
+
 	if(t == YAFFS_OBJECT_TYPE_HARDLINK)
 	{
 		oh->equiv_id = equivalentObj;
 	}
-	
+
 	if(t == YAFFS_OBJECT_TYPE_SYMLINK)
 	{
 		strncpy(oh->alias,alias,YAFFS_MAX_ALIAS_LENGTH);
@@ -349,9 +349,9 @@ static int write_object_header(int obj_id, enum yaffs_obj_type t, struct stat *s
     {
         object_header_little_to_big_endian(oh);
     }
-	
+
 	return write_chunk(bytes,obj_id,0,0xffff);
-	
+
 }
 
 
@@ -362,14 +362,14 @@ static int process_directory(int parent, const char *path)
 	struct dirent *entry;
 
 	nDirectories++;
-	
+
 	dir = opendir(path);
-	
+
 	if(dir)
 	{
 		while((entry = readdir(dir)) != NULL)
 		{
-		
+
 			/* Ignore . and .. */
 			if(strcmp(entry->d_name,".") &&
 			   strcmp(entry->d_name,".."))
@@ -378,11 +378,11 @@ static int process_directory(int parent, const char *path)
 				struct stat stats;
 				int equivalentObj;
 				int newObj;
-				
+
 				sprintf(full_name,"%s/%s",path,entry->d_name);
-				
+
 				lstat(full_name,&stats);
-				
+
 				if(S_ISLNK(stats.st_mode) ||
 				    S_ISREG(stats.st_mode) ||
 				    S_ISDIR(stats.st_mode) ||
@@ -391,12 +391,12 @@ static int process_directory(int parent, const char *path)
 				    S_ISCHR(stats.st_mode) ||
 				    S_ISSOCK(stats.st_mode))
 				{
-				
+
 					newObj = obj_alloc_id++;
 					n_obj++;
-					
+
 					printf("Object %d, %s is a ",newObj,full_name);
-					
+
 					/* We're going to create an object for it */
 					if((equivalentObj = find_obj_in_list(stats.st_dev, stats.st_ino)) > 0)
 					{
@@ -404,20 +404,24 @@ static int process_directory(int parent, const char *path)
 					 	printf("hard link to object %d\n",equivalentObj);
 						error =  write_object_header(newObj, YAFFS_OBJECT_TYPE_HARDLINK, &stats, parent, entry->d_name, equivalentObj, NULL);
 					}
-					else 
+					else
 					{
-						
+
 						add_obj_to_list(stats.st_dev,stats.st_ino,newObj);
-						
+
 						if(S_ISLNK(stats.st_mode))
 						{
-					
+
 							char symname[500];
-						
+							int ret;
+
 							memset(symname,0, sizeof(symname));
-					
-							readlink(full_name,symname,sizeof(symname) -1);
-						
+
+							ret = readlink(full_name,symname,sizeof(symname) -1);
+
+							if (ret < 0)
+								perror("readlink of symlink");
+
 							printf("symlink to \"%s\"\n",symname);
 							error =  write_object_header(newObj, YAFFS_OBJECT_TYPE_SYMLINK, &stats, parent, entry->d_name, -1, symname);
 
@@ -433,7 +437,7 @@ static int process_directory(int parent, const char *path)
 								u8 bytes[512];
 								int n_bytes;
 								int chunk = 0;
-								
+
 								h = open(full_name,O_RDONLY);
 								if(h >= 0)
 								{
@@ -444,9 +448,9 @@ static int process_directory(int parent, const char *path)
 										write_chunk(bytes,newObj,chunk,n_bytes);
 										memset(bytes,0xff,512);
 									}
-									if(n_bytes < 0) 
+									if(n_bytes < 0)
 									   error = n_bytes;
-									   
+
 									printf("%d data chunks written\n",chunk);
 								}
 								else
@@ -454,9 +458,9 @@ static int process_directory(int parent, const char *path)
 									perror("Error opening file");
 								}
 								close(h);
-								
-							}							
-														
+
+							}
+
 						}
 						else if(S_ISSOCK(stats.st_mode))
 						{
@@ -494,7 +498,7 @@ static int process_directory(int parent, const char *path)
 			}
 		}
 	}
-	
+
 	return 0;
 
 }
@@ -503,9 +507,9 @@ static int process_directory(int parent, const char *path)
 int main(int argc, char *argv[])
 {
 	struct stat stats;
-	
+
 	printf("mkyaffsimage: image building tool for YAFFS built "__DATE__"\n");
-	
+
 	if(argc < 3)
 	{
 		printf("usage: mkyaffsimage dir image_file [convert]\n");
@@ -519,35 +523,35 @@ int main(int argc, char *argv[])
     {
         convert_endian = 1;
     }
-    
+
 	if(stat(argv[1],&stats) < 0)
 	{
 		printf("Could not stat %s\n",argv[1]);
 		exit(1);
 	}
-	
+
 	if(!S_ISDIR(stats.st_mode))
 	{
 		printf(" %s is not a directory\n",argv[1]);
 		exit(1);
 	}
-	
+
 	outFile = open(argv[2],O_CREAT | O_TRUNC | O_WRONLY, S_IREAD | S_IWRITE);
-	
-	
+
+
 	if(outFile < 0)
 	{
 		printf("Could not open output file %s\n",argv[2]);
 		exit(1);
 	}
-	
+
 	printf("Processing directory %s into image file %s\n",argv[1],argv[2]);
 	error =  write_object_header(1, YAFFS_OBJECT_TYPE_DIRECTORY, &stats, 1,"", -1, NULL);
 	if(error)
 	error = process_directory(YAFFS_OBJECTID_ROOT,argv[1]);
-	
+
 	close(outFile);
-	
+
 	if(error < 0)
 	{
 		perror("operation incomplete");
@@ -559,9 +563,9 @@ int main(int argc, char *argv[])
 		       "%d objects in %d directories\n"
 		       "%d NAND pages\n",n_obj, nDirectories, nPages);
 	}
-	
+
 	close(outFile);
-	
+
 	exit(0);
-}	
+}
 
