@@ -3,8 +3,7 @@
 # NB this is not yet suitable for putting into the kernel tree.
 # YAFFS: Yet another Flash File System. A NAND-flash specific file system. 
 #
-# Copyright (C) 2002 Aleph One Ltd.
-#   for Toby Churchill Ltd and Brightstar Engineering
+# Copyright (C) 2002-2018 Aleph One Ltd.
 #
 # Created by Charles Manning <charles@aleph1.co.uk>
 #
@@ -16,7 +15,7 @@
 
 #KERNELDIR = /usr/src/kernel-headers-2.4.18
 
-CFLAGS =    -O2 -Wall -DCONFIG_YAFFS_UTIL
+CFLAGS =    -O2 -Wall -Werror -DCONFIG_YAFFS_UTIL
 CFLAGS+=   -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-declarations
 CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
 
@@ -26,7 +25,7 @@ MAKETOOLS =
 CC=$(MAKETOOLS)gcc
 
 COMMON_BASE_C_LINKS = yaffs_ecc.c
-COMMON_BASE_LINKS = $(COMMON_BASE_C_LINKS) yaffs_ecc.h yaffs_guts.h yaffs_packedtags2.h yaffs_trace.h
+COMMON_BASE_LINKS = $(COMMON_BASE_C_LINKS) yaffs_ecc.h yaffs_guts.h yaffs_packedtags2.h yaffs_trace.h yaffs_endian.h
 COMMON_DIRECT_C_LINKS = yaffs_hweight.c
 COMMON_C_LINKS = $(COMMON_DIRECT_C_LINKS) $(COMMON_BASE_C_LINKS)
 COMMON_DIRECT_LINKS= $(COMMON_DIRECT_C_LINKS) yportenv.h yaffs_hweight.h yaffs_list.h
@@ -51,7 +50,7 @@ $(BASE_LINKS):
 $(DIRECT_LINKS):
 	ln -s ../direct/$@ $@
 
-$(COMMONOBJS) $(MKYAFFSIMAGEOBJS) $(MKYAFFS2IMAGEOBJS) : $(ALL_LINKS)
+$(COMMONOBJS) $(MKYAFFSIMAGEOBJS) $(MKYAFFS2IMAGEOBJS) : $(ALL_LINKS) Makefile
 
 $(COMMONOBJS) $(MKYAFFSIMAGEOBJS) $(MKYAFFS2IMAGEOBJS) : %.o: %.c
 	$(CC) -c $(CFLAGS) $< -o $@

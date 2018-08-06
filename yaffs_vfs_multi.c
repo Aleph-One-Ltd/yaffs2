@@ -1,8 +1,7 @@
 /*
  * YAFFS: Yet Another Flash File System. A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2011 Aleph One Ltd.
- *   for Toby Churchill Ltd and Brightstar Engineering
+ * Copyright (C) 2002-2018 Aleph One Ltd.
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
  * Acknowledgements:
@@ -1820,8 +1819,10 @@ static int yaffs_iterate(struct file *f, struct dir_context *dc)
 		goto out;
 	}
 
-	if (!dir_emit_dots(f, dc))
+	if (!dir_emit_dots(f, dc)) {
+		yaffs_gross_unlock(dev);
 		return 0;
+	}
 
 	curoffs = 1;
 

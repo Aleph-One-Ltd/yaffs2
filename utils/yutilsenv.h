@@ -1,8 +1,7 @@
 /*
  * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2011 Aleph One Ltd.
- *   for Toby Churchill Ltd and Brightstar Engineering
+ * Copyright (C) 2002-2018 Aleph One Ltd.
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
  *
@@ -19,6 +18,23 @@
 
 #define YCHAR char
 #define YUCHAR unsigned char
+
+#ifndef u8
+#define u8 unsigned char
+#endif
+
+#ifndef u16
+#define u16 unsigned short
+#endif
+
+#ifndef u32
+#define u32 unsigned int
+#endif
+
+#ifndef s32
+#define s32 int
+#endif
+
 
 #include <sys/types.h>
 #include <string.h>
