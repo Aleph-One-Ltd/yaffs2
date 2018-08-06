@@ -250,17 +250,20 @@ MODULE_PARM(yaffs_gc_control, "i");
 #include <linux/seq_file.h>
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 #define PAGE_CACHE_SIZE PAGE_SIZE
 #define PAGE_CACHE_SHIFT PAGE_SHIFT
 #define Y_GET_DENTRY(f) ((f)->f_path.dentry)
-#define page_cache_release put_page
 #define YAFFS_NEW_XATTR 1
 #define YAFFS_NEW_GET_LINK 1
 #else
 #define Y_GET_DENTRY(f) ((f)->f_dentry)
 #define YAFFS_NEW_XATTR 0
 #define YAFFS_NEW_GET_LINK 0
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0))
+#define page_cache_release put_page
 #endif
 
 #define update_dir_time(dir) do {\
@@ -801,7 +804,7 @@ static int yaffs_sync_object(struct file *file, struct dentry *dentry,
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 22))
 static const struct file_operations yaffs_file_operations = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0)
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 8, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 4, 0)
 	.read = new_sync_read,
 	.write = new_sync_write,
 #endif
@@ -974,7 +977,7 @@ static int yaffs_setxattr(struct dentry *dentry, const char *name,
 	return error;
 }
 
-#ifdef YAFFS_NEW_XATTR
+#if (YAFFS_NEW_XATTR > 0)
 static ssize_t yaffs_getxattr(struct dentry * dentry, struct inode *inode,
 	const char *name, void *buff, size_t size)
 {
