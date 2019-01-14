@@ -4534,13 +4534,11 @@ int yaffs_get_obj_name(struct yaffs_obj *obj, YCHAR *name, int buffer_size)
 
 		if (obj->hdr_chunk > 0) {
 			result = yaffs_rd_chunk_tags_nand(obj->my_dev,
-							  obj->hdr_chunk,
-							  buffer, NULL);
+				obj->hdr_chunk, buffer, NULL);
+			if (result == YAFFS_OK)
+				yaffs_load_name_from_oh(obj->my_dev, name,
+					oh->name, buffer_size);
 		}
-		if (result == YAFFS_OK)
-			yaffs_load_name_from_oh(obj->my_dev, name, oh->name,
-					buffer_size);
-
 		yaffs_release_temp_buffer(obj->my_dev, buffer);
 	}
 
