@@ -35,6 +35,9 @@
  * for any version of Linux.
  */
 #include <linux/version.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0))
+#include <linux/iversion.h>
+#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 10))
 #define YAFFS_COMPILE_BACKGROUND
@@ -109,10 +112,10 @@
 #include <linux/statfs.h>
 
 #define UnlockPage(p) unlock_page(p)
-#define Page_Uptodate(page)	test_bit(PG_uptodate, &(page)->flags)
+#define Page_Uptodate(page) test_bit(PG_uptodate, &(page)->flags)
 
 /* FIXME: use sb->s_id instead ? */
-#define yaffs_devname(sb, buf)	bdevname(sb->s_bdev, buf)
+#define yaffs_devname(sb, buf) bdevname(sb->s_bdev, buf)
 
 #else
 
@@ -130,13 +133,15 @@
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 26))
 #define YPROC_ROOT  (&proc_root)
 #else
-#define YPROC_ROOT  NULL
+#define YPROC_ROOT NULL
 #endif
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 26))
 #define Y_INIT_TIMER(a)	init_timer(a)
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 15, 0)
 #define Y_INIT_TIMER(a)	init_timer_on_stack(a)
+#else
+#define Y_INIT_TIMER(a,cb) timer_setup_on_stack(a,cb,0)
 #endif
 
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 27))
@@ -172,18 +177,12 @@ static uint32_t YCALCBLOCKS(uint64_t partition_size, uint32_t block_size)
 #include "yaffs_trace.h"
 #include "yaffs_guts.h"
 #include "yaffs_attribs.h"
-
 #include "yaffs_linux.h"
-
 #include "yaffs_mtdif.h"
 #include "yaffs_packedtags2.h"
 #include "yaffs_getblockinfo.h"
 
-unsigned int yaffs_trace_mask =
-		YAFFS_TRACE_BAD_BLOCKS |
-		YAFFS_TRACE_ALWAYS |
-		0;
-
+unsigned int yaffs_trace_mask = YAFFS_TRACE_BAD_BLOCKS | YAFFS_TRACE_ALWAYS | 0;
 unsigned int yaffs_wr_attempts = YAFFS_WR_ATTEMPTS;
 unsigned int yaffs_auto_checkpoint = 1;
 unsigned int yaffs_gc_control = 1;
@@ -265,9 +264,19 @@ MODULE_PARM(yaffs_gc_control, "i");
 #define page_cache_release put_page
 #endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4,12,0))
 #define update_dir_time(dir) do {\
-			(dir)->i_ctime = (dir)->i_mtime = CURRENT_TIME; \
-		} while (0)
+		(dir)->i_ctime = (dir)->i_mtime = CURRENT_TIME; \
+	} while (0)
+#elif (LINUX_VERSION_CODE < KERNEL_VERSION(4,18,0))
+#define update_dir_time(dir) do {\
+		(dir)->i_ctime = (dir)->i_mtime = current_kernel_time(); \
+	} while (0)
+#else
+#define update_dir_time(dir) do {\
+		(dir)->i_ctime = (dir)->i_mtime = current_kernel_time64(); \
+	} while (0)
+#endif
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0))
 static inline int setattr_prepare(struct dentry *dentry, struct iattr *attr)
@@ -1649,7 +1658,11 @@ static int yaffs_unlink(struct inode *dir, struct dentry *dentry)
 
 	if (ret_val == YAFFS_OK) {
 		inode_dec_link_count(dentry->d_inode);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0))
+		inode_inc_iversion(dir);
+#else
 		dir->i_version++;
+#endif
 		yaffs_gross_unlock(dev);
 		update_dir_time(dir);
 		return 0;
@@ -2132,10 +2145,26 @@ static unsigned yaffs_bg_gc_urgency(struct yaffs_dev *dev)
 
 #ifdef YAFFS_COMPILE_BACKGROUND
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+struct timer_struct {
+	struct task_struct *task;
+	struct timer_list timer;
+};
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+static void yaffs_background_waker(struct timer_list *t)
+{
+	struct timer_struct *ts = from_timer(ts, t, timer);
+
+	wake_up_process(ts->task);
+}
+#else
 void yaffs_background_waker(unsigned long data)
 {
 	wake_up_process((struct task_struct *)data);
 }
+#endif
 
 static int yaffs_bg_thread_fn(void *data)
 {
@@ -2148,7 +2177,11 @@ static int yaffs_bg_thread_fn(void *data)
 	unsigned int urgency;
 
 	int gc_result;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+	struct timer_struct timer;
+#else
 	struct timer_list timer;
+#endif
 
 	yaffs_trace(YAFFS_TRACE_BACKGROUND,
 		"yaffs_background starting for dev %p", (void *)dev);
@@ -2194,24 +2227,32 @@ static int yaffs_bg_thread_fn(void *data)
                         }
 		}
 		yaffs_gross_unlock(dev);
-#if 1
 		expires = next_dir_update;
 		if (time_before(next_gc, expires))
 			expires = next_gc;
 		if (time_before(expires, now))
 			expires = now + HZ;
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+		Y_INIT_TIMER(&timer.timer, yaffs_background_waker);
+		timer.timer.expires = expires + 1;
+		timer.task = current;
+#else
 		Y_INIT_TIMER(&timer);
 		timer.expires = expires + 1;
 		timer.data = (unsigned long)current;
 		timer.function = yaffs_background_waker;
+#endif
 
 		set_current_state(TASK_INTERRUPTIBLE);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+		add_timer(&timer.timer);
+		schedule();
+		del_timer_sync(&timer.timer);
+#else
 		add_timer(&timer);
 		schedule();
 		del_timer_sync(&timer);
-#else
-		msleep(10);
 #endif
 	}
 
@@ -3748,8 +3789,8 @@ static void __exit exit_yaffs_fs(void)
 }
 
 module_init(init_yaffs_fs)
-    module_exit(exit_yaffs_fs)
+module_exit(exit_yaffs_fs)
 
-    MODULE_DESCRIPTION("YAFFS2 - a NAND specific flash file system");
+MODULE_DESCRIPTION("YAFFS2 - a NAND specific flash file system");
 MODULE_AUTHOR("Charles Manning, Aleph One Ltd., 2002-2011");
 MODULE_LICENSE("GPL");
