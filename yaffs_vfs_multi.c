@@ -3687,6 +3687,7 @@ static struct file_operations procfs_ops = {
 	.open  = yaffs_proc_open,
 	.read  = seq_read,
 	.write = yaffs_proc_write,
+	.release = single_release,
 };
 
 static int yaffs_procfs_init(void)
