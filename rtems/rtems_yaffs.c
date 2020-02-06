@@ -407,7 +407,7 @@ static int ryfs_fchmod(const rtems_filesystem_location_info_t *loc, mode_t mode)
 	if (obj != NULL) {
 		obj->yst_mode = mode;
 		obj->dirty = 1;
-		yc = yaffs_flush_file(obj, 0, 0);
+		yc = yaffs_flush_file(obj, 0, 0,0);
 	} else {
 		yc = YAFFS_FAIL;
 	}
@@ -435,7 +435,7 @@ static int ryfs_chown(
 		obj->yst_uid = owner;
 		obj->yst_gid = group;
 		obj->dirty = 1;
-		yc = yaffs_flush_file(obj, 0, 0);
+		yc = yaffs_flush_file(obj, 0, 0, 0);
 	} else {
 		yc = YAFFS_FAIL;
 	}
@@ -456,9 +456,9 @@ static int ryfs_fsync_or_fdatasync(rtems_libio_t *iop)
 	int yc;
 
 	ylock(dev);
-	yc = yaffs_flush_file(obj, 0, 1);
+	yc = yaffs_flush_file(obj, 0, 1, 0);
 	if (rtems_filesystem_location_is_instance_root(&iop->pathinfo)) {
-		yaffs_flush_whole_cache(dev);
+		yaffs_flush_whole_cache(dev, 0);
 	}
 	yunlock(dev);
 
@@ -509,7 +509,7 @@ static int ryfs_file_close(rtems_libio_t *iop)
 	struct yaffs_dev *dev = obj->my_dev;
 
 	ylock(dev);
-	yaffs_flush_file(obj, 1, 0);
+	yaffs_flush_file(obj, 1, 0, 1);
 	yunlock(dev);
 
 	return 0;
@@ -623,7 +623,7 @@ int rtems_yaffs_mount_handler(rtems_filesystem_mount_table_entry_t *mt_entry, co
 	mt_entry->mt_fs_root->location.node_access = dev->root_dir;
 	mt_entry->mt_fs_root->location.handlers = &yaffs_directory_handlers;
 
-	yaffs_flush_whole_cache(dev);
+	yaffs_flush_whole_cache(dev, 0);
 	yunlock(dev);
 
 	return 0;
@@ -634,7 +634,7 @@ static void ryfs_fsunmount(rtems_filesystem_mount_table_entry_t *mt_entry)
 	struct yaffs_dev *dev = ryfs_get_device_by_mt_entry(mt_entry);
 
 	ylock(dev);
-	yaffs_flush_whole_cache(dev);
+	yaffs_flush_whole_cache(dev, 1);
 	yaffs_deinitialise(dev);
 	yunlock(dev);
 	rtems_yaffs_os_unmount(dev);

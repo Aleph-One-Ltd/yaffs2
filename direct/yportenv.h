@@ -17,6 +17,24 @@
 #define __YPORTENV_H__
 
 
+#ifdef __rtems__
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+
+#define CONFIG_YAFFS_DIRECT 1
+#define CONFIG_YAFFS_SHORT_NAMES_IN_RAM 1
+#define CONFIG_YAFFS_YAFFS2 1
+#define CONFIG_YAFFS_PROVIDE_DEFS 1
+#define CONFIG_YAFFSFS_PROVIDE_VALUES 1
+#define CONFIG_YAFFS_DEFINES_TYPES 1
+#define NO_Y_INLINE 1
+#define loff_t off_t
+
+#endif /* __rtems__ */
+
 /* Definition of types */
 #ifdef CONFIG_YAFFS_DEFINES_TYPES
 typedef unsigned char u8;
@@ -25,7 +43,6 @@ typedef unsigned int u32;
 typedef unsigned long long u64;
 typedef signed int s32;
 #endif
-
 
 #ifdef CONFIG_YAFFS_PROVIDE_DEFS
 /* File types */

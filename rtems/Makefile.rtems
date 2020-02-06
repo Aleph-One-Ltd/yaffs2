@@ -1,0 +1,147 @@
+#
+# This file was originally written to work from the yaffs2 base directory
+# which required deleting some of the Linux files.
+#
+# This is now modified to run from the yaffs2/rtems directory and copies in
+# all files as symbolic links.
+#
+
+include $(RTEMS_MAKEFILE_PATH)/Makefile.inc
+include $(RTEMS_MAKEFILE_PATH)/make/target.cfg
+
+INSTALL_BASE = $(RTEMS_MAKEFILE_PATH)/lib
+
+BUILDDIR = build-$(RTEMS_BSP)
+
+CPPFLAGS += -I. 
+
+DEPFLAGS = -MT $@ -MD -MP -MF $(basename $@).d
+
+GCCFLAGS = -g -I . -B $(INSTALL_BASE) -specs bsp_specs -qrtems
+
+CFLAGS += $(DEPFLAGS) $(GCCFLAGS)
+
+# Files to be made into local symlinks
+YCORE_SYMLINKS = \
+	yaffs_ecc.c \
+	yaffs_guts.c \
+	yaffs_packedtags1.c \
+	yaffs_tagscompat.c \
+	yaffs_packedtags2.c \
+	yaffs_nand.c \
+	yaffs_checkptrw.c \
+	yaffs_nameval.c \
+	yaffs_allocator.c \
+	yaffs_bitmap.c \
+	yaffs_yaffs1.c \
+	yaffs_yaffs2.c \
+	yaffs_verify.c \
+	yaffs_summary.c \
+	yaffs_ecc.h \
+	yaffs_guts.h \
+	yaffs_packedtags1.h \
+	yaffs_tagscompat.h \
+	yaffs_packedtags2.h \
+	yaffs_nand.h \
+	yaffs_checkptrw.h \
+	yaffs_nameval.h \
+	yaffs_attribs.h \
+	yaffs_allocator.h \
+	yaffs_bitmap.h \
+	yaffs_yaffs1.h \
+	yaffs_yaffs2.h \
+	yaffs_verify.h \
+	yaffs_summary.h \
+	yaffs_trace.h \
+	yaffs_endian.h \
+	yaffs_getblockinfo.h \
+	yaffs_tagsmarshall.h
+
+
+DIRECT_SYMLINKS = \
+	yaffs_attribs.c \
+	yaffs_hweight.c \
+	yaffs_hweight.h \
+	yportenv.h \
+	ydirectenv.h \
+	yaffscfg.h \
+	yaffs_osglue.h \
+	yaffs_list.h \
+	yaffsfs.h
+
+DIRECT_QSORT_SYMLINKS = \
+	qsort.c
+
+ALL_SYMLINKS = $(YCORE_SYMLINKS) $(DIRECT_SYMLINKS) $(DIRECT_QSORT_SYMLINKS)
+
+
+INCLUDES = rtems_yaffs.h \
+	yportenv.h \
+	ydirectenv.h \
+	yaffs_osglue.h \
+	yaffs_hweight.h \
+	yaffscfg.h \
+	yaffs_list.h \
+	yaffsfs.h \
+	yaffs_guts.h \
+	yaffs_packedtags2.h \
+	yaffs_ecc.h
+
+LIB = $(BUILDDIR)/libyaffs2.a
+LIB_PIECES = yaffs_ecc \
+	yaffs_guts \
+	yaffs_packedtags1 \
+	yaffs_tagscompat \
+	yaffs_packedtags2 \
+	yaffs_nand \
+	yaffs_checkptrw \
+	qsort \
+	yaffs_nameval \
+	yaffs_attribs \
+	yaffs_allocator \
+	yaffs_bitmap \
+	yaffs_yaffs1 \
+	yaffs_yaffs2 \
+	yaffs_verify \
+	yaffs_summary \
+	yaffs_hweight \
+	rtems_yaffs \
+	rtems_yaffs_os_context \
+	rtems_yaffs_os_glue
+LIB_OBJS = $(LIB_PIECES:%=$(BUILDDIR)/%.o)
+LIB_DEPS = $(LIB_PIECES:%=$(BUILDDIR)/%.d)
+
+all: $(BUILDDIR) $(ALL_SYMLINKS) $(LIB)
+
+symlinks:$(ALL_SYMLINKS)
+
+$(YCORE_SYMLINKS): 
+	ln -s ../$@ $@
+
+$(DIRECT_SYMLINKS): 
+	ln -s ../direct/$@ $@
+
+$(DIRECT_QSORT_SYMLINKS): 
+	ln -s ../direct/optional_sort/$@ $@
+
+$(BUILDDIR):
+	mkdir $(BUILDDIR)
+
+$(LIB): $(LIB_OBJS)
+	$(AR) rcu $@ $^
+	$(RANLIB) $@
+
+$(BUILDDIR)/%.o: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf $(BUILDDIR) $(ALL_SYMLINKS)
+
+install:  all
+	mkdir -p $(INSTALL_BASE)/include/yaffs
+	install -m 644 $(LIB) $(INSTALL_BASE)
+	install -m 644 $(INCLUDES) $(INSTALL_BASE)/include/yaffs
+
+.PHONY: clean install
+
+-include $(LIB_DEPS)

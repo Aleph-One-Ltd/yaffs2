@@ -151,7 +151,7 @@ loop:	SWAPINIT(a, es);
 	vecswap(pb, pn - r, r);
 	r = pb - pa;
 	if (r > es)
-		yaffs_qsort(a, r / es, es, cmp);
+		qsort(a, r / es, es, cmp);
 	r = pd - pc;
 	if (r > es) {
 		/* Iterate rather than recurse to save stack space */
@@ -159,5 +159,5 @@ loop:	SWAPINIT(a, es);
 		n = r / es;
 		goto loop;
 	}
-/*		yaffs_qsort(pn - r, r / es, es, cmp);*/
+/*		qsort(pn - r, r / es, es, cmp);*/
 }
