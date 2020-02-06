@@ -1,0 +1,76 @@
+include $(RTEMS_MAKEFILE_PATH)/Makefile.inc
+include $(RTEMS_MAKEFILE_PATH)/make/target.cfg
+
+INSTALL_BASE = $(RTEMS_MAKEFILE_PATH)/lib
+
+BUILDDIR = build-$(RTEMS_BSP)
+
+CPPFLAGS += -I. -Idirect -Idirect/rtems
+
+DEPFLAGS = -MT $@ -MD -MP -MF $(basename $@).d
+
+GCCFLAGS = -g -I . -B $(INSTALL_BASE) -specs bsp_specs -qrtems
+
+CFLAGS += $(DEPFLAGS) $(GCCFLAGS)
+
+INCLUDES = rtems/rtems_yaffs.h \
+	direct/yportenv.h \
+	direct/ydirectenv.h \
+	direct/yaffs_osglue.h \
+	direct/yaffs_hweight.h \
+	direct/yaffscfg.h \
+	direct/yaffs_list.h \
+	direct/yaffsfs.h \
+	yaffs_guts.h \
+	yaffs_packedtags2.h \
+	yaffs_ecc.h
+
+LIB = $(BUILDDIR)/libyaffs2.a
+LIB_PIECES = yaffs_ecc \
+	yaffs_guts \
+	yaffs_packedtags1 \
+	yaffs_tagscompat \
+	yaffs_packedtags2 \
+	yaffs_nand \
+	yaffs_checkptrw \
+	direct/yaffs_qsort \
+	yaffs_nameval \
+	yaffs_attribs \
+	yaffs_allocator \
+	yaffs_bitmap \
+	yaffs_yaffs1 \
+	yaffs_yaffs2 \
+	yaffs_verify \
+	yaffs_summary \
+	direct/yaffs_hweight \
+	rtems/rtems_yaffs \
+	rtems/rtems_yaffs_os_context \
+	rtems/rtems_yaffs_os_glue
+LIB_OBJS = $(LIB_PIECES:%=$(BUILDDIR)/%.o)
+LIB_DEPS = $(LIB_PIECES:%=$(BUILDDIR)/%.d)
+
+all: $(BUILDDIR) $(LIB)
+
+$(BUILDDIR):
+	mkdir $(BUILDDIR)
+	mkdir $(BUILDDIR)/direct
+	mkdir $(BUILDDIR)/rtems
+
+$(LIB): $(LIB_OBJS)
+	$(AR) rcu $@ $^
+	$(RANLIB) $@
+
+$(BUILDDIR)/%.o: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -rf $(BUILDDIR)
+
+install:  all
+	mkdir -p $(INSTALL_BASE)/include/yaffs
+	install -m 644 $(LIB) $(INSTALL_BASE)
+	install -m 644 $(INCLUDES) $(INSTALL_BASE)/include/yaffs
+
+.PHONY: clean install
+
+-include $(LIB_DEPS)
