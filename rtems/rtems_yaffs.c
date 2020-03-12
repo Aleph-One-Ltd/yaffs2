@@ -684,14 +684,6 @@ static int ryfs_symlink(const rtems_filesystem_location_info_t *parent_loc,
 						geteuid(), getegid(), target);
 
 	if (created_link != NULL) {
-		// In RTEMS VFS, there is no filesytem-wide sync(), only per-file
-		// flushes.  Filesystem-wide sync is implemented by looping over all of
-		// the open files and individually fsync()ing them.  That's part of why
-		// every close() in RTEMS-yaffs is accompanied by an implicit fsync().
-		// There is no such close() call associated with the symlink's creation,
-		// since it wasn't created via open().  Therefore, flush it immediately
-		// instead.
-		yaffs_flush_file(created_link, 0, 0, 0);
 		ret = 0;
 	} else {
 		errno = EINVAL;
