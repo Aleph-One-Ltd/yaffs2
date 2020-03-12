@@ -4,6 +4,8 @@
  * Copyright (C) 2010, 2011 Sebastien Bourdeauducq
  * Copyright (C) 2011 Stephan Hoffmann <sho@reLinux.de>
  * Copyright (C) 2011-2012 embedded brains GmbH <rtems@embedded-brains.de>
+ * Copyright (C) 2019 Space Sciences and Engineering, LLC
+ *     <jbrandmeyer@planetiq.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -41,6 +43,7 @@
 
 static const rtems_filesystem_file_handlers_r yaffs_directory_handlers;
 static const rtems_filesystem_file_handlers_r yaffs_file_handlers;
+static const rtems_filesystem_file_handlers_r yaffs_link_handlers;
 static const rtems_filesystem_operations_table yaffs_ops;
 
 /* locking */
@@ -94,6 +97,9 @@ static void ryfs_set_location(rtems_filesystem_location_info_t *loc, struct yaff
 			break;
 		case YAFFS_OBJECT_TYPE_DIRECTORY:
 			loc->handlers = &yaffs_directory_handlers;
+			break;
+		case YAFFS_OBJECT_TYPE_SYMLINK:
+			loc->handlers = &yaffs_link_handlers;
 			break;
 		default:
 			loc->handlers = &rtems_filesystem_handlers_default;
@@ -407,7 +413,7 @@ static int ryfs_fchmod(const rtems_filesystem_location_info_t *loc, mode_t mode)
 	if (obj != NULL) {
 		obj->yst_mode = mode;
 		obj->dirty = 1;
-		yc = yaffs_flush_file(obj, 0, 0,0);
+		yc = yaffs_flush_file(obj, 0, 0, 0);
 	} else {
 		yc = YAFFS_FAIL;
 	}
@@ -654,6 +660,91 @@ static void ryfs_unlock(const rtems_filesystem_mount_table_entry_t *mt_entry)
 	yunlock(dev);
 }
 
+/**
+ * Construct a link from parent/name to target.
+ */
+static int ryfs_symlink(const rtems_filesystem_location_info_t *parent_loc,
+		const char *name,
+		size_t namelen,
+		const char *target)
+{
+	struct yaffs_obj *parent_dir = ryfs_get_object_by_location(parent_loc);
+	struct yaffs_dev *dev = parent_dir->my_dev;
+	uint32_t mode;
+	struct yaffs_obj *created_link;
+	int ret;
+
+	ylock(dev);
+
+	mode = S_IFLNK |
+		((S_IRWXU | S_IRWXG | S_IRWXO) & ~rtems_filesystem_umask);
+
+	created_link = yaffs_create_symlink(parent_dir, name, mode, 
+						geteuid(), getegid(), target);
+
+	if (created_link != NULL) {
+		// In RTEMS VFS, there is no filesytem-wide sync(), only per-file
+		// flushes.  Filesystem-wide sync is implemented by looping over all of
+		// the open files and individually fsync()ing them.  That's part of why
+		// every close() in RTEMS-yaffs is accompanied by an implicit fsync().
+		// There is no such close() call associated with the symlink's creation,
+		// since it wasn't created via open().  Therefore, flush it immediately
+		// instead.
+		yaffs_flush_file(created_link, 0, 0, 0);
+		ret = 0;
+	} else {
+		errno = EINVAL;
+		ret = -1;
+	}
+
+	yunlock(dev);
+	return ret;
+}
+
+/**
+ * Read the target name of a symbolic link.  Interpretation of the path name is
+ * up to the caller.
+ *
+ * @param loc The location of the symlink
+ * @param dst_buf A non-NULL pointer to the caller's buffer for the characters.
+ * @param dst_buf_size The size of the caller's buffer in characters.
+ *
+ * @retval -1 An error occurred, the error may be found via errno.
+ * @retval non-negative size of the actual contents in characters, including the
+ * terminating NULL.
+ */
+static ssize_t ryfs_readlink(const rtems_filesystem_location_info_t *loc,
+		char *dst_buf, size_t dst_buf_size)
+{
+	struct yaffs_obj *link = ryfs_get_object_by_location(loc);
+	struct yaffs_dev *dev = link->my_dev;
+
+	ylock(dev);
+	ssize_t chars_copied = -1;
+
+	link = yaffs_get_equivalent_obj(link);
+	if (!link) {
+		errno = EBADF;
+		goto error_locked;
+	}
+
+	if (link->variant_type != YAFFS_OBJECT_TYPE_SYMLINK) {
+		errno = EINVAL;
+		goto error_locked;
+	}
+
+	// Source string length including the terminating NULL.
+	size_t src_buf_size = strlen(link->variant.symlink_variant.alias) + 1;
+	if (src_buf_size > dst_buf_size)
+		src_buf_size = dst_buf_size;
+	memcpy(dst_buf, link->variant.symlink_variant.alias, src_buf_size);
+	chars_copied = src_buf_size;
+
+error_locked:
+	yunlock(dev);
+	return chars_copied;
+}
+
 static const rtems_filesystem_file_handlers_r yaffs_directory_handlers = {
 	.open_h = rtems_filesystem_default_open,
 	.close_h = rtems_filesystem_default_close,
@@ -682,6 +773,20 @@ static const rtems_filesystem_file_handlers_r yaffs_file_handlers = {
 	.fcntl_h = rtems_filesystem_default_fcntl
 };
 
+static const rtems_filesystem_file_handlers_r yaffs_link_handlers = {
+	.open_h = rtems_filesystem_default_open,
+	.close_h = rtems_filesystem_default_close,
+	.read_h = rtems_filesystem_default_read,
+	.write_h = rtems_filesystem_default_write,
+	.ioctl_h = rtems_filesystem_default_ioctl,
+	.lseek_h = rtems_filesystem_default_lseek_file,
+	.fstat_h = ryfs_fstat,
+	.ftruncate_h = rtems_filesystem_default_ftruncate,
+	.fsync_h = rtems_filesystem_default_fsync_or_fdatasync,
+	.fdatasync_h = rtems_filesystem_default_fsync_or_fdatasync,
+	.fcntl_h = rtems_filesystem_default_fcntl,
+};
+
 static const rtems_filesystem_operations_table yaffs_ops = {
 	.lock_h = ryfs_lock,
 	.unlock_h = ryfs_unlock,
@@ -698,8 +803,8 @@ static const rtems_filesystem_operations_table yaffs_ops = {
 	.unmount_h = rtems_filesystem_default_unmount,
 	.fsunmount_me_h = ryfs_fsunmount,
 	.utime_h = ryfs_utime,
-	.symlink_h = rtems_filesystem_default_symlink,
-	.readlink_h = rtems_filesystem_default_readlink,
+	.symlink_h = ryfs_symlink,
+	.readlink_h = ryfs_readlink,
 	.rename_h = ryfs_rename,
 	.statvfs_h = rtems_filesystem_default_statvfs
 };
