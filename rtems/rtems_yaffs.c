@@ -641,6 +641,7 @@ static void ryfs_fsunmount(rtems_filesystem_mount_table_entry_t *mt_entry)
 
 	ylock(dev);
 	yaffs_flush_whole_cache(dev, 1);
+	yaffs_checkpoint_save(dev);
 	yaffs_deinitialise(dev);
 	yunlock(dev);
 	rtems_yaffs_os_unmount(dev);
