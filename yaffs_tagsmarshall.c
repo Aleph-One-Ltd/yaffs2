@@ -14,7 +14,7 @@
  * tags storage.
  */
 
-#include "yaffs_guts.h"
+#include "yaffs_tagsmarshall.h"
 #include "yaffs_trace.h"
 #include "yaffs_packedtags2.h"
 
