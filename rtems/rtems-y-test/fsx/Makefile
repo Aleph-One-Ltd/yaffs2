@@ -1,19 +1,20 @@
 #
-#  Makefile for yaffs-rtems-test.exe
+#  Makefile for rtems-fsx.exe
 #
 
 #
 #  RTEMS_MAKEFILE_PATH is typically set in an environment variable
 #
 
-EXEC=yaffs-rtems-test.exe
+EXEC=rtems-fsx.exe
 PGM=${ARCH}/$(EXEC)
 
 # optional managers required
 MANAGERS=all
 
 # C source names
-CSRCS = yaffs-rtems-test.c yaffs-rtems-flashsim.c
+CSRCS = rtems-fsx.c
+CSRCS += yaffs-rtems-test-wrapper.c yaffs-rtems-flashsim.c
 COBJS_ = $(CSRCS:.c=.o)
 COBJS = $(COBJS_:%=${ARCH}/%)
 
@@ -39,6 +40,18 @@ include $(PROJECT_ROOT)/make/leaf.cfg
 OBJS= $(COBJS) $(CXXOBJS) $(ASOBJS)
 
 all:    ${ARCH} $(PGM)
+
+#Create symlinks
+yaffs-rtems-test-wrapper.c: ../common/yaffs-rtems-test-wrapper.c
+	ln -sf $^ $@
+
+yaffs-rtems-flashsim.c: ../common/yaffs-rtems-flashsim.c
+	ln -sf $^ $@
+
+yaffs-rtems-flashsim.h: ../common/yaffs-rtems-flashsim.h
+	ln -sf $^ $@
+
+$(OBJS): yaffs-rtems-flashsim.h
 
 $(PGM): $(OBJS)
 	$(make-exe)

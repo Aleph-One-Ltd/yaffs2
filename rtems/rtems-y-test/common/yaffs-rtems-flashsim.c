@@ -4,7 +4,7 @@
 #include "yaffs-rtems-flashsim.h"
 
 #include <string.h>
-#include "../yaffs_guts.h"
+#include "../../yaffs_guts.h"
 
 
 
@@ -15,6 +15,12 @@
 #define PAGE_SIZE	(DATA_SIZE + SPARE_SIZE)
 #define PAGES_PER_BLOCK	64
 
+
+#if 0
+#define dout printf
+#else
+#define dout(...) do { } while(0)
+#endif
 
 typedef struct {
 	unsigned char page[PAGES_PER_BLOCK][PAGE_SIZE];
@@ -88,6 +94,7 @@ static int yramsim_rd_chunk (struct yaffs_dev *dev, int pageId,
 	unsigned pageOffset = pageId % PAGES_PER_BLOCK;
 	unsigned char * d;
 	unsigned char *s;
+
 	if(blockId >= sim->nBlocks ||
 	   pageOffset >= PAGES_PER_BLOCK ||
 	   dataLength >DATA_SIZE ||
@@ -122,6 +129,9 @@ static int yramsim_wr_chunk (struct yaffs_dev *dev, int pageId,
 	unsigned pageOffset = pageId % PAGES_PER_BLOCK;
 	unsigned char * d;
 	unsigned char *s;
+
+	dout("wr_chunk\n");
+
 	if(blockId >= sim->nBlocks ||
 	   pageOffset >= PAGES_PER_BLOCK ||
 	   dataLength >DATA_SIZE ||

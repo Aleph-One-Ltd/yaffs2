@@ -14,8 +14,8 @@
 
 #include "yaffs-rtems-flashsim.h"
 
-//#define YPATH "/yaffs_mount_pt/"
-#define YPATH ""
+#define YPATH "/yaffs_mount_pt"
+//#define YPATH ""
 
 void yaffs_bug_fn(const char *file_name, int line_no)
 {
@@ -48,92 +48,19 @@ int filesystem_init(const char *mount_target)
 	mount_args.dev = device;
 
 	if (mount_and_make_target_path(NULL,
-                              NULL /*mount_target */,
+                              mount_target,
                               RTEMS_FILESYSTEM_TYPE_YAFFS,
                               RTEMS_FILESYSTEM_READ_WRITE,
                               &mount_args) < 0) {
+		perror("mount_and_make");
 		return errno;
 	} else {
+		chmod(mount_target, 0777); /* Make partition rw/modifiable */
 		return 0;
 	}
 }
 
-
-void set_uint8_t_buffer(uint8_t *buf, uint32_t n, uint8_t start, uint8_t inc)
-{
-	while (n) {
-		*buf = start;
-		buf++;
-		start += inc;
-		n--;
-	}
-}
-
-int run_basic_file_test(void)
-{
-	int fd;
-	int ret;
-	uint8_t buf[100];
-	uint8_t buf2[100];
-
-	fd = open(YPATH"/test", O_RDWR | O_CREAT | O_TRUNC, 0666);
-	printf("open = %d\n", fd);
-
-	set_uint8_t_buffer(buf, sizeof(buf), 0xAA, 1);
-
-	ret = write(fd, buf, sizeof(buf));
-
-	printf("write returned %d\n", ret);
-
-	if (ret == -1)
-		perror("writing file");
-
-	ret = lseek(fd, 0, SEEK_END);
-
-	printf("lseek end ret = %d\n", ret);
-
-	ret = lseek(fd, 0, SEEK_SET);
-	printf("lseek start ret = %d\n", ret);
-
-	ret = read(fd, buf2, sizeof(buf2));
-
-	printf("reading file ret = %d\n", ret);
-
-	if (ret == -1)
-		perror("reading file");
-
-
-	return ret;
-
-#if 0
-
-
-   fd = open("test1", O_CREAT);
-   printf( "fcntl flags =0x%x\n", fcntl( fd, F_GETFL ) );
-   close(fd);
-
-   fd = open("test", O_RDONLY);
-   if (fd == -1) {
-     printf("Starting on the wrong foot....\n");
-     exit(-1);
-   }
-
-   printf( "fcntl flags =0x%x\n", fcntl( fd, F_GETFL ) );
-
-   fp = fdopen(fd, "r");
-   if (fp == NULL) {
-      printf("Nothing ever goes my way!\n");
-      close(fd);
-      exit(-1);
-   } else {
-      printf("Soon, I will be able to take over the world!\n");
-      fgets(str, 200, fp);
-      printf("%s\n", str);
-      fclose(fp);
-   }
-#endif
-}
-
+extern int run_the_test(void);
 
 rtems_task Init(
   rtems_task_argument ignored
@@ -147,8 +74,7 @@ rtems_task Init(
 
 	printf("filesystem_init(\"%s\") returned %d\n", YPATH, err);
 
-	run_basic_file_test();
-
+	run_the_test();
 
    exit(0);
 }
@@ -178,7 +104,7 @@ previously-registered handler.
 #define CONFIGURE_APPLICATION_NEEDS_CONSOLE_DRIVER
 
 #define CONFIGURE_USE_IMFS_AS_BASE_FILESYSTEM
-#define CONFIGURE_MAXIMUM_FILE_DESCRIPTORS 6
+#define CONFIGURE_MAXIMUM_FILE_DESCRIPTORS 32
 
 #define CONFIGURE_RTEMS_INIT_TASKS_TABLE
 #define CONFIGURE_MAXIMUM_TASKS 1
