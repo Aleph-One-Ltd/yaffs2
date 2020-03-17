@@ -1,0 +1,34 @@
+FSX is a file system exerciser originally written at Apple for 
+stress testing file system operations, particularly those related to 
+seeking, truncating etc.
+
+A good output looks like:
+fsx_init done
+truncating to largest ever: 0x1cbf7
+truncating to largest ever: 0x27453
+truncating to largest ever: 0x2d9bd
+truncating to largest ever: 0x36c22
+truncating to largest ever: 0x3e9f5
+truncating to largest ever: 0x3eff0
+truncating to largest ever: 0x3fd22
+truncating to largest ever: 0x3fe0b
+truncating to largest ever: 0x3fe29
+truncating to largest ever: 0x3ff4b
+truncating to largest ever: 0x3ff8c
+truncating to largest ever: 0x3ffa2
+truncating to largest ever: 0x3ffe5
+truncating to largest ever: 0x3fff8
+skipping zero size write
+skipping zero size read
+truncating to largest ever: 0x3fffd
+truncating to largest ever: 0x3ffff
+skipping zero size read
+skipping zero size read
+skipping zero size write
+skipping zero size write
+skipping zero size read
+skipping zero size read
+skipping zero size read
+skipping zero size read
+skipping zero size read
+skipping zero size read

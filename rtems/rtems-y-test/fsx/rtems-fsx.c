@@ -934,5 +934,5 @@ int run_the_test(void)
 	if (ret < 0)
 		perror("mkdir");
 
-	return fsx_main(FSX_TEST_DIR, 100000);
+	return fsx_main(FSX_TEST_DIR, 100000000);
 }
