@@ -253,6 +253,7 @@ int create_delete_files_pass(char *root_path, char *test_path, int n_files, int 
 	}
 
 	for (i = 0; i < n_files; i++) {
+		int link_fd;
 
 		make_test_file_name(fname, sizeof(fname), root_path, test_path, "file-", i);
 		make_test_file_name(lname, sizeof(lname), root_path, test_path, "link-", i);
@@ -272,6 +273,18 @@ int create_delete_files_pass(char *root_path, char *test_path, int n_files, int 
 			ret = fds[i];
 			goto err;
 		}
+
+
+		link_fd = open(lname, O_RDWR, 0777);
+		printf("opening link %s  = %d\n", lname, link_fd);
+
+		if (link_fd < 0) {
+			perror("opening symlink file");
+			ret = link_fd;
+			goto err;
+		}
+		close(link_fd);
+
 	}
 
 	set_uint8_t_buffer(buf, sizeof(buf), 0xAA, 1);
