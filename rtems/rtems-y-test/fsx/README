@@ -3,6 +3,12 @@ stress testing file system operations, particularly those related to
 seeking, truncating etc.
 
 A good output looks like:
+
+Starting
+Created simulated flash device 0x2d24348
+yaffs: 0 blocks to be sorted...
+filesystem_init("/yaffs_mount_pt") returned 0
+mkdir returned 0
 fsx_init done
 truncating to largest ever: 0x1cbf7
 truncating to largest ever: 0x27453
@@ -14,21 +20,19 @@ truncating to largest ever: 0x3fd22
 truncating to largest ever: 0x3fe0b
 truncating to largest ever: 0x3fe29
 truncating to largest ever: 0x3ff4b
-truncating to largest ever: 0x3ff8c
-truncating to largest ever: 0x3ffa2
-truncating to largest ever: 0x3ffe5
-truncating to largest ever: 0x3fff8
-skipping zero size write
-skipping zero size read
-truncating to largest ever: 0x3fffd
-truncating to largest ever: 0x3ffff
-skipping zero size read
-skipping zero size read
-skipping zero size write
-skipping zero size write
-skipping zero size read
-skipping zero size read
-skipping zero size read
-skipping zero size read
-skipping zero size read
-skipping zero size read
+All operations completed A-OK!
+fsx wanted to exit with 0
+
+Flashsim stats
+reads.....44373
+writes....46000
+erases....644
+
+
+
+To run for longer or shorter periods modify this line:
+      return fsx_main(FSX_TEST_DIR, 10000);
+
+
+This program has been run overnight (using a very large value) and no 
+problems were observed.
