@@ -5,5 +5,7 @@ struct yaffs_dev;
 
 struct yaffs_dev *yaffs_rtems_flashsim_setup(void);
 
+void yaffs_rtems_flashsim_dump_status(void);
+
 #endif
 

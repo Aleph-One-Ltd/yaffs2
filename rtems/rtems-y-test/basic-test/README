@@ -1,0 +1,4 @@
+The basic tests test common fs operations such as open, close, read, write etc.
+
+Multiple files and directories are opened, created, read, deleted, truncated etc.
+

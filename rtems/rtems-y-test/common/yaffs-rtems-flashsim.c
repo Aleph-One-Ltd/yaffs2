@@ -22,6 +22,12 @@
 #define dout(...) do { } while(0)
 #endif
 
+
+
+uint32_t stats_reads;
+uint32_t stats_writes;
+uint32_t stats_erases;
+
 typedef struct {
 	unsigned char page[PAGES_PER_BLOCK][PAGE_SIZE];
 	unsigned blockOk;
@@ -95,6 +101,8 @@ static int yramsim_rd_chunk (struct yaffs_dev *dev, int pageId,
 	unsigned char * d;
 	unsigned char *s;
 
+	stats_reads++;
+
 	if(blockId >= sim->nBlocks ||
 	   pageOffset >= PAGES_PER_BLOCK ||
 	   dataLength >DATA_SIZE ||
@@ -132,6 +140,8 @@ static int yramsim_wr_chunk (struct yaffs_dev *dev, int pageId,
 
 	dout("wr_chunk\n");
 
+	stats_writes++;
+
 	if(blockId >= sim->nBlocks ||
 	   pageOffset >= PAGES_PER_BLOCK ||
 	   dataLength >DATA_SIZE ||
@@ -156,6 +166,8 @@ static int yramsim_wr_chunk (struct yaffs_dev *dev, int pageId,
 static int yramsim_erase(struct yaffs_dev *dev, int blockId)
 {
 	SimData *sim = DevToSim(dev);
+
+	stats_erases++;
 
 	CheckInitialised();
 	return yramsim_erase_internal(sim,blockId,0);
@@ -309,3 +321,11 @@ struct yaffs_dev *yaffs_rtems_flashsim_setup(void)
 				0, 99);
 }
 
+
+void yaffs_rtems_flashsim_dump_status(void)
+{
+	printf("\nFlashsim stats\n");
+	printf("reads.....%d\n", stats_reads);
+	printf("writes....%d\n", stats_writes);
+	printf("erases....%d\n", stats_erases);
+}

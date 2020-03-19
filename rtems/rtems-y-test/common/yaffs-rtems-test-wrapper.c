@@ -76,6 +76,8 @@ rtems_task Init(
 
 	run_the_test();
 
+	yaffs_rtems_flashsim_dump_status();
+
    exit(0);
 }
 
