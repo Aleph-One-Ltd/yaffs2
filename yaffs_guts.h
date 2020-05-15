@@ -885,6 +885,7 @@ struct yaffs_xattr_mod {
 
 int yaffs_guts_initialise(struct yaffs_dev *dev);
 void yaffs_deinitialise(struct yaffs_dev *dev);
+void yaffs_guts_cleanup(struct yaffs_dev *dev);
 
 int yaffs_get_n_free_chunks(struct yaffs_dev *dev);
 
