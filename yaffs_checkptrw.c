@@ -438,7 +438,7 @@ int yaffs_checkpt_close(struct yaffs_dev *dev)
 
 	if (dev->checkpt_open_write) {
 		if (dev->checkpt_byte_offs !=
-			sizeof(sizeof(struct yaffs_checkpt_chunk_hdr)))
+			sizeof(struct yaffs_checkpt_chunk_hdr))
 			yaffs2_checkpt_flush_buffer(dev);
 	} else if (dev->checkpt_block_list) {
 		for (i = 0;

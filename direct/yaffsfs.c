@@ -3050,6 +3050,7 @@ int yaffs_remount_common(struct yaffs_dev *dev, const YCHAR *path,
 		       int force, int read_only)
 {
 	int retVal = -1;
+	int was_read_only;
 
 	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
 		yaffsfs_SetError(-EFAULT);
@@ -3072,7 +3073,11 @@ int yaffs_remount_common(struct yaffs_dev *dev, const YCHAR *path,
 			if (force || !yaffsfs_IsDevBusy(dev)) {
 				if (read_only)
 					yaffs_checkpoint_save(dev);
+				was_read_only = dev->read_only;
 				dev->read_only = read_only ? 1 : 0;
+				if (was_read_only && !read_only) {
+					yaffs_guts_cleanup(dev);
+				}
 				retVal = 0;
 			} else
 				yaffsfs_SetError(-EBUSY);

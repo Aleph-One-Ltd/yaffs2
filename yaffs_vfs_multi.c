@@ -2718,6 +2718,7 @@ static int yaffs_sync_fs(struct super_block *sb)
 static int yaffs_remount_fs(struct super_block *sb, int *flags, char *data)
 {
 	int read_only = 0;
+	int was_read_only = 0;
 	struct mtd_info *mtd;
 	struct yaffs_dev *dev = 0;
 
@@ -2747,7 +2748,17 @@ static int yaffs_remount_fs(struct super_block *sb, int *flags, char *data)
 	}
 
 	dev = sb->s_fs_info;
+	was_read_only = dev->read_only;
 	dev->read_only = read_only;
+
+	if (was_read_only && !read_only) {
+		yaffs_gross_lock(dev);
+		yaffs_guts_cleanup(dev);
+		yaffs_gross_unlock(dev);
+		yaffs_bg_start(dev);
+	} else if (!was_read_only && read_only) {
+		yaffs_bg_stop(dev);
+	}
 
 	return 0;
 }

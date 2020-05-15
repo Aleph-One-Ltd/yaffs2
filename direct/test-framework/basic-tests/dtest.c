@@ -519,7 +519,7 @@ void dumpDirFollow(const char *dname)
 	yaffs_DIR *d;
 	struct yaffs_dirent *de;
 	struct yaffs_stat s;
-	char str[100];
+	char str[300];
 
 	d = yaffs_opendir(dname);
 
@@ -970,7 +970,7 @@ int huge_directory_test_on_path(char *path)
 	int total = 0;
 	int lastTotal = 0;
 
-	char str[100];
+	char str[300];
 
 
 	yaffs_start_up();
