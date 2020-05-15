@@ -1,0 +1,136 @@
+
+
+Building with Makeifle
+
+Assuming the BSP is the sparc erc32 BSP in:
+/home/charles/quick-start/rtems/5/sparc-rtems5/erc32/
+
+
+
+Set up environment variuables
+
+export RTEMS_MAKEFILE_PATH=/home/charles/quick-start/rtems/5/sparc-rtems5/erc32/
+export PATH=/home/charles/quick-start/rtems/5/bin/:$PATH
+
+Now we can build and install the Yaffs library:
+
+$cd /opt/y/git/yaffs2/rtems
+
+$make -f Makefile.rtems clean
+$make -f Makefile.rtems all
+   output is build-erc32/libyaffs2.a
+$make -f Makefile.rtems install
+   mkdir -p /home/charles/quick-start/rtems/5/sparc-rtems5/erc32/lib/include/yaffs
+   install -m 644 build-erc32/libyaffs2.a /home/charles/quick-start/rtems/5/sparc-rtems5/erc32/lib
+   install -m 644 rtems_yaffs.h yportenv.h ydirectenv.h yaffs_osglue.h yaffs_hweight.h yaffscfg.h yaffs_list.h yaffsfs.h yaffs_guts.h yaffs_packedtags2.h yaffs_ecc.h /home/charles/quick-start/rtems/5/sparc-rtems5/erc32/lib/include/yaffs
+
+
+Building test application
+
+
+$ cd rtems-y-test/
+
+
+
+Running 
+
+$  sparc-rtems5-sis hello_world_c/o-optimize/hello.exe
+
+ SIS - SPARC/RISCV instruction simulator 2.20,  copyright Jiri Gaisler 2019
+ Bug-reports to jiri@gaisler.se
+
+ ERC32 emulation enabled
+
+ Loaded hello_world_c/o-optimize/hello.exe, entry 0x02000000
+sis> go
+resuming at 0x02000000
+
+
+*** HELLO WORLD TEST ***
+Hello World 123
+*** END OF HELLO WORLD TEST ***
+
+*** FATAL ***
+fatal source: 5 (RTEMS_FATAL_SOURCE_EXIT)
+fatal code: 0 (0x00000000)
+RTEMS version: 5.0.0.e22554535796fc29a7ed7c5e2338128e324a621d-modified
+RTEMS tools: 7.5.0 20191114 (RTEMS 5, RSB 5 (599c4d7c87fa), Newlib d14714c69)
+executing thread ID: 0x08a010001
+executing thread name: UI1 
+cpu 0 in error mode (tt = 0x101)
+   125619  0200c0e0:  91d02000   ta  0x0
+sis> 
+
+
+Running with GDB
+
+Open a second terminal to run sis in gdb mode
+
+$ sparc-rtems5-sis -gdb
+
+ SIS - SPARC/RISCV instruction simulator 2.20,  copyright Jiri Gaisler 2019
+ Bug-reports to jiri@gaisler.se
+
+ ERC32 emulation enabled
+
+gdb: listening on port 1234 connected
+X2000000,0:#40
+
+
+*** HELLO WORLD TEST ***
+Hello World 123
+*** END OF HELLO WORLD TEST ***
+
+*** FATAL ***
+fatal source: 5 (RTEMS_FATAL_SOURCE_EXIT)
+fatal code: 0 (0x00000000)
+RTEMS version: 5.0.0.e22554535796fc29a7ed7c5e2338128e324a621d-modified
+RTEMS tools: 7.5.0 20191114 (RTEMS 5, RSB 5 (599c4d7c87fa), Newlib d14714c69)
+executing thread ID: 0x08a010001
+executing thread name: UI1 
+
+
+
+
+
+
+From other window use gdb
+
+
+
+$ sparc-rtems5-gdb hello.exe
+GNU gdb (GDB) 8.3
+Copyright (C) 2019 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "--host=x86_64-linux-gnu --target=sparc-rtems5".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from hello.exe...
+(gdb) target remote :1234
+:1234: Connection timed out.
+(gdb) target remote :1234
+Remote debugging using :1234
+0x00000000 in ?? ()
+(gdb) load
+Loading section .text, size 0x12880 lma 0x2000000
+Loading section .rtemsroset, size 0x40 lma 0x2012880
+Loading section .data, size 0x530 lma 0x20138c0
+Start address 0x2000000, load size 77296
+Transfer rate: 2434 KB/sec, 270 bytes/write.
+(gdb) c
+Continuing.
+
+Program received signal SIGTERM, Terminated.
+syscall () at /home/charles/quick-start/src/rtems/c/src/../../cpukit/score/cpu/sparc/syscall.S:44
+44		ta	0			! syscall 1, halt with %g1,%g2,%g3 info
+(gdb) 
+
