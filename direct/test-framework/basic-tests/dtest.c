@@ -3406,11 +3406,33 @@ void rmdir_test2(void)
 	try_rmdir("/nand/z/");
 }
 
+
+void dump_yaffs_malloc_usage(void)
+{
+	unsigned current;
+	unsigned high_water;
+
+	yaffsfs_get_malloc_values(&current, &high_water);
+
+	printf("\n"
+	       "***************************************\n"
+	       "Dump of yaffs malloc usage during run\n"
+	       "Currently allocated : %u bytes\n"
+	       "High water allocated : %u bytes\n"
+	       "Note, this is not accurate on all platforms\n",
+		current, high_water);
+
+}
+
+
 int random_seed;
 int simulate_power_failure;
 
 int main(int argc, char *argv[])
 {
+
+	atexit(dump_yaffs_malloc_usage);
+
 	(void) argc;
 	(void) argv;
 
@@ -3454,7 +3476,7 @@ int main(int argc, char *argv[])
 	//long_test_on_path("/ram2k");
 	// long_test_on_path("/flash");
 	//simple_rw_test("/flash/flash");
-	//fill_disk_test("/flash/flash");
+	//fill_disk_test("/nand");
 	// rename_over_test("/flash");
 	//lookup_test("/flash");
 	//freespace_test("/flash/flash");

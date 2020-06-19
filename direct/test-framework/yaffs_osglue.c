@@ -165,6 +165,48 @@ u32 yaffsfs_CurrentTime(void)
  * Functions to allocate and free memory.
  */
 
+
+static unsigned malloc_high_water;
+static unsigned malloc_currently_allocated;
+
+#ifdef CONFIG_YAFFS_MONITOR_MALLOC
+
+#include <malloc.h>
+static void yaffsfs_malloc_add(void *ptr)
+{
+	unsigned this_size = malloc_usable_size(ptr);
+	malloc_currently_allocated += this_size;
+
+	if (malloc_currently_allocated > malloc_high_water)
+		malloc_high_water = malloc_currently_allocated;
+}
+
+static void yaffsfs_malloc_remove(void *ptr)
+{
+	unsigned this_size = malloc_usable_size(ptr);
+	malloc_currently_allocated -= this_size;
+}
+#else
+static void yaffsfs_malloc_add(void *ptr)
+{
+	(void)ptr;
+}
+
+static void yaffsfs_malloc_remove(void *ptr)
+{
+	(void)ptr;
+}
+#endif
+
+void yaffsfs_get_malloc_values(unsigned *current, unsigned *high_water)
+{
+	if (current)
+		*current = malloc_currently_allocated;
+	if(high_water)
+		*high_water = malloc_high_water;
+}
+
+
 #ifdef CONFIG_YAFFS_TEST_MALLOC
 
 static int yaffs_kill_alloc = 0;
@@ -182,6 +224,7 @@ void *yaffsfs_malloc(size_t size)
 	this = malloc(size);
 	if(this)
 		total_malloced += size;
+	yaffsfs_malloc_add(this);
 	return this;
 }
 
@@ -189,13 +232,19 @@ void *yaffsfs_malloc(size_t size)
 
 void *yaffsfs_malloc(size_t size)
 {
-	return malloc(size);
+	void *this = malloc(size);
+	yaffsfs_malloc_add(this);
+	return this;
 }
 
 #endif
 
+
+
+
 void yaffsfs_free(void *ptr)
 {
+	yaffsfs_malloc_remove(ptr);
 	free(ptr);
 }
 
