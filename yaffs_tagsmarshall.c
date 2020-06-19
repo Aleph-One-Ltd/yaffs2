@@ -172,10 +172,7 @@ static int yaffs_tags_marshall_query_block(struct yaffs_dev *dev, int block_no,
 		"block query returns  seq %d state %d",
 		*seq_number, *state);
 
-	if (retval == 0)
-		return YAFFS_OK;
-	else
-		return YAFFS_FAIL;
+	return retval;
 }
 
 static int yaffs_tags_marshall_mark_bad(struct yaffs_dev *dev, int block_no)
