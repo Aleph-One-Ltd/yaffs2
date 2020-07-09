@@ -1040,6 +1040,11 @@ loff_t yaffs_oh_to_size(struct yaffs_dev *dev, struct yaffs_obj_hdr *oh,
 			int do_endian);
 loff_t yaffs_max_file_size(struct yaffs_dev *dev);
 
+
+/* yaffs_wr_data_obj needs to be exposed to allow the cache to access it. */
+int yaffs_wr_data_obj(struct yaffs_obj *in, int inode_chunk,
+			     const u8 *buffer, int n_bytes, int use_reserve);
+
 /*
  * Debug function to count number of blocks in each state
  * NB Needs to be called with correct number of integers
