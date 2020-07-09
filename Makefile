@@ -26,7 +26,8 @@ ifneq ($(KERNELRELEASE),)
 
 	obj-m := $(YAFFS_O)
 
-	yaffs2-objs := yaffs_mtdif_single.o
+	yaffs2-objs := yaffs_cache.o
+	yaffs2-objs += yaffs_mtdif_single.o
 	yaffs2-objs += yaffs_packedtags1.o
 	yaffs2-objs += yaffs_ecc.o yaffs_vfs_single.o yaffs_guts.o
 	yaffs2-objs += yaffs_packedtags2.o
@@ -41,7 +42,8 @@ ifneq ($(KERNELRELEASE),)
 	yaffs2-objs += yaffs_endian.o
 	yaffs2-objs += yaffs_summary.o
 
-	yaffs2multi-objs := yaffs_mtdif_multi.o
+	yaffs2multi-objs := yaffs_cache.o
+	yaffs2multi-objs += yaffs_mtdif_multi.o
 	yaffs2multi-objs += yaffs_packedtags1.o
 	yaffs2multi-objs += yaffs_ecc.o yaffs_vfs_multi.o yaffs_guts.o
 	yaffs2multi-objs += yaffs_packedtags2.o

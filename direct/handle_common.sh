@@ -1,7 +1,9 @@
 #! /bin/sh
 
 YAFFS_COMMON_SOURCES="\
-          yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
+          yaffs_ecc.c yaffs_ecc.h \
+          yaffs_cache.c yaffs_cache.h \
+          yaffs_guts.c yaffs_guts.h \
           yaffs_tagscompat.c yaffs_tagscompat.h \
           yaffs_tagsmarshall.c yaffs_tagsmarshall.h \
           yaffs_packedtags1.c yaffs_packedtags1.h \
