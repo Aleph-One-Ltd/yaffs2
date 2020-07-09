@@ -73,11 +73,15 @@ size_t strnlen(const char *s, size_t maxlen);
 
 #define cond_resched()  do {} while (0)
 
+#ifdef CONFIG_YAFFS_NO_TRACE
 #define yaffs_trace(msk, fmt, ...) do { \
 	if (yaffs_trace_mask & (msk)) \
 		printf("yaffs: " fmt "\n", ##__VA_ARGS__); \
 } while (0)
 
+#else
+#define yaffs_trace(...) do { } while (0)
+#endif
 
 #define YAFFS_LOSTNFOUND_NAME		"lost+found"
 #define YAFFS_LOSTNFOUND_PREFIX		"obj"
