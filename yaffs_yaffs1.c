@@ -20,6 +20,9 @@
 
 int yaffs1_scan(struct yaffs_dev *dev)
 {
+#ifdef CONFIG_NO_YAFFS1
+	return YAFFS_FAIL;
+#else
 	struct yaffs_ext_tags tags;
 	u32 blk;
 	int result;
@@ -420,4 +423,5 @@ int yaffs1_scan(struct yaffs_dev *dev)
 	yaffs_trace(YAFFS_TRACE_SCAN, "yaffs1_scan ends");
 
 	return YAFFS_OK;
+#endif
 }
