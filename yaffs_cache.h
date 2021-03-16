@@ -46,6 +46,9 @@ void yaffs_invalidate_chunk_cache(struct yaffs_obj *object,
  */
 void yaffs_invalidate_file_cache(struct yaffs_obj *in);
 
+
+int yaffs_count_dirty_caches(struct yaffs_dev *dev);
+
 /* Init/deinit. */
 int yaffs_cache_init(struct yaffs_dev *dev);
 void yaffs_cache_deinit(struct yaffs_dev *dev);

@@ -118,9 +118,6 @@ int check_pattern_file(char *fn)
 }
 
 
-
-
-
 int dump_file_data(char *fn)
 {
 	int h;
@@ -1519,6 +1516,40 @@ void fill_disk_test(const char *mountpt)
 		yaffs_mount(mountpt);
 		fill_disk_and_delete(mountpt,100,i+1);
 		yaffs_unmount(mountpt);
+	}
+
+}
+
+
+void fill_n_file_test(const char *mountpt, int n, int syz)
+{
+	int i;
+	int l;
+
+	yaffs_start_up();
+
+	yaffs_format(mountpt, 0, 0, 0);
+	yaffs_mount(mountpt);
+
+
+	for(i = 0; i < n; i++)
+	{
+		int h;
+		char fname[200];
+
+		sprintf(fname, "%s/%d", mountpt, i);
+
+		h = yaffs_open(fname, O_CREAT | O_TRUNC | O_RDWR,  S_IREAD | S_IWRITE);
+
+		l = syz;
+
+		while(l > 0) {
+			yaffs_write(h, fname, sizeof(fname));
+			l -= sizeof(fname);
+		}
+
+		yaffs_close(h);
+
 	}
 
 }
@@ -3431,6 +3462,9 @@ int simulate_power_failure;
 int main(int argc, char *argv[])
 {
 
+	//unlink("emfile-nand");
+
+
 	atexit(dump_yaffs_malloc_usage);
 
 	(void) argc;
@@ -3459,7 +3493,8 @@ int main(int argc, char *argv[])
 	//link_test0("/nand");
 	//link_test1("yaffs2");
 	 //scan_pattern_test("/flash",10000,10);
-	short_scan_test("/yflash2",40000,200);
+	//short_scan_test("/yflash2",40000,200);
+	//short_scan_test("/nand128MB",40000,200);
 	  //small_mount_test("/flash/flash",1000);
 	  //small_overwrite_test("/flash/flash",1000);
 	  //seek_overwrite_test("/flash/flash",1000);
@@ -3476,7 +3511,7 @@ int main(int argc, char *argv[])
 	//long_test_on_path("/ram2k");
 	// long_test_on_path("/flash");
 	//simple_rw_test("/flash/flash");
-	//fill_disk_test("/nand");
+	 fill_n_file_test("/nand128MB", 50, 128000000/50);
 	// rename_over_test("/flash");
 	//lookup_test("/flash");
 	//freespace_test("/flash/flash");

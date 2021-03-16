@@ -175,9 +175,11 @@ static int  CheckInit(void)
 		}
 		kfree(ned.block);
 
+		(void) sizeInMB;
+
 		yaffs_trace(YAFFS_TRACE_ALWAYS,
 			"Allocation failed, could only allocate %dMB of %dMB requested.\n",
-			nAllocated/64,sizeInMB);
+			nAllocated/64, sizeInMB);
 		return 0;
 	}
 

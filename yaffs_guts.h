@@ -125,7 +125,7 @@
 /* Special sequence number for bad block that failed to be marked bad */
 #define YAFFS_SEQUENCE_BAD_BLOCK	0xffff0000
 
-/* ChunkCache is used for short read/write operations.*/
+/* Chunk cache is used for short read/write operations.*/
 struct yaffs_cache {
 	struct yaffs_obj *object;
 	int chunk_id;
@@ -134,6 +134,13 @@ struct yaffs_cache {
 	int n_bytes;		/* Only valid if the cache is dirty */
 	int locked;		/* Can't push out or flush while locked. */
 	u8 *data;
+};
+
+struct yaffs_cache_manager {
+	struct yaffs_cache *cache;
+	int n_caches;
+	int cache_last_use;
+	int n_temp_buffers;
 };
 
 /* yaffs1 tags structures in RAM
@@ -741,8 +748,7 @@ struct yaffs_dev {
 	int buffered_block;	/* Which block is buffered here? */
 	int doing_buffered_block_rewrite;
 
-	struct yaffs_cache *cache;
-	int cache_last_use;
+	struct yaffs_cache_manager cache_mgr;
 
 	/* Stuff for background deletion and unlinked files. */
 	struct yaffs_obj *unlinked_dir;	/* Directory where unlinked and deleted

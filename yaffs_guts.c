@@ -2471,6 +2471,8 @@ static unsigned yaffs_find_gc_block(struct yaffs_dev *dev,
 	struct yaffs_block_info *bi;
 	u32 threshold = dev->param.chunks_per_block;
 
+	(void) prioritised;
+
 	/* First let's see if we need to grab a prioritised block */
 	if (dev->has_pending_prioritised_gc && !aggressive) {
 		dev->gc_dirtiest = 0;
@@ -2725,6 +2727,7 @@ int yaffs_bg_gc(struct yaffs_dev *dev, unsigned urgency)
 {
 	int erased_chunks = dev->n_erased_blocks * dev->param.chunks_per_block;
 
+	(void) urgency;
 	yaffs_trace(YAFFS_TRACE_BACKGROUND, "Background gc %u", urgency);
 
 	yaffs_check_gc(dev, 1);
@@ -2759,6 +2762,7 @@ void yaffs_chunk_del(struct yaffs_dev *dev, int chunk_id, int mark_flash,
 	struct yaffs_ext_tags tags;
 	struct yaffs_block_info *bi;
 
+	(void) lyn;
 	if (chunk_id <= 0)
 		return;
 
@@ -4694,9 +4698,6 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 
 	dev->gc_cleanup_list = NULL;
 
-
-	dev->cache = NULL;
-
 	if (!init_failed)
 		init_failed = yaffs_cache_init(dev) < 0;
 
@@ -4860,18 +4861,12 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev)
 	int n_free;
 	int n_dirty_caches;
 	int blocks_for_checkpt;
-	u32 i;
 
 	n_free = dev->n_free_chunks;
 	n_free += dev->n_deleted_files;
 
 	/* Now count and subtract the number of dirty chunks in the cache. */
-
-	for (n_dirty_caches = 0, i = 0; i < dev->param.n_caches; i++) {
-		if (dev->cache[i].dirty)
-			n_dirty_caches++;
-	}
-
+	n_dirty_caches = yaffs_count_dirty_caches(dev);
 	n_free -= n_dirty_caches;
 
 	n_free -=

@@ -21,7 +21,9 @@
 
 struct yaffs_dev *yaffs_nandsim_install_drv(const char *dev_name,
 					const char *backing_file_name,
-					int n_blocks)
+					int n_blocks,
+					int n_caches,
+					int inband_tags)
 {
 	struct yaffs_dev *dev;
 	char *name_copy = NULL;
@@ -52,8 +54,9 @@ struct yaffs_dev *yaffs_nandsim_install_drv(const char *dev_name,
 	param->end_block = n_blocks - 1; // Last block
 	param->is_yaffs2 = 1;
 	param->use_nand_ecc = 1;
-	param->n_caches = 10;
+	param->n_caches = n_caches;
 	param->stored_endian = 2;
+	param->inband_tags = inband_tags;
 
 	if(yaffs_nand_install_drv(dev, chip) != YAFFS_OK)
 		goto fail;

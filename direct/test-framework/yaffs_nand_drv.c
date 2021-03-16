@@ -67,7 +67,7 @@ static int yaffs_nand_drv_WriteChunk(struct yaffs_dev *dev, int nand_chunk,
 	struct nanddrv_transfer tr[2];
 	int i;
 
-	if(!data || !oob)
+	if(!data)
 		return YAFFS_FAIL;
 
 
@@ -78,7 +78,8 @@ static int yaffs_nand_drv_WriteChunk(struct yaffs_dev *dev, int nand_chunk,
 	for(i = 0, e = buffer + 2; i < chip->data_bytes_per_page; i+=256, e+=3)
 		yaffs_ecc_calc(data + i, e);
 
-	memcpy(buffer + 26, oob, oob_len);
+	if (oob)
+		memcpy(buffer + 26, oob, oob_len);
 
 	/* Set up and execute transfer */
 

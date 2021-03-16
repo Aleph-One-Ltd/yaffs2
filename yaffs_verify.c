@@ -53,6 +53,8 @@ void yaffs_verify_blk(struct yaffs_dev *dev, struct yaffs_block_info *bi, int n)
 	int actually_used;
 	int in_use;
 
+	(void) block_state_name;
+
 	if (yaffs_skip_verification(dev))
 		return;
 

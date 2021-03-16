@@ -19,6 +19,8 @@ struct yaffs_dev;
 
 struct yaffs_dev *yaffs_nandsim_install_drv(const char *dev_name,
 					const char *backing_file_name,
-					int n_blocks);
+					int n_blocks,
+					int n_caches,
+					int inband_tags);
 
 #endif

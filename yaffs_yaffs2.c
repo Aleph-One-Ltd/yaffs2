@@ -707,6 +707,8 @@ static int yaffs2_wr_checkpt_objs(struct yaffs_dev *dev)
 	 * dumping them to the checkpointing stream.
 	 */
 
+	(void) cp_variant_type;
+
 	for (i = 0; ok && i < YAFFS_NOBJECT_BUCKETS; i++) {
 		list_for_each(lh, &dev->obj_bucket[i].list) {
 			obj = list_entry(lh, struct yaffs_obj, hash_link);

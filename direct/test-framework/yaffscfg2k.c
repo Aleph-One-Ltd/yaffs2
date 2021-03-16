@@ -65,7 +65,8 @@ int yaffs_start_up(void)
 	yflash2_install_drv("yflash2");
 	yaffs_m18_install_drv("M18-1");
 	yaffs_nor_install_drv("nor");
-	yaffs_nandsim_install_drv("nand", "emfile-nand", 256);
+	yaffs_nandsim_install_drv("nand", "emfile-nand", 256, 4, 1);
+	yaffs_nandsim_install_drv("nand128MB", "emfile-nand128MB", 1024, 4, 1);
 
 	return 0;
 }

@@ -29,11 +29,11 @@ int yaffs_obj_cache_dirty(struct yaffs_obj *obj)
 {
 	struct yaffs_dev *dev = obj->my_dev;
 	int i;
-	struct yaffs_cache *cache;
-	int n_caches = obj->my_dev->param.n_caches;
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
 
-	for (i = 0; i < n_caches; i++) {
-		cache = &dev->cache[i];
+	for (i = 0; i < mgr->n_caches; i++) {
+		struct yaffs_cache *cache = &mgr->cache[i];
+
 		if (cache->object == obj && cache->dirty)
 			return 1;
 	}
@@ -66,16 +66,16 @@ void yaffs_flush_file_cache(struct yaffs_obj *obj, int discard)
 {
 	struct yaffs_dev *dev = obj->my_dev;
 	int i;
-	struct yaffs_cache *cache;
-	int n_caches = obj->my_dev->param.n_caches;
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
 
-	if (n_caches < 1)
+	if (mgr->n_caches < 1)
 		return;
 
 
 	/* Find the chunks for this object and flush them. */
-	for (i = 0; i < n_caches; i++) {
-		cache = &dev->cache[i];
+	for (i = 0; i < mgr->n_caches; i++) {
+		struct yaffs_cache *cache = &mgr->cache[i];
+
 		if (cache->object == obj)
 			yaffs_flush_single_cache(cache, discard);
 	}
@@ -85,8 +85,8 @@ void yaffs_flush_file_cache(struct yaffs_obj *obj, int discard)
 
 void yaffs_flush_whole_cache(struct yaffs_dev *dev, int discard)
 {
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
 	struct yaffs_obj *obj;
-	int n_caches = dev->param.n_caches;
 	int i;
 
 	/* Find a dirty object in the cache and flush it...
@@ -94,9 +94,10 @@ void yaffs_flush_whole_cache(struct yaffs_dev *dev, int discard)
 	 */
 	do {
 		obj = NULL;
-		for (i = 0; i < n_caches && !obj; i++) {
-			if (dev->cache[i].object && dev->cache[i].dirty)
-				obj = dev->cache[i].object;
+		for (i = 0; i < mgr->n_caches && !obj; i++) {
+			struct yaffs_cache *cache = &mgr->cache[i];
+			if (cache->object && cache->dirty)
+				obj = cache->object;
 		}
 		if (obj)
 			yaffs_flush_file_cache(obj, discard);
@@ -111,13 +112,13 @@ void yaffs_flush_whole_cache(struct yaffs_dev *dev, int discard)
  */
 static struct yaffs_cache *yaffs_grab_chunk_worker(struct yaffs_dev *dev)
 {
-	u32 i;
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
+	int i;
 
-	if (dev->param.n_caches > 0) {
-		for (i = 0; i < dev->param.n_caches; i++) {
-			if (!dev->cache[i].object)
-				return &dev->cache[i];
-		}
+	for (i = 0; i < mgr->n_caches; i++) {
+		struct yaffs_cache *cache = &mgr->cache[i];
+		if (!cache->object)
+			return cache;
 	}
 
 	return NULL;
@@ -125,11 +126,12 @@ static struct yaffs_cache *yaffs_grab_chunk_worker(struct yaffs_dev *dev)
 
 struct yaffs_cache *yaffs_grab_chunk_cache(struct yaffs_dev *dev)
 {
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
 	struct yaffs_cache *cache;
 	int usage;
-	u32 i;
+	int i;
 
-	if (dev->param.n_caches < 1)
+	if (mgr->n_caches < 1)
 		return NULL;
 
 	/* First look for an unused cache */
@@ -147,12 +149,14 @@ struct yaffs_cache *yaffs_grab_chunk_cache(struct yaffs_dev *dev)
 	usage = -1;
 	cache = NULL;
 
-	for (i = 0; i < dev->param.n_caches; i++) {
-		if (dev->cache[i].object &&
-		    !dev->cache[i].locked &&
-		    (dev->cache[i].last_use < usage || !cache)) {
-				usage = dev->cache[i].last_use;
-				cache = &dev->cache[i];
+	for (i = 0; i < mgr->n_caches; i++) {
+		struct yaffs_cache *this_cache = &mgr->cache[i];
+
+		if (this_cache->object &&
+		    !this_cache->locked &&
+		    (this_cache->last_use < usage || !cache)) {
+				usage = this_cache->last_use;
+				cache = this_cache;
 		}
 	}
 
@@ -171,17 +175,19 @@ struct yaffs_cache *yaffs_find_chunk_cache(const struct yaffs_obj *obj,
 						  int chunk_id)
 {
 	struct yaffs_dev *dev = obj->my_dev;
-	u32 i;
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
+	int i;
 
-	if (dev->param.n_caches < 1)
+	if (mgr->n_caches < 1)
 		return NULL;
 
-	for (i = 0; i < dev->param.n_caches; i++) {
-		if (dev->cache[i].object == obj &&
-		    dev->cache[i].chunk_id == chunk_id) {
-			dev->cache_hits++;
+	for (i = 0; i < mgr->n_caches; i++) {
+		struct yaffs_cache *cache = &mgr->cache[i];
 
-			return &dev->cache[i];
+		if (cache->object == obj &&
+		    cache->chunk_id == chunk_id) {
+			dev->cache_hits++;
+			return cache;
 		}
 	}
 	return NULL;
@@ -191,21 +197,22 @@ struct yaffs_cache *yaffs_find_chunk_cache(const struct yaffs_obj *obj,
 void yaffs_use_cache(struct yaffs_dev *dev, struct yaffs_cache *cache,
 			    int is_write)
 {
-	u32 i;
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
+	int i;
 
-	if (dev->param.n_caches < 1)
+	if (mgr->n_caches < 1)
 		return;
 
-	if (dev->cache_last_use < 0 ||
-		dev->cache_last_use > 100000000) {
+	if (mgr->cache_last_use < 0 ||
+		mgr->cache_last_use > 100000000) {
 		/* Reset the cache usages */
-		for (i = 1; i < dev->param.n_caches; i++)
-			dev->cache[i].last_use = 0;
+		for (i = 1; i < mgr->n_caches; i++)
+			mgr->cache[i].last_use = 0;
 
-		dev->cache_last_use = 0;
+		mgr->cache_last_use = 0;
 	}
-	dev->cache_last_use++;
-	cache->last_use = dev->cache_last_use;
+	mgr->cache_last_use++;
+	cache->last_use = mgr->cache_last_use;
 
 	if (is_write)
 		cache->dirty = 1;
@@ -219,63 +226,80 @@ void yaffs_invalidate_chunk_cache(struct yaffs_obj *object, int chunk_id)
 {
 	struct yaffs_cache *cache;
 
-	if (object->my_dev->param.n_caches > 0) {
-		cache = yaffs_find_chunk_cache(object, chunk_id);
+	cache = yaffs_find_chunk_cache(object, chunk_id);
+	if (cache)
+		cache->object = NULL;
+}
 
-		if (cache)
+/* Invalidate all the cache pages associated with this object
+ * Do this whenever the file is deleted or resized.
+ */
+void yaffs_invalidate_file_cache(struct yaffs_obj *in)
+{
+	int i;
+	struct yaffs_dev *dev = in->my_dev;
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
+
+	/* Invalidate it. */
+	for (i = 0; i < mgr->n_caches; i++) {
+		struct yaffs_cache *cache = &mgr->cache[i];
+
+		if (cache->object == in)
 			cache->object = NULL;
 	}
 }
 
-/* Invalidate all the cache pages associated with this object
- * Do this whenever ther file is deleted or resized.
- */
-void yaffs_invalidate_file_cache(struct yaffs_obj *in)
+int yaffs_count_dirty_caches(struct yaffs_dev *dev)
 {
-	u32 i;
-	struct yaffs_dev *dev = in->my_dev;
+	int n_dirty;
+	int i;
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
 
-	if (dev->param.n_caches > 0) {
-		/* Invalidate it. */
-		for (i = 0; i < dev->param.n_caches; i++) {
-			if (dev->cache[i].object == in)
-				dev->cache[i].object = NULL;
-		}
+	for (n_dirty= 0, i = 0; i < mgr->n_caches; i++) {
+		if (mgr->cache[i].dirty)
+			n_dirty++;
 	}
-}
 
+	return n_dirty;
+}
 
 int yaffs_cache_init(struct yaffs_dev *dev)
 {
-	int init_failed;
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
+	int init_failed = 0;
 
-	if (dev->param.n_caches > 0) {
-		u32 i;
-		void *buf;
-		u32 cache_bytes =
-		    dev->param.n_caches * sizeof(struct yaffs_cache);
-
-		if (dev->param.n_caches > YAFFS_MAX_SHORT_OP_CACHES)
+	if (dev->param.n_caches > YAFFS_MAX_SHORT_OP_CACHES)
 			dev->param.n_caches = YAFFS_MAX_SHORT_OP_CACHES;
 
-		dev->cache = kmalloc(cache_bytes, GFP_NOFS);
+	mgr->n_caches = dev->param.n_caches;
+	if (mgr->n_caches > 0) {
+		int i;
+		void *buf;
+		u32 cache_bytes =
+		    mgr->n_caches * sizeof(struct yaffs_cache);
 
-		buf = (u8 *) dev->cache;
 
-		if (dev->cache)
-			memset(dev->cache, 0, cache_bytes);
 
-		for (i = 0; i < dev->param.n_caches && buf; i++) {
-			dev->cache[i].object = NULL;
-			dev->cache[i].last_use = 0;
-			dev->cache[i].dirty = 0;
-			dev->cache[i].data = buf =
+		mgr->cache = kmalloc(cache_bytes, GFP_NOFS);
+
+		buf = (u8 *) mgr->cache;
+
+		if (mgr->cache)
+			memset(mgr->cache, 0, cache_bytes);
+
+		for (i = 0; i < mgr->n_caches && buf; i++) {
+			struct yaffs_cache *cache = &mgr->cache[i];
+
+			cache->object = NULL;
+			cache->last_use = 0;
+			cache->dirty = 0;
+			cache->data = buf =
 			    kmalloc(dev->param.total_bytes_per_chunk, GFP_NOFS);
 		}
 		if (!buf)
 			init_failed = 1;
 
-		dev->cache_last_use = 0;
+		mgr->cache_last_use = 0;
 	}
 
 	return init_failed ? -1 : 0;
@@ -283,16 +307,19 @@ int yaffs_cache_init(struct yaffs_dev *dev)
 
 void yaffs_cache_deinit(struct yaffs_dev *dev)
 {
+	struct yaffs_cache_manager *mgr = &dev->cache_mgr;
+	int i;
 
-	if (dev->param.n_caches > 0 && dev->cache) {
-		u32 i;
+	if (mgr->n_caches < 1 || !mgr->cache)
+		return;
 
-		for (i = 0; i < dev->param.n_caches; i++) {
-			kfree(dev->cache[i].data);
-			dev->cache[i].data = NULL;
-		}
+	for (i = 0; i < mgr->n_caches; i++) {
 
-		kfree(dev->cache);
-		dev->cache = NULL;
+		struct yaffs_cache *cache = &mgr->cache[i];
+		kfree(cache->data);
+		cache->data = NULL;
 	}
+
+	kfree(mgr->cache);
+	mgr->cache = NULL;
 }
