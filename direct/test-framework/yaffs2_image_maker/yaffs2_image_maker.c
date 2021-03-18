@@ -32,6 +32,7 @@
 
 #include "yaffs_nandsim_file.h"
 #include "yaffs_guts.h"
+#include "yaffs_trace.h"
 
 
 /*
@@ -41,6 +42,7 @@
 #define PAGE_SPARE_SIZE 64
 #define PAGE_SIZE	(PAGE_DATA_SIZE + PAGE_SPARE_SIZE)
 
+
 /* Some stub definitions to get building to work. */
 int simulate_power_failure = 0;
 int random_seed = 0;
@@ -48,6 +50,7 @@ int random_seed = 0;
 static char *input_dir;
 static char *output_file;
 static char *working_file;
+static char endian = 'l';
 
 static void usage(const char *prog_name)
 {
@@ -55,6 +58,7 @@ static void usage(const char *prog_name)
 	printf("\t-i name input_directory\n");
 	printf("\t-o name output_file\n");
 	printf("\t-w name working_file\n");
+	printf("\t-b      big endian output\n");
 }
 
 static void parse_args(int argc, char *argv[])
@@ -62,13 +66,14 @@ static void parse_args(int argc, char *argv[])
 	int c;
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "i:o:w:h")) != -1) {
+	while ((c = getopt(argc, argv, "bi:o:w:h")) != -1) {
 		switch (c) {
 		default:
 		case 'h': usage(argv[0]); break;
 		case 'i': input_dir = strdup(optarg); break;
 		case 'o': output_file = strdup(optarg); break;
 		case 'w': working_file = strdup(optarg); break;
+		case 'b': endian = 'b'; break;
 		}
 	}
 }
@@ -270,12 +275,19 @@ int main(int argc, char *argv[])
 	struct yaffs_dev * dev;
 	int ret;
 
+	yaffs_trace_mask = 0;
+
 	parse_args(argc, argv);
 
 	if (!input_dir || !output_file || !working_file) {
 		printf("Need input directory , output file and working file\n");
 		exit(1);
 	}
+
+	printf("Generating image from %s into file %s using working file %s\n",
+		input_dir, output_file, working_file);
+	printf("Output file is in %s endian\n",
+		(endian == 'l') ? "little" : "big");
 
 	/*
 	 * Create the Yaffs working file using the simulator.
@@ -298,15 +310,20 @@ int main(int argc, char *argv[])
 	dev->param.skip_checkpt_rd = 1;
 	dev->param.skip_checkpt_wr = 1;
 
+	/*
+	 * Set up stored endian: 1 = little endian, 2 = big endian.
+	 */
+	dev->param.stored_endian = (endian == 'l') ? 1 : 2;
+
 	ret = yaffs_mount("yroot");
 
 	printf("yaffs_mount returned %d\n", ret);
 
-	printf("Generating image from %s into file %s using working file %s\n",
-		input_dir, output_file, working_file);
 	process_directory(input_dir, "yroot");
 
 	yaffs_unmount("yroot");
+
+	printf("Generating output file\n");
 
 	ret = generate_output_file(working_file, output_file);
 
