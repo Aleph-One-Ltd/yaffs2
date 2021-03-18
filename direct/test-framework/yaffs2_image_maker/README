@@ -1,0 +1,35 @@
+How to use the image maker
+
+The purpose of this image maker is to create image files that can be burned into NAND.
+
+This image maker is set up to create image files for a flash that is:
+* 2k pages used ad "chunks"
+* 64 pages per block.
+* Inband tags
+
+If those are not the parameters that you require then it is easy enough to modify the tool.
+
+The image maker takes a sub-directory and copies all the files and directories over to a yaffs NAND simulation.
+The data from the NAND simulator simulates pages with 2k bytes of data area, then 64 bytes of spare.
+Since the spare is not used (because inband tags are used), the final step is to copy the data part of each page
+into the final image file.
+
+
+The resulting inmage file is a multiple of 2k bytes.
+
+To program this into a NAND flash:
+
+1. Erase the NAND flash.
+2. Put the flash device into ECC mode. The NAND will then write the ECC data into the spare area automatically.
+3. Starting at the first block to be used for Yaffs:
+   a. Check if the block is good. If it is bad skip over that block.
+   b. For 64 times (ie. each page in the block)
+     i.   Read a 2k byte page of data from the image file.
+     ii.  Write that 2k bytes into the page of flash.
+     iii. Verify if required.
+     iv.  If the write fails, then mark the block as bad and rewrite the data in the next block.
+
+Note:
+ It is Ok if there are bad blocks. Yaffs is designed to handle bad blocks.
+
+
