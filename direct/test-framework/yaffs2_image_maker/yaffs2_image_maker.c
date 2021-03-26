@@ -33,6 +33,7 @@
 #include "yaffs_nandsim_file.h"
 #include "yaffs_guts.h"
 #include "yaffs_trace.h"
+#include "yaffs_packedtags2.h"
 
 
 /*
@@ -51,6 +52,12 @@ static char *input_dir;
 static char *output_file;
 static char *working_file;
 static char endian = 'l';
+static int no_tags_ecc = 0;
+static int inband_tags = 0;
+
+static int tags_size;
+static int record_size;
+static int total_written;
 
 static void usage(const char *prog_name)
 {
@@ -59,6 +66,9 @@ static void usage(const char *prog_name)
 	printf("\t-o name output_file\n");
 	printf("\t-w name working_file\n");
 	printf("\t-b      big endian output\n");
+	printf("\t-I      strore tags in flash data area (inband_tags)\n");
+	printf("\t-N      do not apply ECC to tags in OOB area (no_tags_ecc)\n");
+	exit(1);
 }
 
 static void parse_args(int argc, char *argv[])
@@ -66,7 +76,7 @@ static void parse_args(int argc, char *argv[])
 	int c;
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "bi:o:w:h")) != -1) {
+	while ((c = getopt(argc, argv, "bi:o:w:hIN")) != -1) {
 		switch (c) {
 		default:
 		case 'h': usage(argv[0]); break;
@@ -74,6 +84,8 @@ static void parse_args(int argc, char *argv[])
 		case 'o': output_file = strdup(optarg); break;
 		case 'w': working_file = strdup(optarg); break;
 		case 'b': endian = 'b'; break;
+		case 'I': inband_tags = 1; break;
+		case 'N': no_tags_ecc = 1; break;
 		}
 	}
 }
@@ -237,7 +249,6 @@ int generate_output_file(const char *working_file, const char *output_file)
 	int outh;
 	int nread;
 	int nwritten;
-	int total = 0;
 
 	inh = open(working_file, O_RDONLY);
 	outh = open(output_file, O_CREAT | O_TRUNC | O_RDWR, 0666);
@@ -253,6 +264,7 @@ int generate_output_file(const char *working_file, const char *output_file)
 			break;
 		}
 
+		/* Write the data part. */
 		nwritten = write(outh, buffer, PAGE_DATA_SIZE);
 
 		if (nwritten != PAGE_DATA_SIZE) {
@@ -260,13 +272,30 @@ int generate_output_file(const char *working_file, const char *output_file)
 			return -1;
 		}
 
-		total+= nwritten;
+		total_written += nwritten;
+
+		/* Now if there are OOB tags then write the OOB tags part too */
+		if (tags_size > 0) {
+			/* Read the oob bytes. In the simulator these are
+			 * stored at offset 26 in the 64-byte spare area.
+			 * We must therefore copy them from this location to
+			 * the output file.
+			 */
+			nwritten = write(outh, buffer + PAGE_DATA_SIZE + 26, tags_size);
+
+			if (nwritten != tags_size) {
+				printf("short write\n");
+				return -1;
+			}
+
+			total_written += nwritten;
+		}
 	}
 
 	close(inh);
 	close(outh);
 
-	return total;
+	return total_written;
 }
 
 
@@ -290,6 +319,19 @@ int main(int argc, char *argv[])
 		(endian == 'l') ? "little" : "big");
 
 	/*
+	 * Determine oob tags_size.
+	 */
+	if (inband_tags)
+		tags_size = 0;
+	else if (no_tags_ecc)
+		tags_size = sizeof(struct yaffs_packed_tags2_tags_only);
+	else
+		tags_size = sizeof(struct yaffs_packed_tags2);
+
+	record_size = PAGE_DATA_SIZE + tags_size;
+
+	printf("\n");
+	/*
 	 * Create the Yaffs working file using the simulator.
 	 */
 	unlink(working_file);
@@ -297,7 +339,7 @@ int main(int argc, char *argv[])
 					working_file,
 					2048,
 					10,
-					1);
+					inband_tags);
 
 	if (!dev) {
 		printf("Failed to create yaffs working file\n");
@@ -312,8 +354,11 @@ int main(int argc, char *argv[])
 
 	/*
 	 * Set up stored endian: 1 = little endian, 2 = big endian.
+	 * Set no_tags_ecc
 	 */
 	dev->param.stored_endian = (endian == 'l') ? 1 : 2;
+	dev->param.no_tags_ecc = no_tags_ecc;
+
 
 	ret = yaffs_mount("yroot");
 
@@ -327,8 +372,22 @@ int main(int argc, char *argv[])
 
 	ret = generate_output_file(working_file, output_file);
 
-	printf("wrote %d bytes to output\n", ret);
-
+	printf("Done\n\n");
+	printf("Wrote %d bytes (%d pages of %d bytes each) to output\n",
+		total_written, total_written/record_size, record_size);
+	if (inband_tags) {
+		printf("The image has inband tags.\n");
+		printf("This means it is structured a records of %d bytes per page\n", record_size);
+		printf("This should be written to the data portion of the page\n");
+	} else {
+		printf("The image has out of band tags with%s ECC on the tags\n",
+			no_tags_ecc ? " NO" : "");
+		printf("This means it has %d tags bytes per record to be written in the oob area\n", tags_size);
+		printf("Each record is %d bytes.\n"
+			"The first %d bytes are data for the data datea and\n"
+			"the last %d bytes are tags for the oob (spare) area\n",
+			record_size, PAGE_DATA_SIZE, tags_size);
+	}
 	if (ret < 0)
 		exit(1);
 
