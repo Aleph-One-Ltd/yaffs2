@@ -32,6 +32,7 @@ CFLAGS +=    -Wextra -Wpointer-arith
 
 COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o yaffs_error.o\
 		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
+		 yaffs_flexible_file_sim.o \
 		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
 		 yaffs_tagscompat.o yaffs_tagsmarshall.o \
 		 yaffs_packedtags2.o yaffs_nand.o \
@@ -85,6 +86,7 @@ YAFFSDIRECTSYMLINKS =  \
 FRAMEWORKEXTRASYMLINKS = \
 		yaffscfg2k.c yaffs_fileem2k.c yaffs_fileem2k.h\
 		yaffs_fileem.c yaffs_m18_drv.c yaffs_m18_drv.h \
+		yaffs_flexible_file_sim.c yaffs_flexible_file_sim.h \
 		yaffs_nor_drv.c yaffs_nor_drv.h \
 		yaffs_nand_drv.c yaffs_nand_drv.h \
 		yaffs_ramdisk.c yaffs_ramdisk.h yaffs_ramem2k.c \

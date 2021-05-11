@@ -30,7 +30,7 @@
 
 #include "yaffsfs.h"
 
-#include "yaffs_nandsim_file.h"
+#include "yaffs_flexible_file_sim.h"
 #include "yaffs_guts.h"
 #include "yaffs_trace.h"
 #include "yaffs_packedtags2.h"
@@ -39,9 +39,12 @@
 /*
  * These are the sizes in the simulator file.
  */
-#define PAGE_DATA_SIZE	2048
-#define PAGE_SPARE_SIZE 64
-#define PAGE_SIZE	(PAGE_DATA_SIZE + PAGE_SPARE_SIZE)
+
+#define MAX_BLOCKS		3000
+#define PAGES_PER_BLOCK_DEFAULT	64
+#define PAGE_DATA_SIZE_DEFAULT	2048
+#define PAGE_SPARE_SIZE 	64
+#define FULL_PAGE_SIZE	(chunk_size + PAGE_SPARE_SIZE)
 
 
 /* Some stub definitions to get building to work. */
@@ -58,6 +61,8 @@ static int inband_tags = 0;
 static int tags_size;
 static int record_size;
 static int total_written;
+static int chunk_size = PAGE_DATA_SIZE_DEFAULT;
+static int chunks_per_block = PAGES_PER_BLOCK_DEFAULT;
 
 static void usage(const char *prog_name)
 {
@@ -66,8 +71,10 @@ static void usage(const char *prog_name)
 	printf("\t-o name output_file\n");
 	printf("\t-w name working_file\n");
 	printf("\t-b      big endian output\n");
-	printf("\t-I      strore tags in flash data area (inband_tags)\n");
+	printf("\t-I      store tags in flash data area (inband_tags)\n");
 	printf("\t-N      do not apply ECC to tags in OOB area (no_tags_ecc)\n");
+	printf("\t-c val  chunk size in bytes (default %d)\n", PAGE_DATA_SIZE_DEFAULT);
+	printf("\t-B val  chunks per block(default %d)\n", PAGES_PER_BLOCK_DEFAULT);
 	exit(1);
 }
 
@@ -76,7 +83,7 @@ static void parse_args(int argc, char *argv[])
 	int c;
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "bi:o:w:hIN")) != -1) {
+	while ((c = getopt(argc, argv, "bi:c:B:o:w:hIN")) != -1) {
 		switch (c) {
 		default:
 		case 'h': usage(argv[0]); break;
@@ -84,6 +91,8 @@ static void parse_args(int argc, char *argv[])
 		case 'o': output_file = strdup(optarg); break;
 		case 'w': working_file = strdup(optarg); break;
 		case 'b': endian = 'b'; break;
+		case 'c': chunk_size = atoi(optarg); break;
+		case 'B': chunks_per_block = atoi(optarg); break;
 		case 'I': inband_tags = 1; break;
 		case 'N': no_tags_ecc = 1; break;
 		}
@@ -244,30 +253,32 @@ int is_all_ff(unsigned char *buffer, int n)
  */
 int generate_output_file(const char *working_file, const char *output_file)
 {
-	unsigned char buffer[PAGE_SIZE];
+	unsigned char *buffer;
 	int inh;
 	int outh;
 	int nread;
 	int nwritten;
 
+	buffer = malloc(FULL_PAGE_SIZE);
+
 	inh = open(working_file, O_RDONLY);
 	outh = open(output_file, O_CREAT | O_TRUNC | O_RDWR, 0666);
 
-	while ((nread = read(inh, buffer, PAGE_SIZE)) > 0) {
-		if (nread != PAGE_SIZE) {
+	while ((nread = read(inh, buffer, FULL_PAGE_SIZE)) > 0) {
+		if (nread != FULL_PAGE_SIZE) {
 			printf("working file not properly sized\n");
 			return -1;
 		}
 
-		if(is_all_ff(buffer, PAGE_DATA_SIZE)) {
+		if(is_all_ff(buffer, chunk_size)) {
 			printf("End of data found\n");
 			break;
 		}
 
 		/* Write the data part. */
-		nwritten = write(outh, buffer, PAGE_DATA_SIZE);
+		nwritten = write(outh, buffer, chunk_size);
 
-		if (nwritten != PAGE_DATA_SIZE) {
+		if (nwritten != chunk_size) {
 			printf("short write\n");
 			return -1;
 		}
@@ -277,11 +288,11 @@ int generate_output_file(const char *working_file, const char *output_file)
 		/* Now if there are OOB tags then write the OOB tags part too */
 		if (tags_size > 0) {
 			/* Read the oob bytes. In the simulator these are
-			 * stored at offset 26 in the 64-byte spare area.
+			 * stored at offset 0 in the 64-byte spare area.
 			 * We must therefore copy them from this location to
 			 * the output file.
 			 */
-			nwritten = write(outh, buffer + PAGE_DATA_SIZE + 26, tags_size);
+			nwritten = write(outh, buffer + chunk_size, tags_size);
 
 			if (nwritten != tags_size) {
 				printf("short write\n");
@@ -328,18 +339,22 @@ int main(int argc, char *argv[])
 	else
 		tags_size = sizeof(struct yaffs_packed_tags2);
 
-	record_size = PAGE_DATA_SIZE + tags_size;
+	record_size = chunk_size + tags_size;
 
 	printf("\n");
 	/*
 	 * Create the Yaffs working file using the simulator.
 	 */
 	unlink(working_file);
-	dev = yaffs_nandsim_install_drv("yroot",
-					working_file,
-					2048,
-					10,
-					inband_tags);
+
+	dev = yaffs_flexible_file_sim_create(
+					"yroot",
+				working_file,
+				MAX_BLOCKS,
+				0, MAX_BLOCKS - 1,
+				chunks_per_block,
+				chunk_size,
+				PAGE_SPARE_SIZE);
 
 	if (!dev) {
 		printf("Failed to create yaffs working file\n");
@@ -359,22 +374,31 @@ int main(int argc, char *argv[])
 	dev->param.stored_endian = (endian == 'l') ? 1 : 2;
 	dev->param.no_tags_ecc = no_tags_ecc;
 
+	dev->param.inband_tags = inband_tags;
 
 	ret = yaffs_mount("yroot");
 
 	printf("yaffs_mount returned %d\n", ret);
 
+	if (ret < 0) {
+		printf("Mounting yaffs simulator failed - cannot continue\n");
+		exit(1);
+	}
+
 	process_directory(input_dir, "yroot");
 
 	yaffs_unmount("yroot");
 
-	printf("Generating output file\n");
+
+	printf("Generating output file: %s\n", output_file);
 
 	ret = generate_output_file(working_file, output_file);
 
 	printf("Done\n\n");
-	printf("Wrote %d bytes (%d pages of %d bytes each) to output\n",
+	printf("Wrote %d bytes (%d pages of %d bytes each) to output file.\n",
 		total_written, total_written/record_size, record_size);
+	printf("This images has %d bytes per chunk, %d chunks per block.\n",
+		chunk_size, chunks_per_block);
 	if (inband_tags) {
 		printf("The image has inband tags.\n");
 		printf("This means it is structured a records of %d bytes per page\n", record_size);
@@ -386,7 +410,7 @@ int main(int argc, char *argv[])
 		printf("Each record is %d bytes.\n"
 			"The first %d bytes are data for the data datea and\n"
 			"the last %d bytes are tags for the oob (spare) area\n",
-			record_size, PAGE_DATA_SIZE, tags_size);
+			record_size, chunk_size, tags_size);
 	}
 	if (ret < 0)
 		exit(1);
