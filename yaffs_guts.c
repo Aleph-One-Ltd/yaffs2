@@ -4541,10 +4541,15 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 		return YAFFS_FAIL;
 	}
 
+	if (!yaffs_init_tmp_buffers(dev))
+		return YAFFS_FAIL;
+
 	if (yaffs_init_nand(dev) != YAFFS_OK) {
 		yaffs_trace(YAFFS_TRACE_ALWAYS, "InitialiseNAND failed");
 		return YAFFS_FAIL;
 	}
+
+	dev->ll_init = 1;
 
 	return YAFFS_OK;
 }
@@ -4692,10 +4697,7 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 
 	yaffs_endian_config(dev);
 
-	/* Initialise temporary buffers and caches. */
-	if (!yaffs_init_tmp_buffers(dev))
-		init_failed = 1;
-
+	/* Initialise temporary caches. */
 	dev->gc_cleanup_list = NULL;
 
 	if (!init_failed)
