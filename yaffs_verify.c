@@ -36,16 +36,16 @@ static int yaffs_skip_nand_verification(struct yaffs_dev *dev)
 }
 
 static const char * const block_state_name[] = {
-	"Unknown",
-	"Needs scan",
-	"Scanning",
-	"Empty",
-	"Allocating",
-	"Full",
-	"Dirty",
-	"Checkpoint",
-	"Collecting",
-	"Dead"
+	[YAFFS_BLOCK_STATE_UNKNOWN] = "Unknown",
+	[YAFFS_BLOCK_STATE_NEEDS_SCAN] = "Needs scan",
+	[YAFFS_BLOCK_STATE_SCANNING] = "Scanning",
+	[YAFFS_BLOCK_STATE_EMPTY] = "Empty",
+	[YAFFS_BLOCK_STATE_ALLOCATING] = "Allocating",
+	[YAFFS_BLOCK_STATE_FULL] = "Full",
+	[YAFFS_BLOCK_STATE_DIRTY] = "Dirty",
+	[YAFFS_BLOCK_STATE_CHECKPOINT] = "Checkpoint",
+	[YAFFS_BLOCK_STATE_COLLECTING] = "Collecting",
+	[YAFFS_BLOCK_STATE_DEAD] = "Dead"
 };
 
 void yaffs_verify_blk(struct yaffs_dev *dev, struct yaffs_block_info *bi, int n)
