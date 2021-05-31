@@ -136,7 +136,7 @@ int delete_dir(char *dir_name)
 	yaffs_DIR *d;
    	struct yaffs_dirent *de;
    	struct yaffs_stat s;
-   	char str[100];
+   	char str[300];
 	d = yaffs_opendir(dir_name);
 	//printf("%s\n",dir_name);
 	if(!d)
