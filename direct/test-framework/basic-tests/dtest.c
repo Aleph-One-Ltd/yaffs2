@@ -2662,6 +2662,7 @@ void basic_utime_test(const char *mountpt)
 	struct yaffs_utimbuf utb;
 	struct yaffs_stat st;
 
+	//setup
 	yaffs_start_up();
 
 	yaffs_mount(mountpt);
@@ -2676,13 +2677,18 @@ void basic_utime_test(const char *mountpt)
 	h = yaffs_open(name,O_CREAT | O_TRUNC | O_RDWR, S_IREAD | S_IWRITE);
 
 	yaffs_fstat(h,&st);
-	printf(" times %lu %lu %lu\n",
+	printf(" times before %lu %lu %lu\n",
 			st.yst_atime, st.yst_ctime, st.yst_mtime);
 
+	//here are the last access and modification times.
 	utb.actime = 1000;
 	utb.modtime = 2000;
+
+	//futime sets the last modification and access time of the file
 	result = yaffs_futime(h,&utb);
-	printf("futime to a 1000 m 2000 result %d\n",result);
+	printf("setting times using the futime function to a 1000 m 2000 result  %d\n",result);
+
+	//read the times from the file header
 	yaffs_fstat(h,&st);
 	printf(" times %lu %lu %lu\n",
 			st.yst_atime, st.yst_ctime, st.yst_mtime);
@@ -3511,7 +3517,7 @@ int main(int argc, char *argv[])
 	//long_test_on_path("/ram2k");
 	// long_test_on_path("/flash");
 	//simple_rw_test("/flash/flash");
-	 fill_n_file_test("/nand128MB", 50, 128000000/50);
+	//fill_n_file_test("/nand128MB", 50, 128000000/50);
 	// rename_over_test("/flash");
 	//lookup_test("/flash");
 	//freespace_test("/flash/flash");
@@ -3543,7 +3549,7 @@ int main(int argc, char *argv[])
 	 //large_file_test("/nand");
 	 //readdir_test("/nand");
 
-	 //basic_utime_test("/nand");
+	 basic_utime_test("/nand");
 	 //case_insensitive_test("/nand");
 
 	 //yy_test("/nand");
