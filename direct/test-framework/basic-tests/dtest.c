@@ -2677,8 +2677,8 @@ void basic_utime_test(const char *mountpt)
 	h = yaffs_open(name,O_CREAT | O_TRUNC | O_RDWR, S_IREAD | S_IWRITE);
 
 	yaffs_fstat(h,&st);
-	printf(" times before %lu %lu %lu\n",
-			st.yst_atime, st.yst_ctime, st.yst_mtime);
+	printf(" times before %llu %llu %llu\n",
+			( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
 
 	//here are the last access and modification times.
 	utb.actime = 1000;
@@ -2690,8 +2690,8 @@ void basic_utime_test(const char *mountpt)
 
 	//read the times from the file header
 	yaffs_fstat(h,&st);
-	printf(" times %lu %lu %lu\n",
-			st.yst_atime, st.yst_ctime, st.yst_mtime);
+	printf(" times %llu %llu %llu\n",
+			( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
 
 
 	utb.actime = 5000;
@@ -2699,17 +2699,84 @@ void basic_utime_test(const char *mountpt)
 	result = yaffs_utime(name, &utb);
 	printf("utime to a 5000 m 8000 result %d\n",result);
 	yaffs_fstat(h,&st);
-	printf(" times %lu %lu %lu\n",
-			st.yst_atime, st.yst_ctime, st.yst_mtime);
+	printf(" times %llu %llu %llu\n",
+			( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
 
 	result = yaffs_utime(name, NULL);
 	printf("utime to NULL result %d\n",result);
 	yaffs_fstat(h,&st);
-	printf(" times %lu %lu %lu\n",
-			st.yst_atime, st.yst_ctime, st.yst_mtime);
+	printf(" times %llu %llu %llu\n",
+			( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
 
 
 }
+
+void size_utime_test(const char *mountpt)
+{
+	char name[100];
+	int h;
+	int result;
+	struct yaffs_utimbuf utb;
+	struct yaffs_stat st;
+
+	//setup
+	yaffs_start_up();
+
+	yaffs_mount(mountpt);
+
+	strcpy(name,mountpt);
+	strcat(name,"/");
+	strcat(name,"xfile");
+
+	yaffs_unlink(name);
+
+	printf("created\n");
+	h = yaffs_open(name,O_CREAT | O_TRUNC | O_RDWR, S_IREAD | S_IWRITE);
+
+	yaffs_fstat(h,&st);
+	printf(" times before %llu %llu %llu\n",
+                          ( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
+
+	//first lets get the yaffs_object.
+
+	//then check that yaffs_stat also works.
+	//yaffs_stat already uses 64 bits for both wince and unix times.
+	//To see if we are using 32 or 64 bit time, save a large number into the time and
+	//see if it overflows.
+
+	printf("the times are %ld bits long\n", 8*sizeof(st.yst_ctime));
+
+	//here are the last access and modification times.
+	utb.actime = 1000;
+	utb.modtime = 2000;
+
+	//futime sets the last modification and access time of the file
+	result = yaffs_futime(h,&utb);
+	printf("setting times using the futime function to a 1000 m 2000 result  %d\n",result);
+
+	//read the times from the file header
+	yaffs_fstat(h,&st);
+	printf(" times %llu %llu %llu\n",
+                   ( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
+
+
+	utb.actime = 5000;
+	utb.modtime = 8000;
+	result = yaffs_utime(name, &utb);
+	printf("utime to a 5000 m 8000 result %d\n",result);
+	yaffs_fstat(h,&st);
+	printf(" times %llu %llu %llu\n",
+                   ( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
+
+	result = yaffs_utime(name, NULL);
+	printf("utime to NULL result %d\n",result);
+	yaffs_fstat(h,&st);
+	printf(" times %llu %llu %llu\n",
+                   ( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
+
+
+}
+
 
 void basic_xattr_test(const char *mountpt)
 {
@@ -3550,6 +3617,7 @@ int main(int argc, char *argv[])
 	 //readdir_test("/nand");
 
 	 basic_utime_test("/nand");
+	 size_utime_test("/nand");
 	 //case_insensitive_test("/nand");
 
 	 //yy_test("/nand");
