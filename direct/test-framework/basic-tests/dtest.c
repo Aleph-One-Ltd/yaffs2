@@ -2743,8 +2743,33 @@ void size_utime_test(const char *mountpt)
 	//yaffs_stat already uses 64 bits for both wince and unix times.
 	//To see if we are using 32 or 64 bit time, save a large number into the time and
 	//see if it overflows.
+	long bitsInTime = 8*sizeof(st.yst_ctime);
+	printf("the times are %ld bits long\n", bitsInTime);
 
-	printf("the times are %ld bits long\n", 8*sizeof(st.yst_ctime));
+	//two testcases
+	if (bitsInTime == 64) {
+		//no need to test the overflow. Just check that it can be retrieved intact.
+
+			//use u64 variables in case utb truncates the values to 32 bit time by accident.
+			u64 start = 0xfffff;
+			u64 end = 	0xffffff;
+
+        	utb.actime =  start;
+        	utb.modtime = end;
+
+        	result = yaffs_futime(h,&utb);
+        	yaffs_fstat(h,&st);
+        	if (st.yst_atime == start && st.yst_mtime == end) {
+        		printf("successfully stored and retrevied a 64 bit number for atime and modtime\n");
+        	} else {
+        		printf("failed to store and retrieve a 64 bit number for atime and modtime\n");
+
+        	}
+	} else {
+		//it is a 32 bit number. Check to see that it overflowed.
+
+	}
+
 
 	//here are the last access and modification times.
 	utb.actime = 1000;
