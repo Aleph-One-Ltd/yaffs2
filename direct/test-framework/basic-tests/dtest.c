@@ -18,9 +18,11 @@
 #include <time.h>
 #include <ctype.h>
 
+
 #include "yaffsfs.h"
 
 #include "yaffs_guts.h" /* Only for dumping device innards */
+#include "yaffs_endian.h" /*For testing the swap_u64 macro */
 
 extern int yaffs_trace_mask;
 
@@ -2711,6 +2713,50 @@ void basic_utime_test(const char *mountpt)
 
 }
 
+void print_binary(u64 val){
+	int count = 0;
+	for (int i= 63; i>=0; i --) {
+		if (count == 0){
+			printf(" ");
+		}
+		if ((((u64)1) << i) & val) {
+			printf("1");
+		} else {
+			printf("0");
+		}
+		count = (count +1) % 8;
+	}
+}
+
+void testing_swap_u64() {
+	int numberOfFailedTests = 0;
+	for (int i =0; i < 8; i ++) {
+		u64 startingNumber = (0xffLLu << (i*8));
+		u64 expected = (0xffLLu << (64 - (i*8) -8));
+		u64 converted = swap_u64(startingNumber);
+		if (converted != expected) {
+			numberOfFailedTests ++;
+			printf("numbers do not match.\n");
+			printf("0xff\t\t\t");
+			print_binary(0xff);
+			printf("\nStarting Number \t");
+            print_binary(startingNumber);
+			printf("\nExpecting \t\t");
+			print_binary(expected);
+			printf("\nConverted \t\t");
+			print_binary(converted);
+
+			printf("\n");
+		}
+	}
+	if (numberOfFailedTests){
+		printf("testing_swap failed %d tests\n", numberOfFailedTests);
+	} else {
+		printf("testing_swap_u64 passed all tests\n");
+	}
+}
+
+
 void size_utime_test(const char *mountpt)
 {
 	char name[100];
@@ -3642,6 +3688,7 @@ int main(int argc, char *argv[])
 	 //readdir_test("/nand");
 
 	 basic_utime_test("/nand");
+	 testing_swap_u64();
 	 size_utime_test("/nand");
 	 //case_insensitive_test("/nand");
 
