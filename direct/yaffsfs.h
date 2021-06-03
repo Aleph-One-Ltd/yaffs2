@@ -69,9 +69,9 @@ struct yaffs_stat {
 	unsigned long	yst_wince_mtime[2];
 	unsigned long	yst_wince_ctime[2];
 #else
-	YTIME_T	yst_atime;	/* time of last access */
-	YTIME_T	yst_mtime;	/* time of last modification */
-	YTIME_T	yst_ctime;	/* time of last change */
+	YTIME_T yst_atime;	/* time of last access */
+	YTIME_T yst_mtime;	/* time of last modification */
+	YTIME_T yst_ctime;	/* time of last change */
 #endif
 };
 
