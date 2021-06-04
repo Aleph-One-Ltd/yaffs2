@@ -30,22 +30,23 @@ int main()
 	output = yaffs_mount(YAFFS_MOUNT_POINT);
 
 	if (output>=0){  
-		printf("yaffs mounted: %s\n",YAFFS_MOUNT_POINT); 
+		printf("yaffs correctly mounted: %s\n",YAFFS_MOUNT_POINT);
 	} else {
-		printf("error\n yaffs failed to mount: %s\nerror\n",YAFFS_MOUNT_POINT);
+		printf("error\n yaffs failed to mount: %s\n with error code %d\n",YAFFS_MOUNT_POINT, yaffs_get_error());
+
 		return (0);
 	}
 	//now create a file.
 	output = yaffs_open(FILE_PATH,O_CREAT | O_RDWR, S_IREAD | S_IWRITE);
 	if (output>=0){  
-		printf("file created: %s\n",FILE_PATH); 
+		printf("yaffs correctly created a the file: %s\n",FILE_PATH);
 	} else {
 		printf("error\n yaffs failed to create the file: %s\nerror\n",FILE_PATH);
 		return (0);
 	}
 	output2 = yaffs_close(output);
 	if (output2>=0){  
-		printf("file closed: %s\n",FILE_PATH); 
+		printf("yaffs correctly closed the file: %s\n",FILE_PATH);
 	} else {
 		printf("error\n yaffs failed to close the file: %s\nerror\n",FILE_PATH);
 		return (0);
@@ -53,14 +54,14 @@ int main()
 	//unmount and remount the mount point.
 	output = yaffs_unmount(YAFFS_MOUNT_POINT);
 	if (output>=0){  
-		printf("yaffs unmounted: %s\n",YAFFS_MOUNT_POINT); 
+		printf("yaffs correctly unmounted: %s\n",YAFFS_MOUNT_POINT);
 	} else {
 		printf("error\n yaffs failed to unmount: %s\nerror\n",YAFFS_MOUNT_POINT);
 		return (0);
 	}
 	output = yaffs_mount(YAFFS_MOUNT_POINT);
 	if (output>=0){  
-		printf("yaffs mounted: %s\n",YAFFS_MOUNT_POINT); 
+		printf("yaffs correctly mounted: %s\n",YAFFS_MOUNT_POINT);
 	} else {
 		printf("error\n yaffs failed to mount: %s\nerror\n",YAFFS_MOUNT_POINT);
 		return (0);
@@ -68,7 +69,7 @@ int main()
 	//now open the existing file.
 	output = yaffs_open(FILE_PATH, O_RDWR, S_IREAD | S_IWRITE);
 	if (output>=0){  
-		printf("file created: %s\n",FILE_PATH); 
+		printf("yaffs correctly opened the file: %s\n",FILE_PATH);
 	} else {
 		printf("error\n yaffs failed to create the file: %s\nerror\n",FILE_PATH);
 		return (0);
@@ -76,7 +77,7 @@ int main()
 	//close the file.
 	output2 = yaffs_close(output);
 	if (output2>=0){  
-		printf("file closed: %s\n",FILE_PATH); 
+		printf("yaffs correctly closed the file: %s\n",FILE_PATH);
 	} else {
 		printf("error\n yaffs failed to close the file: %s\nerror\n",FILE_PATH);
 		return (0);
@@ -85,7 +86,7 @@ int main()
 	//unmount the mount point.
 	output = yaffs_unmount(YAFFS_MOUNT_POINT);
 	if (output>=0){  
-		printf("yaffs unmounted: %s\n",YAFFS_MOUNT_POINT); 
+		printf("yaffs correctly unmounted: %s\n",YAFFS_MOUNT_POINT);
 	} else {
 		printf("error\n yaffs failed to unmount: %s\nerror\n",YAFFS_MOUNT_POINT);
 		return (0);
