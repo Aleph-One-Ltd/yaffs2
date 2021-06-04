@@ -12,8 +12,8 @@
 
 
 #include "yaffsfs.h"
-#define YAFFS_MOUNT_POINT "/yaffs2/"
-#define FILE_PATH "/yaffs2/foo.txt"
+#define YAFFS_MOUNT_POINT "/yflash2/"
+#define FILE_PATH "/yflash2/foo.txt"
 
 int random_seed;
 int simulate_power_failure = 0;
