@@ -100,8 +100,12 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 		BUG();
 
 
-	if (retval == YAFFS_FAIL)
+	if (retval == YAFFS_FAIL) {
+		if (local_data)
+			yaffs_release_temp_buffer(dev, data);
+
 		return YAFFS_FAIL;
+	}
 
 	if (dev->param.inband_tags) {
 		if (tags) {
