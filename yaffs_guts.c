@@ -163,6 +163,8 @@ u8 *yaffs_get_temp_buffer(struct yaffs_dev * dev)
 
 }
 
+/* Frees all the temp_buffer objects in the yaffs_dev instance
+*/
 void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer)
 {
 	int i;
@@ -4826,6 +4828,7 @@ void yaffs_deinitialise(struct yaffs_dev *dev)
 		kfree(dev->checkpt_block_list);
 		dev->checkpt_block_list = NULL;
 
+		dev->ll_init = 0;
 		dev->is_mounted = 0;
 
 		yaffs_deinit_nand(dev);
