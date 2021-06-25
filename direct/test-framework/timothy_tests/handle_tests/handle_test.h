@@ -18,9 +18,12 @@
 #include <stdio.h>
 #include "yaffsfs.h"
 
-#define FILE_PATH "/yaffs2/foo"
+#define YAFFS_MOUNT_POINT "/yflash2/"
+#define FILE_PATH "/yflash2/foo"
 
 int open_close_handle_test(int num_of_tests);
 int open_handle(void);
 void get_error(void);
+int dup_test(void);
+
 #endif

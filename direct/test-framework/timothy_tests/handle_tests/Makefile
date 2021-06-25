@@ -34,10 +34,10 @@ include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
 
 yaffs_test: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) -lpthread
 
 
 
 handle_test: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) -lpthread
 

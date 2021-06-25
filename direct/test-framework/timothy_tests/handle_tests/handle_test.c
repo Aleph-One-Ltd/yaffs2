@@ -22,7 +22,7 @@ int main()
 	int output =0;
 	unsigned int total_number_of_tests_run=0;
 	yaffs_start_up();
-	yaffs_mount("yaffs2");
+	yaffs_mount(YAFFS_MOUNT_POINT);
 
 	printf("running tests\n");
 
@@ -62,7 +62,7 @@ int dup_test(void){
 	output=yaffs_lseek(handle,20,SEEK_SET);
 	if (output >= 0) {
 		output = yaffs_lseek(handle,0,SEEK_CUR);
-		if (output = 20){
+		if (output == 20){
 			printf("dup is working\n");
 			return 1;
 		} else if (output <0){
