@@ -29,7 +29,6 @@
 #include "test_yaffs_unmount_EBUSY.h"
 
 #include "test_yaffs_open.h"
-#include "test_yaffs_open_EISDIR.h"
 #include "test_yaffs_open_EEXIST.h"
 #include "test_yaffs_open_ENOENT.h"
 #include "test_yaffs_open_ENOTDIR.h"
@@ -286,7 +285,6 @@ test_template test_list[]={
 	{test_yaffs_unmount_EBUSY,test_yaffs_unmount_EBUSY_clean,"test_yaffs_unmount_EBUSY"},
 
 	{test_yaffs_open,test_yaffs_open_clean,"test_yaffs_open"},
-	{test_yaffs_open_EISDIR,test_yaffs_open_EISDIR_clean,"test_yaffs_open_EISDIR"},
 	{test_yaffs_open_EEXIST,test_yaffs_open_EEXIST_clean,"test_yaffs_open_EEXIST"},
 	{test_yaffs_open_ENOTDIR,test_yaffs_open_ENOTDIR_clean,"test_yaffs_open_ENOTDIR"},
 	{test_yaffs_open_ENOENT,test_yaffs_open_ENOENT_clean,"test_yaffs_open_ENOENT"},
