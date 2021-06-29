@@ -94,10 +94,8 @@ ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(FUZZER_OBJS)
 
 include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
-
-yaffs_test: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) -lpthread
-
+phony. test: quick_tests
+	./quick_tests
 
 
 quick_tests: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
