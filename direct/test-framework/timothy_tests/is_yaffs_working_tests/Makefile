@@ -30,6 +30,8 @@ ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(FUZZER_OBJS)
 
 include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
+phony. test: test_1_yaffs_mount
+	./test_1_yaffs_mount
 
 test_1_yaffs_mount: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
 	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) -lpthread
