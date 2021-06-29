@@ -19,7 +19,7 @@ YDI_DIR = ../../../
 YDI_FRAMEWORK_DIR = ../../
 CLEAN_OBJS = yaffs_tester emfile-2k-0
 
-TESTFILES = 	yaffs_tester.o message_buffer.o error_handler.o 
+TESTFILES = 	yaffs_tester.o message_buffer.o error_handler.o shared.o
 
 all: yaffs_tester
 
@@ -32,10 +32,10 @@ include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
 
 yaffs_test: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) -lpthread
 
 
 
 yaffs_tester: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) -lpthread
 

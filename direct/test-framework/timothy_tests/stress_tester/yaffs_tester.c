@@ -16,6 +16,7 @@
 
 
 #include "yaffs_tester.h"
+#include "shared.h"
 
 
 
@@ -25,16 +26,13 @@ int simulate_power_failure = 0;
 
 buffer message_buffer;	/*create  message_buffer */
 
-char yaffs_test_dir[] ="/yaffs2/test_dir";	/*the path to the directory where all of the testing will take place*/
-char yaffs_mount_dir[]="/yaffs2/";		/*the path to the mount point which yaffs will mount*/
-
 
 int main(int argc, char *argv[]){	
 	
 	
-	init(yaffs_test_dir,yaffs_mount_dir,argc,argv);
-	test(yaffs_test_dir);
-	yaffs_unmount(yaffs_mount_dir);
+	init(YAFFS_TEST_DIR, YAFFS_MOUNT_DIR, argc, argv);
+	test(YAFFS_TEST_DIR);
+	yaffs_unmount(YAFFS_MOUNT_DIR);
 	return 0;
 }
 
@@ -88,10 +86,8 @@ void init(char *yaffs_test_dir,char *yaffs_mount_dir,int argc, char *argv[]){
 	
 }
 
-void quit_program(){
-	yaffs_unmount(yaffs_mount_dir);
-	exit(1);
-}
+
+
 void join_paths(char *path1,char *path2,char *new_path ){
 
 /*	printf("strlen path1:%d\n",strlen(path1));
@@ -169,9 +165,9 @@ void open_random_file(char *yaffs_test_dir, handle_regster *P_open_handles_array
 	if (P_open_handles_array->number_of_open_handles<MAX_NUMBER_OF_OPENED_HANDLES)
 	{
 		generate_random_string(name,MAX_FILE_NAME_SIZE);
-		printf("before %d %d %d\n",strlen(yaffs_test_dir),strlen(name),strlen(path));
+		//printf("before %d %d %d\n",strlen(yaffs_test_dir),strlen(name),strlen(path));
 		join_paths(yaffs_test_dir,name,path);
-		printf("after %d %d %d\n",strlen(yaffs_test_dir),strlen(name),strlen(path));
+		//printf("after %d %d %d\n",strlen(yaffs_test_dir),strlen(name),strlen(path));
 		add_to_buffer(&message_buffer,"trying to open file: ",MESSAGE_LEVEL_BASIC_TASKS,NPRINT);
 		append_to_buffer(&message_buffer,path,MESSAGE_LEVEL_BASIC_TASKS,PRINT);
 		if (yaffs_access(path,0)==0){
@@ -330,8 +326,7 @@ void stat_file(char *path){
 }
 
 void test(char*yaffs_test_dir){
-	struct yaffs_stat stat;
-	int output=0;
+
 	//char name[MAX_FILE_NAME_SIZE+3 ]="apple\0";
 	//char path[MAX_FILE_NAME_SIZE];
 	handle_regster open_handles_array;

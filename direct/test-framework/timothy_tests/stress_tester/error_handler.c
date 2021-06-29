@@ -14,7 +14,7 @@
  * error_handler.c contains code for checking yaffs function calls for errors.
  */
 #include "error_handler.h"
-
+#include "shared.h"
 
 typedef struct error_codes_template {
   int code;
@@ -42,9 +42,9 @@ const error_entry error_list[] = {
 	{ 0, NULL }
 };
 
-const char * error_to_str(int err)
+char * error_to_str(int err)
 {
-	error_entry *e = error_list;
+	error_entry const *e = error_list;
 	if (err < 0) 
 		err = -err;
 	while(e->code && e->text){
@@ -56,10 +56,8 @@ const char * error_to_str(int err)
 }
 
 void yaffs_check_for_errors(char output, buffer *message_buffer,char error_message[],char success_message[]){
-	char dummy[10];
-	unsigned int x=0;
 	int yaffs_error=-1;
-	char error_found=0;
+
 	if (output==-1)
 	{
 		add_to_buffer(message_buffer, "\nerror##########",MESSAGE_LEVEL_ERROR,PRINT);
