@@ -4827,6 +4827,7 @@ void yaffs_deinitialise(struct yaffs_dev *dev)
 		kfree(dev->checkpt_block_list);
 		dev->checkpt_block_list = NULL;
 
+		dev->ll_init = 0;
 		dev->is_mounted = 0;
 
 		yaffs_deinit_nand(dev);
