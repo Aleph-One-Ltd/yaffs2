@@ -1890,11 +1890,11 @@ static void yaffs_fill_inode_from_obj(struct inode *inode,
 
 	inode->i_rdev = old_decode_dev(obj->yst_rdev);
 
-	inode->i_atime.tv_sec = (time_t) (obj->yst_atime);
+	inode->i_atime.tv_sec = (YTIME_T) (obj->yst_atime);
 	inode->i_atime.tv_nsec = 0;
-	inode->i_mtime.tv_sec = (time_t) obj->yst_mtime;
+	inode->i_mtime.tv_sec = (YTIME_T) obj->yst_mtime;
 	inode->i_mtime.tv_nsec = 0;
-	inode->i_ctime.tv_sec = (time_t) obj->yst_ctime;
+	inode->i_ctime.tv_sec = (YTIME_T) obj->yst_ctime;
 	inode->i_ctime.tv_nsec = 0;
 	inode->i_size = yaffs_get_obj_length(obj);
 	inode->i_blocks = (inode->i_size + 511) >> 9;

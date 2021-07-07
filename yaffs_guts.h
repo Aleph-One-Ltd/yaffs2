@@ -482,15 +482,17 @@ struct yaffs_obj {
 	YCHAR short_name[YAFFS_SHORT_NAME_LENGTH + 1];
 
 #ifdef CONFIG_YAFFS_WINCE
+	//these are always 64 bits
 	u32 win_ctime[2];
 	u32 win_mtime[2];
 	u32 win_atime[2];
 #else
-	u32 yst_uid;
-	u32 yst_gid;
-	u32 yst_atime;
-	u32 yst_mtime;
-	u32 yst_ctime;
+	//these can be 32 or 64 bits
+	YTIME_T yst_uid;
+	YTIME_T yst_gid;
+	YTIME_T yst_atime;
+	YTIME_T yst_mtime;
+	YTIME_T yst_ctime;
 #endif
 
 	u32 yst_rdev;
