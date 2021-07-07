@@ -24,6 +24,7 @@ CFLAGS += $(DEPFLAGS) $(GCCFLAGS)
 # Files to be made into local symlinks
 YCORE_SYMLINKS = \
 	yaffs_ecc.c \
+	yaffs_cache.c \
 	yaffs_endian.c \
 	yaffs_guts.c \
 	yaffs_packedtags1.c \
@@ -39,6 +40,7 @@ YCORE_SYMLINKS = \
 	yaffs_verify.c \
 	yaffs_summary.c \
 	yaffs_tagsmarshall.c\
+	yaffs_cache.h \
 	yaffs_ecc.h \
 	yaffs_guts.h \
 	yaffs_packedtags1.h \
@@ -93,6 +95,7 @@ LIB = $(BUILDDIR)/libyaffs2.a
 LIB_PIECES = yaffs_ecc \
 	yaffs_endian \
 	yaffs_guts \
+	yaffs_cache \
 	yaffs_packedtags1 \
 	yaffs_tagscompat \
 	yaffs_tagsmarshall\

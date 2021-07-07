@@ -28,38 +28,23 @@ $make -f Makefile.rtems install
 Building test application
 
 
-$ cd rtems-y-test/
+$ cd rtems-y-test/basic-test
+$ make
 
-
-
-Running 
-
-$  sparc-rtems5-sis hello_world_c/o-optimize/hello.exe
+$ sparc-rtems5-sis o-optimize/yaffs-rtems-test.exe 
 
  SIS - SPARC/RISCV instruction simulator 2.20,  copyright Jiri Gaisler 2019
  Bug-reports to jiri@gaisler.se
 
  ERC32 emulation enabled
 
- Loaded hello_world_c/o-optimize/hello.exe, entry 0x02000000
+ Loaded o-optimize/yaffs-rtems-test.exe, entry 0x02000000
 sis> go
 resuming at 0x02000000
-
-
-*** HELLO WORLD TEST ***
-Hello World 123
-*** END OF HELLO WORLD TEST ***
-
-*** FATAL ***
-fatal source: 5 (RTEMS_FATAL_SOURCE_EXIT)
-fatal code: 0 (0x00000000)
-RTEMS version: 5.0.0.e22554535796fc29a7ed7c5e2338128e324a621d-modified
-RTEMS tools: 7.5.0 20191114 (RTEMS 5, RSB 5 (599c4d7c87fa), Newlib d14714c69)
-executing thread ID: 0x08a010001
-executing thread name: UI1 
-cpu 0 in error mode (tt = 0x101)
-   125619  0200c0e0:  91d02000   ta  0x0
-sis> 
+Starting
+Created simulated flash device 0x2d203c8
+yaffs: 0 blocks to be sorted...
+....
 
 
 Running with GDB
