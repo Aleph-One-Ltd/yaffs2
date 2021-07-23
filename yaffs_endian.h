@@ -25,6 +25,26 @@ static inline u32 swap_u32(u32 val)
 	       ((val <<24) & 0xff000000);
 }
 
+static inline u64 swap_u64(u64 val)
+{
+	return ((val >> 56) & 0x00000000000000ff) |
+	       ((val >> 40) & 0x000000000000ff00) |
+	       ((val >> 24) & 0x0000000000ff0000) |
+	       ((val >> 8)  & 0x00000000ff000000) |
+	       ((val << 8)  & 0x000000ff00000000) |
+	       ((val << 24) & 0x0000ff0000000000) |
+	       ((val << 40) & 0x00ff000000000000) |
+	       ((val << 56) & 0xff00000000000000);
+}
+
+//YTIME_T can be a 32 or 64 bit number.
+#if YAFFS_USE_32_BIT_TIME_T
+	#define swap_ytime_t( val ) swap_u32(val)
+#else
+	#define swap_ytime_t( val ) swap_u64(val)
+#endif
+
+//swap a signed 32 bit integer.
 #define swap_s32(val) \
 	(s32)(swap_u32((u32)(val)))
 

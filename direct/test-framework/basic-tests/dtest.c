@@ -18,9 +18,11 @@
 #include <time.h>
 #include <ctype.h>
 
+
 #include "yaffsfs.h"
 
 #include "yaffs_guts.h" /* Only for dumping device innards */
+#include "yaffs_endian.h" /*For testing the swap_u64 macro */
 
 extern int yaffs_trace_mask;
 
@@ -2662,6 +2664,7 @@ void basic_utime_test(const char *mountpt)
 	struct yaffs_utimbuf utb;
 	struct yaffs_stat st;
 
+	//setup
 	yaffs_start_up();
 
 	yaffs_mount(mountpt);
@@ -2676,16 +2679,21 @@ void basic_utime_test(const char *mountpt)
 	h = yaffs_open(name,O_CREAT | O_TRUNC | O_RDWR, S_IREAD | S_IWRITE);
 
 	yaffs_fstat(h,&st);
-	printf(" times %lu %lu %lu\n",
-			st.yst_atime, st.yst_ctime, st.yst_mtime);
+	printf(" times before %llu %llu %llu\n",
+			( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
 
+	//here are the last access and modification times.
 	utb.actime = 1000;
 	utb.modtime = 2000;
+
+	//futime sets the last modification and access time of the file
 	result = yaffs_futime(h,&utb);
-	printf("futime to a 1000 m 2000 result %d\n",result);
+	printf("setting times using the futime function to a 1000 m 2000 result  %d\n",result);
+
+	//read the times from the file header
 	yaffs_fstat(h,&st);
-	printf(" times %lu %lu %lu\n",
-			st.yst_atime, st.yst_ctime, st.yst_mtime);
+	printf(" times %llu %llu %llu\n",
+			( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
 
 
 	utb.actime = 5000;
@@ -2693,17 +2701,153 @@ void basic_utime_test(const char *mountpt)
 	result = yaffs_utime(name, &utb);
 	printf("utime to a 5000 m 8000 result %d\n",result);
 	yaffs_fstat(h,&st);
-	printf(" times %lu %lu %lu\n",
-			st.yst_atime, st.yst_ctime, st.yst_mtime);
+	printf(" times %llu %llu %llu\n",
+			( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
 
 	result = yaffs_utime(name, NULL);
 	printf("utime to NULL result %d\n",result);
 	yaffs_fstat(h,&st);
-	printf(" times %lu %lu %lu\n",
-			st.yst_atime, st.yst_ctime, st.yst_mtime);
+	printf(" times %llu %llu %llu\n",
+			( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
 
 
 }
+
+void print_binary(u64 val){
+	int count = 0;
+	for (int i= 63; i>=0; i --) {
+		if (count == 0){
+			printf(" ");
+		}
+		if ((((u64)1) << i) & val) {
+			printf("1");
+		} else {
+			printf("0");
+		}
+		count = (count +1) % 8;
+	}
+}
+
+void testing_swap_u64() {
+	int numberOfFailedTests = 0;
+	for (int i =0; i < 8; i ++) {
+		u64 startingNumber = (0xffLLu << (i*8));
+		u64 expected = (0xffLLu << (64 - (i*8) -8));
+		u64 converted = swap_u64(startingNumber);
+		if (converted != expected) {
+			numberOfFailedTests ++;
+			printf("numbers do not match.\n");
+			printf("0xff\t\t\t");
+			print_binary(0xff);
+			printf("\nStarting Number \t");
+            print_binary(startingNumber);
+			printf("\nExpecting \t\t");
+			print_binary(expected);
+			printf("\nConverted \t\t");
+			print_binary(converted);
+
+			printf("\n");
+		}
+	}
+	if (numberOfFailedTests){
+		printf("testing_swap failed %d tests\n", numberOfFailedTests);
+	} else {
+		printf("testing_swap_u64 passed all tests\n");
+	}
+}
+
+
+void size_utime_test(const char *mountpt)
+{
+	char name[100];
+	int h;
+	int result;
+	struct yaffs_utimbuf utb;
+	struct yaffs_stat st;
+
+	//setup
+	yaffs_start_up();
+
+	yaffs_mount(mountpt);
+
+	strcpy(name,mountpt);
+	strcat(name,"/");
+	strcat(name,"xfile");
+
+	yaffs_unlink(name);
+
+	printf("created\n");
+	h = yaffs_open(name,O_CREAT | O_TRUNC | O_RDWR, S_IREAD | S_IWRITE);
+
+	yaffs_fstat(h,&st);
+	printf(" times before %llu %llu %llu\n",
+                          ( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
+
+	//first lets get the yaffs_object.
+
+	//then check that yaffs_stat also works.
+	//yaffs_stat already uses 64 bits for both wince and unix times.
+	//To see if we are using 32 or 64 bit time, save a large number into the time and
+	//see if it overflows.
+	long bitsInTime = 8*sizeof(st.yst_ctime);
+	printf("the times are %ld bits long\n", bitsInTime);
+
+	//two testcases
+	if (bitsInTime == 64) {
+		//no need to test the overflow. Just check that it can be retrieved intact.
+
+			//use u64 variables in case utb truncates the values to 32 bit time by accident.
+			u64 start = 0xfffff;
+			u64 end = 	0xffffff;
+
+        	utb.actime =  start;
+        	utb.modtime = end;
+
+        	result = yaffs_futime(h,&utb);
+        	yaffs_fstat(h,&st);
+        	if (st.yst_atime == start && st.yst_mtime == end) {
+        		printf("successfully stored and retrevied a 64 bit number for atime and modtime\n");
+        	} else {
+        		printf("failed to store and retrieve a 64 bit number for atime and modtime\n");
+
+        	}
+	} else {
+		//it is a 32 bit number. Check to see that it overflowed.
+
+	}
+
+
+	//here are the last access and modification times.
+	utb.actime = 1000;
+	utb.modtime = 2000;
+
+	//futime sets the last modification and access time of the file
+	result = yaffs_futime(h,&utb);
+	printf("setting times using the futime function to a 1000 m 2000 result  %d\n",result);
+
+	//read the times from the file header
+	yaffs_fstat(h,&st);
+	printf(" times %llu %llu %llu\n",
+                   ( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
+
+
+	utb.actime = 5000;
+	utb.modtime = 8000;
+	result = yaffs_utime(name, &utb);
+	printf("utime to a 5000 m 8000 result %d\n",result);
+	yaffs_fstat(h,&st);
+	printf(" times %llu %llu %llu\n",
+                   ( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
+
+	result = yaffs_utime(name, NULL);
+	printf("utime to NULL result %d\n",result);
+	yaffs_fstat(h,&st);
+	printf(" times %llu %llu %llu\n",
+                   ( u64) st.yst_atime, ( u64) st.yst_ctime, ( u64) st.yst_mtime);
+
+
+}
+
 
 void basic_xattr_test(const char *mountpt)
 {
@@ -3511,7 +3655,7 @@ int main(int argc, char *argv[])
 	//long_test_on_path("/ram2k");
 	// long_test_on_path("/flash");
 	//simple_rw_test("/flash/flash");
-	 fill_n_file_test("/nand128MB", 50, 128000000/50);
+	//fill_n_file_test("/nand128MB", 50, 128000000/50);
 	// rename_over_test("/flash");
 	//lookup_test("/flash");
 	//freespace_test("/flash/flash");
@@ -3543,7 +3687,9 @@ int main(int argc, char *argv[])
 	 //large_file_test("/nand");
 	 //readdir_test("/nand");
 
-	 //basic_utime_test("/nand");
+	 basic_utime_test("/nand");
+	 testing_swap_u64();
+	 size_utime_test("/nand");
 	 //case_insensitive_test("/nand");
 
 	 //yy_test("/nand");
