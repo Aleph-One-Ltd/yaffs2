@@ -10,10 +10,10 @@ int main()
 {
 	yaffs_start_up();
 
-    //test that ytime is 64 bits
+    //test that ytime is 32 bits
 
-    if (sizeof(YTIME_T) != 8) {
-        printf("Error:size of YTIME_T is not 64 bits\n");
+    if (sizeof(YTIME_T) != 4) {
+        printf("Error:size of YTIME_T is %lu, not 32 bits \n", sizeof(YTIME_T)*8);
         return 1;
     }
 
