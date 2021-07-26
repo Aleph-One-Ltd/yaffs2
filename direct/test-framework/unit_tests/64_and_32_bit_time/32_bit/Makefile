@@ -1,4 +1,4 @@
-# Makefile for 64 bit time test.
+# Makefile for 32 bit time test.
 #
 #
 # YAFFS: Yet another Flash File System. A NAND-flash specific file system.
@@ -21,6 +21,7 @@ YDI_FRAMEWORK_DIR = ../../../
 CLEAN_OBJS = time_32_tests emfile-2k-0 emfile-nand  emfile-nand128MB 
 TESTFILES = 	time_32_tests.o
 
+CFLAGS = -DYAFFS_USE_32_BIT_TIME_T
 all: time_32_tests
 
 YAFFS_TEST_OBJS = $(COMMONTESTOBJS) $(TESTFILES)
