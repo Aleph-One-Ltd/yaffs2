@@ -1,14 +1,20 @@
 #!/usr/bin/env python3
 """
- * YAFFS: Yet another FFS. A NAND-flash specific file system.
- *
- * Copyright (C) 2002-2021 Aleph One Ltd.
- *
- * Created by Timothy Manning <timothy@yaffs.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
+test_runner.py
+This file runs all of the yaffs unit tests and aggrates the outputs.
+
+To run this file you can use:
+ 
+$ python3 test_runner.py
+
+or 
+
+$ ./test_runner.py
+
+To add a new test to this test runner, add the test dir path to the
+test_list below. Inside that folder there need to be a makefile with
+a "test" target that compiles and runs the test script. I.e. "make test" 
+is called in every test directory.
 """
 
 
