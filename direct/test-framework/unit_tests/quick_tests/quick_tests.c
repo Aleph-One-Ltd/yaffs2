@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 		run_random_test_loop();
 	}	
 	/*this is where the loop should break to*/
-	quit_quick_tests(0);
+	quit_quick_tests();
 	
 }
 
@@ -102,7 +102,7 @@ void run_test(int x)
 		get_error();
 		print_message("\n\n",1);
 		if (get_exit_on_error()){	
-			quit_quick_tests(1);
+			quit_quick_tests();
 		}
 	}
 	output=0;
@@ -116,7 +116,7 @@ void run_test(int x)
 		get_error();
 		printf("\n\n");
 		if (get_exit_on_error()){
-			quit_quick_tests(1);
+			quit_quick_tests();
 		}
 		
 	} else {
@@ -130,7 +130,7 @@ void run_test(int x)
 	delete_dir(TEST_DIR);
 }
 
-void quit_quick_tests(int exit_code)
+void quit_quick_tests()
 {
 	/*char message[30];
 	message[0]='\0';
@@ -140,6 +140,9 @@ void quit_quick_tests(int exit_code)
 	}
 	printf("out of %d tests, %d ran: %d passed and %d failed\n\n\n", total_number_of_tests,(num_of_tests_pass+num_of_tests_failed) ,num_of_tests_pass,num_of_tests_failed);
 	yaffs_unmount(YAFFS_MOUNT_POINT);
+
+	//remember that the exit_code needs to be 0 when all the tests pass.
+	int exit_code = num_of_tests_failed != 0;
 	exit(exit_code);
 }
 
