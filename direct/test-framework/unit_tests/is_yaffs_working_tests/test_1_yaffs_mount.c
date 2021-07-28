@@ -34,7 +34,7 @@ int main()
 	} else {
 		printf("error\n yaffs failed to mount: %s\n with error code %d\n",YAFFS_MOUNT_POINT, yaffs_get_error());
 
-		return (0);
+		return (-1);
 	}
 	//now create a file.
 	output = yaffs_open(FILE_PATH,O_CREAT | O_RDWR, S_IREAD | S_IWRITE);
@@ -42,14 +42,14 @@ int main()
 		printf("yaffs correctly created a the file: %s\n",FILE_PATH);
 	} else {
 		printf("error\n yaffs failed to create the file: %s\nerror\n",FILE_PATH);
-		return (0);
+		return (-1);
 	}
 	output2 = yaffs_close(output);
 	if (output2>=0){  
 		printf("yaffs correctly closed the file: %s\n",FILE_PATH);
 	} else {
 		printf("error\n yaffs failed to close the file: %s\nerror\n",FILE_PATH);
-		return (0);
+		return (-1);
 	}
 	//unmount and remount the mount point.
 	output = yaffs_unmount(YAFFS_MOUNT_POINT);
@@ -57,14 +57,14 @@ int main()
 		printf("yaffs correctly unmounted: %s\n",YAFFS_MOUNT_POINT);
 	} else {
 		printf("error\n yaffs failed to unmount: %s\nerror\n",YAFFS_MOUNT_POINT);
-		return (0);
+		return (-1);
 	}
 	output = yaffs_mount(YAFFS_MOUNT_POINT);
 	if (output>=0){  
 		printf("yaffs correctly mounted: %s\n",YAFFS_MOUNT_POINT);
 	} else {
 		printf("error\n yaffs failed to mount: %s\nerror\n",YAFFS_MOUNT_POINT);
-		return (0);
+		return (-1);
 	}
 	//now open the existing file.
 	output = yaffs_open(FILE_PATH, O_RDWR, S_IREAD | S_IWRITE);
@@ -72,7 +72,7 @@ int main()
 		printf("yaffs correctly opened the file: %s\n",FILE_PATH);
 	} else {
 		printf("error\n yaffs failed to create the file: %s\nerror\n",FILE_PATH);
-		return (0);
+		return (-1);
 	}
 	//close the file.
 	output2 = yaffs_close(output);
@@ -80,7 +80,7 @@ int main()
 		printf("yaffs correctly closed the file: %s\n",FILE_PATH);
 	} else {
 		printf("error\n yaffs failed to close the file: %s\nerror\n",FILE_PATH);
-		return (0);
+		return (-1);
 	}
 
 	//unmount the mount point.
@@ -89,9 +89,10 @@ int main()
 		printf("yaffs correctly unmounted: %s\n",YAFFS_MOUNT_POINT);
 	} else {
 		printf("error\n yaffs failed to unmount: %s\nerror\n",YAFFS_MOUNT_POINT);
-		return (0);
+		return (-1);
 	}
 
 	printf("test passed. yay!\n");
 	
+	return(0);
 }
