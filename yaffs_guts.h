@@ -354,6 +354,12 @@ struct yaffs_obj_hdr {
 
 	u32 yst_rdev;	/* stuff for block and char devices (major/min) */
 
+	/*
+	 * WinCE times are no longer just used to store WinCE times.
+	 * They are also used to store 64-bit times.
+	 * We actually store and read the times in both places and use
+	 * the best we can.
+	 */
 	u32 win_ctime[2];
 	u32 win_atime[2];
 	u32 win_mtime[2];
@@ -1062,6 +1068,18 @@ void yaffs_count_blocks_by_state(struct yaffs_dev *dev, int bs[10]);
 
 int yaffs_find_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 				    struct yaffs_ext_tags *tags);
+
+/*
+ *Time marshalling functions
+ */
+
+YTIME_T yaffs_oh_ctime_fetch(struct yaffs_obj_hdr *oh);
+YTIME_T yaffs_oh_mtime_fetch(struct yaffs_obj_hdr *oh);
+YTIME_T yaffs_oh_atime_fetch(struct yaffs_obj_hdr *oh);
+
+void yaffs_oh_ctime_load(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh);
+void yaffs_oh_mtime_load(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh);
+void yaffs_oh_atime_load(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh);
 
 /*
  * Define LOFF_T_32_BIT if a 32-bit LOFF_T is being used.

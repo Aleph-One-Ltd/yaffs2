@@ -29,9 +29,11 @@ void yaffs_load_attribs(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh)
 {
 	obj->yst_uid = oh->yst_uid;
 	obj->yst_gid = oh->yst_gid;
-	obj->yst_atime = oh->yst_atime;
-	obj->yst_mtime = oh->yst_mtime;
-	obj->yst_ctime = oh->yst_ctime;
+
+	obj->yst_ctime = yaffs_oh_ctime_fetch(oh);
+	obj->yst_mtime = yaffs_oh_mtime_fetch(oh);
+	obj->yst_atime = yaffs_oh_atime_fetch(oh);
+
 	obj->yst_rdev = oh->yst_rdev;
 }
 
@@ -39,9 +41,11 @@ void yaffs_load_attribs_oh(struct yaffs_obj_hdr *oh, struct yaffs_obj *obj)
 {
 	oh->yst_uid = obj->yst_uid;
 	oh->yst_gid = obj->yst_gid;
-	oh->yst_atime = obj->yst_atime;
-	oh->yst_mtime = obj->yst_mtime;
-	oh->yst_ctime = obj->yst_ctime;
+
+	yaffs_oh_ctime_load(obj, oh);
+	yaffs_oh_mtime_load(obj, oh);
+	yaffs_oh_atime_load(obj, oh);
+
 	oh->yst_rdev = obj->yst_rdev;
 
 }
@@ -105,7 +109,6 @@ int yaffs_set_attribs(struct yaffs_obj *obj, struct iattr *attr)
 	yaffs_update_oh(obj, NULL, 1, 0, 0, NULL);
 
 	return YAFFS_OK;
-
 }
 
 int yaffs_get_attribs(struct yaffs_obj *obj, struct iattr *attr)

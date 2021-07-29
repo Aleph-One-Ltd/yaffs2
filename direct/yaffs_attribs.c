@@ -15,6 +15,7 @@
 
 void yaffs_load_attribs(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh)
 {
+
 #ifdef CONFIG_YAFFS_WINCE
 	obj->win_atime[0] = oh->win_atime[0];
 	obj->win_ctime[0] = oh->win_ctime[0];
@@ -25,9 +26,11 @@ void yaffs_load_attribs(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh)
 #else
 	obj->yst_uid = oh->yst_uid;
 	obj->yst_gid = oh->yst_gid;
-	obj->yst_atime = oh->yst_atime;
-	obj->yst_mtime = oh->yst_mtime;
-	obj->yst_ctime = oh->yst_ctime;
+
+        obj->yst_ctime = yaffs_oh_ctime_fetch(oh);
+        obj->yst_mtime = yaffs_oh_mtime_fetch(oh);
+        obj->yst_atime = yaffs_oh_atime_fetch(oh);
+
 	obj->yst_rdev = oh->yst_rdev;
 #endif
 }
@@ -45,9 +48,11 @@ void yaffs_load_attribs_oh(struct yaffs_obj_hdr *oh, struct yaffs_obj *obj)
 #else
 	oh->yst_uid = obj->yst_uid;
 	oh->yst_gid = obj->yst_gid;
-	oh->yst_atime = obj->yst_atime;
-	oh->yst_mtime = obj->yst_mtime;
-	oh->yst_ctime = obj->yst_ctime;
+
+        yaffs_oh_ctime_load(obj, oh);
+        yaffs_oh_mtime_load(obj, oh);
+        yaffs_oh_atime_load(obj, oh);
+
 	oh->yst_rdev = obj->yst_rdev;
 #endif
 }
@@ -81,8 +86,8 @@ void yaffs_load_current_time(struct yaffs_obj *obj, int do_a, int do_c)
 
 	obj->yst_mtime = Y_CURRENT_TIME;
 	if (do_a)
-		obj->yst_atime = obj->yst_atime;
+		obj->yst_atime = obj->yst_mtime;
 	if (do_c)
-		obj->yst_ctime = obj->yst_atime;
+		obj->yst_ctime = obj->yst_mtime;
 #endif
 }

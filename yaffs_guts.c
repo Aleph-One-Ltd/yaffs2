@@ -4887,6 +4887,80 @@ int yaffs_get_n_free_chunks(struct yaffs_dev *dev)
 	return n_free;
 }
 
+/*
+ * Marshalling functions to get the appropriate time values saved
+ * and restored to/from obj headers.
+ *
+ * Note that the WinCE time fields are used to store the 32-bit values.
+ */
+
+static void yaffs_oh_time_load(u32 *yst_time, u32 *win_time, YTIME_T timeval)
+{
+	u32 upper;
+	u32 lower;
+
+	lower = timeval & 0xffffffff;
+	if (sizeof(YTIME_T) > sizeof(u32))
+		upper = (timeval >> 32) & 0xffffffff;
+	else
+		upper = 0;
+
+	*yst_time = lower;
+	win_time[0] = lower;
+	win_time[1] = upper;
+}
+
+static YTIME_T yaffs_oh_time_fetch(const u32 *yst_time, const u32 *win_time)
+{
+	u32 upper;
+	u32 lower;
+
+	if (win_time[1] == 0xffffffff) {
+		upper = 0;
+		lower = *yst_time;
+	} else {
+		upper = win_time[1];
+		lower = win_time[0];
+	}
+	if (sizeof(YTIME_T) > sizeof(u32)) {
+		u64 ret;
+		ret = (((u64)upper) << 32) | lower;
+		return (YTIME_T) ret;
+
+	} else
+		return (YTIME_T) lower;
+}
+
+YTIME_T yaffs_oh_ctime_fetch(struct yaffs_obj_hdr *oh)
+{
+	return yaffs_oh_time_fetch(&oh->yst_ctime, oh->win_ctime);
+}
+
+YTIME_T yaffs_oh_mtime_fetch(struct yaffs_obj_hdr *oh)
+{
+	return yaffs_oh_time_fetch(&oh->yst_mtime, oh->win_mtime);
+}
+
+YTIME_T yaffs_oh_atime_fetch(struct yaffs_obj_hdr *oh)
+{
+	return yaffs_oh_time_fetch(&oh->yst_atime, oh->win_atime);
+}
+
+void yaffs_oh_ctime_load(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh)
+{
+	yaffs_oh_time_load(&oh->yst_ctime, oh->win_ctime, obj->yst_ctime);
+}
+
+void yaffs_oh_mtime_load(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh)
+{
+	yaffs_oh_time_load(&oh->yst_mtime, oh->win_mtime, obj->yst_mtime);
+}
+
+void yaffs_oh_atime_load(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh)
+{
+	yaffs_oh_time_load(&oh->yst_atime, oh->win_atime, obj->yst_atime);
+}
+
 
 /*
  * Marshalling functions to get loff_t file sizes into and out of

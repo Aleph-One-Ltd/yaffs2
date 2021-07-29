@@ -34,6 +34,8 @@
 #define YCHAR char
 #define YUCHAR unsigned char
 #define _Y(x)     x
+#define YTIME_T u64
+
 
 #define YAFFS_LOSTNFOUND_NAME		"lost+found"
 #define YAFFS_LOSTNFOUND_PREFIX		"obj"

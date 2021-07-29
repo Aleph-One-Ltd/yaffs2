@@ -281,9 +281,9 @@ static int ryfs_utime(
 	obj = yaffs_get_equivalent_obj(obj);
 	if (obj != NULL) {
 		obj->dirty = 1;
-		obj->yst_atime = (u32) actime;
-		obj->yst_mtime = (u32) modtime;
-		obj->yst_ctime = (u32) time(NULL);
+		obj->yst_atime = actime;
+		obj->yst_mtime = modtime;
+		obj->yst_ctime = time(NULL);
 	} else {
 		errno = EIO;
 		rv = -1;
@@ -680,7 +680,7 @@ static int ryfs_symlink(const rtems_filesystem_location_info_t *parent_loc,
 	mode = S_IFLNK |
 		((S_IRWXU | S_IRWXG | S_IRWXO) & ~rtems_filesystem_umask);
 
-	created_link = yaffs_create_symlink(parent_dir, name, mode, 
+	created_link = yaffs_create_symlink(parent_dir, name, mode,
 						geteuid(), getegid(), target);
 
 	if (created_link != NULL) {

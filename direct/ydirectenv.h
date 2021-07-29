@@ -29,7 +29,7 @@ void yaffs_bug_fn(const char *file_name, int line_no);
 
 #define BUG() do { yaffs_bug_fn(__FILE__, __LINE__); } while (0)
 
-#ifdef YAFFS_USE_32_BIT_TIME_T
+#ifdef CONFIG_YAFFS_USE_32_BIT_TIME_T
 	#define YTIME_T u32
 #else
 	#define YTIME_T u64

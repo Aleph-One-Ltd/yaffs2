@@ -39,7 +39,7 @@ void yaffsfs_free(void *ptr)
 	free(ptr);
 }
 
-u32 yaffsfs_CurrentTime(void)
+YTIME_T yaffsfs_CurrentTime(void)
 {
 	return time(NULL);
 }
