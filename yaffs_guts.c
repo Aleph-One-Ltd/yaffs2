@@ -163,6 +163,8 @@ u8 *yaffs_get_temp_buffer(struct yaffs_dev * dev)
 
 }
 
+/* Frees all the temp_buffer objects in the yaffs_dev instance
+*/
 void yaffs_release_temp_buffer(struct yaffs_dev *dev, u8 *buffer)
 {
 	int i;
