@@ -4902,10 +4902,15 @@ static void yaffs_oh_time_load(u32 *yst_time, u32 *win_time, YTIME_T timeval)
 	u32 lower;
 
 	lower = timeval & 0xffffffff;
-	if (sizeof(YTIME_T) > sizeof(u32))
-		upper = (timeval >> 32) & 0xffffffff;
-	else
-		upper = 0;
+	/* we have to use #defines here insted of an if statement
+	otherwise the compiler throws an error saying that
+	right shift count >= width of type when we are using 32 bit time.
+	*/
+	#ifdef CONFIG_YAFFS_USE_32_BIT_TIME_T
+                upper = 0;
+        #else
+                upper = (timeval >> 32) & 0xffffffff;
+        #endif
 
 	*yst_time = lower;
 	win_time[0] = lower;
