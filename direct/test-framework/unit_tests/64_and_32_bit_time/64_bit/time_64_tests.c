@@ -19,6 +19,11 @@ int main()
         return 1;
     }
 
+    struct yaffs_obj obj;
+    if (sizeof(obj.yst_atime) != 8) {
+	    printf("Error: size of yaffs_obj.yst_atime is not 64 bits\n");
+	    return 1;
+    }
 
     //create several times and save them
     //
@@ -41,11 +46,19 @@ int main()
     yaffs_do_endian_oh(&dev,&oh);
 
     //check that the endianess is correct
-    u64 expected = 0xb03217af;
-    if (oh.yst_atime != expected || oh.yst_mtime != expected || oh.yst_ctime != expected) {
-        printf("endian test failed, got %x\n",oh.yst_atime);
+    u32 expected = 0xb03217af;
+    if (oh.yst_atime != expected ) {
+        printf("endian test failed for yst_atime, got %x expected %x\n",oh.yst_atime,expected);
         return 1;
     } 
+    if (oh.yst_mtime != expected) {
+        printf("endian test failed for yst_mtime, got %x, expected %x\n",oh.yst_mtime,expected);
+        return 1;
+    }
+    if (oh.yst_ctime != expected) {
+        printf("endian test failed for yst_ctime, got %x, expected %x\n",oh.yst_ctime,expected);
+        return 1;
+    }
 
     printf("all tests pass\n");
     return 0;
