@@ -42,9 +42,9 @@ void yaffs_do_endian_oh(struct yaffs_dev *dev, struct yaffs_obj_hdr *oh)
 
 	oh->yst_uid = swap_u32(oh->yst_uid);
 	oh->yst_gid = swap_u32(oh->yst_gid);
-	oh->yst_atime = swap_ytime_t(oh->yst_atime);
-	oh->yst_mtime = swap_ytime_t(oh->yst_mtime);
-	oh->yst_ctime = swap_ytime_t(oh->yst_ctime);
+	oh->yst_atime = swap_u32(oh->yst_atime);
+	oh->yst_mtime = swap_u32(oh->yst_mtime);
+	oh->yst_ctime = swap_u32(oh->yst_ctime);
 
 	oh->file_size_low = swap_u32(oh->file_size_low);
 
