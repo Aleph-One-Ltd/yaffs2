@@ -34,6 +34,8 @@ set -e -x
 		-e "s/strncmp/yaffs_strncmp/g"\
 		-e "s/loff_t/Y_LOFF_T/g" \
 		 >$i
+
+		chmod 0444 $i
 	done
 elif [ "$1" = "clean" ] ; then 
 	for i in $YAFFS_COMMON_SOURCES ; do
