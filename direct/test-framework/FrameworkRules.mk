@@ -28,7 +28,7 @@ CFLAGS +=    -Wextra -Wpointer-arith
 
 #CFLAGS+=   -Wshadow -Wpointer-arith -Wwrite-strings -Wstrict-prototypes -Wmissing-declarations
 #CFLAGS+=   -Wmissing-prototypes -Wredundant-decls -Wnested-externs -Winline
-
+CLEAN_OBJS = emfile-2k-0 emfile-nand emfile-nand128MB
 
 COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o yaffs_error.o\
 		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
