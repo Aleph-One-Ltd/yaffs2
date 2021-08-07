@@ -51,14 +51,59 @@ def run_makefile_test(path):
 	
 	return (TEST_PASSED, "test passed")
 
+def clean_tests(makefile_paths):
+    cmds = [("make -j -C {} clean".format(path), path) for path in makefile_paths]
+
+    failed = 0
+    passed = 0
+
+    for cmd, is_successful, cmd_text, debug_info in run_cmds(cmds):
+        if not is_successful:
+            print("\033[41mtest failed to clean\033[0m {}".format(debug_info[0]))
+            failed += 1
+        else :
+            print("\033[42mtest cleaned successfully\033[0m {}".format(debug_info[0]))
+            passed += 1
+    if not failed:
+        print ("\n\033[42mAll tests cleaned successfully\033[0m")
+    else :
+        print ("\n\033[42mTests failed to clean successfully\033[0m")
+    print("ran {}, passed {}, failed {}".format(len(cmds), passed, failed))
+
+def run_tests(makefile_paths):
+    cmds = [("make -j -C {} test".format(path), path) for path in makefile_paths]
+    
+    failed = 0
+    passed = 0
+
+    print("running tests")
+    for cmd, is_successful, cmd_text, debug_info in run_cmds(cmds):
+        if not is_successful:
+            print("\033[41mtest failed\033[0m {}".format(debug_info[0]))
+            failed += 1
+        else :
+            print("\033[42mtest passed\033[0m {}".format(debug_info[0]))
+            passed += 1
+    if not failed:
+        print ("\n\033[42mAll tests passed\033[0m")
+    else :
+        print ("\n\033[41mTests failed\033[0m")
+    print("ran {}, passed {}, failed {}".format(len(cmds), passed, failed)) 
+
+def run_cmds(cmds):
+    output = []
+    for cmd, *debug_info in cmds:
+        try:
+            subprocess.check_output(cmd, shell=True)
+            output.append((cmd, True, "todo add getting text for non failing test", debug_info))
+        except subprocess.CalledProcessError as e:
+            output.append((cmd, False, e.output.decode('UTF-8'), debug_info))
+    return output
 if __name__ == "__main__":
-	#run the test runner.
-	failed_tests = run(test_list)
-	
-	print("\ntest summary #############")
-	if len(failed_tests) == 0:
-		print('\033[42m' +"all tests passed"+'\033[0m')
-	else:
-		for path, output in failed_tests:
-			print('\033[41m' +"test {} failed".format(path)+'\033[0m')
-		print('\033[41m' + "ran {} tests, {} failed".format(len(test_list), len(failed_tests))+'\033[0m')
+        if len(sys.argv) == 2 and sys.argv[1] == "clean":
+            clean_tests(test_list)
+        elif len(sys.argv) == 1:
+            #run the test runner.
+            failed_tests = run_tests(test_list)
+        else:
+            print("run with command ./test_runner.py [clean]")
