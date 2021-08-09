@@ -21,9 +21,9 @@ YDI_FRAMEWORK_DIR = ../../../
 CLEAN_OBJS = time_64_tests emfile-2k-0 emfile-nand  emfile-nand128MB 
 TESTFILES = 	time_64_tests.o
 
-all: time_64_tests
+all: time_64_tests create_64_bit
 
-YAFFS_TEST_OBJS = $(COMMONTESTOBJS) $(TESTFILES)
+YAFFS_TEST_OBJS = $(COMMONTESTOBJS) 
 
 
 ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(FUZZER_OBJS)
@@ -34,5 +34,8 @@ phony. test: time_64_tests
 	./time_64_tests
 
 time_64_tests: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) -lpthread
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) time_64_tests.o -lpthread
 
+
+create_64_bit: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) create_64_bit.o -lpthread
