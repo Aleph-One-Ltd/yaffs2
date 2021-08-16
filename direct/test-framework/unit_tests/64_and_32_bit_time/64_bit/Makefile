@@ -18,10 +18,10 @@
 YDI_DIR = ../../../../
 YDI_FRAMEWORK_DIR = ../../../
 
-CLEAN_OBJS = time_64_tests emfile-2k-0 emfile-nand  emfile-nand128MB 
-TESTFILES = 	time_64_tests.o
+MAINFILES = time_64_tests create_64_bit
+CLEAN_OBJS = $(MAINFILES) 
 
-all: time_64_tests create_64_bit
+all: $(MAINFILES) 
 
 YAFFS_TEST_OBJS = $(COMMONTESTOBJS) 
 
@@ -32,10 +32,6 @@ include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
 phony. test: time_64_tests
 	./time_64_tests
+$(MAINFILES): $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) $@.o -lpthread
 
-time_64_tests: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) time_64_tests.o -lpthread
-
-
-create_64_bit: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) create_64_bit.o -lpthread
