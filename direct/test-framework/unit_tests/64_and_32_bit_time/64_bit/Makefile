@@ -18,20 +18,23 @@
 YDI_DIR = ../../../../
 YDI_FRAMEWORK_DIR = ../../../
 
-MAINFILES = time_64_tests create_64_bit
+MAINFILES = time_64_tests create_64_bit validate_64_bit
+MAIN_OBJS = $(addsuffix .o,$(MAINFILES))
+
+EXTRA_OBJS = shared.o
+
 CLEAN_OBJS = $(MAINFILES) 
 
+YAFFS_TEST_OBJS = $(COMMONTESTOBJS) $(EXTRA_OBJS)
+ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(MAIN_OBJS)
+
 all: $(MAINFILES) 
-
-YAFFS_TEST_OBJS = $(COMMONTESTOBJS) 
-
-
-ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(FUZZER_OBJS)
 
 include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
 phony. test: time_64_tests
 	./time_64_tests
-$(MAINFILES): $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
+
+$(MAINFILES): $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS) $(MAIN_OBJS) 
 	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) $@.o -lpthread
 
