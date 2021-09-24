@@ -1,4 +1,4 @@
-# Makefile for 32 bit time test.
+# Makefile for 64 bit time test.
 #
 #
 # YAFFS: Yet another Flash File System. A NAND-flash specific file system.
@@ -18,22 +18,24 @@
 YDI_DIR = ../../../../
 YDI_FRAMEWORK_DIR = ../../../
 
-CLEAN_OBJS = time_32_tests emfile-2k-0 emfile-nand  emfile-nand128MB 
-TESTFILES = 	time_32_tests.o
+MAINFILES = time_32_tests create_32_bit validate_32_bit
+MAIN_OBJS = $(addsuffix .o,$(MAINFILES))
 
+EXTRA_OBJS = shared.o
+
+CLEAN_OBJS = $(MAINFILES) 
 CFLAGS = -DCONFIG_YAFFS_USE_32_BIT_TIME_T
-all: time_32_tests
 
-YAFFS_TEST_OBJS = $(COMMONTESTOBJS) $(TESTFILES)
+YAFFS_TEST_OBJS = $(COMMONTESTOBJS) $(EXTRA_OBJS)
+ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(MAIN_OBJS)
 
-
-ALL_UNSORTED_OBJS += $(YAFFS_TEST_OBJS) $(FUZZER_OBJS)
+all: $(MAINFILES) 
 
 include $(YDI_FRAMEWORK_DIR)/FrameworkRules.mk
 
 phony. test: time_32_tests
 	./time_32_tests
 
-time_32_tests: $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS)
-	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) -lpthread
+$(MAINFILES): $(FRAMEWORK_SOURCES) $(YAFFS_TEST_OBJS) $(MAIN_OBJS) 
+	gcc $(CFLAGS) -o $@ $(YAFFS_TEST_OBJS) $@.o -lpthread -DCONFIG_YAFFS_USE_32_BIT_TIME_T
 

@@ -21,7 +21,12 @@ void setup_yaffs() {
 
 
 int shared_create(int argc, char *argv[]){
-	
+	printf("YTIME_T size is %lu bits\n", sizeof(YTIME_T) *8);
+	#ifdef CONFIG_YAFFS_USE_32_BIT_TIME_T
+		if (sizeof(YTIME_T)*8 != 32) {
+			printf("YTIME_T size is incorrect. it is %lu and should be 32\n", sizeof(YTIME_T));
+		} 
+	#endif
 	if (argc != 3) {
 		printf("wrong number of arguments\n");
 		printf("requires $ create file_name time\n");
@@ -45,7 +50,7 @@ int shared_create(int argc, char *argv[]){
 	assert_exit_yaffs("yaffs_utime", ret);
 
 	assert_exit_yaffs("yaffs_unmount", yaffs_unmount(YAFFS_MOUNT_POINT));
-	return TEST_FAIL;
+	return 0;
 }
 
 int shared_validate_file(int argc, char *argv[]){
@@ -71,5 +76,5 @@ int shared_validate_file(int argc, char *argv[]){
 		exit(0);
 	}
 	assert_exit_yaffs("yaffs_unmount", yaffs_unmount(YAFFS_MOUNT_POINT));
-	return TEST_FAIL;
+	return 0;
 }
