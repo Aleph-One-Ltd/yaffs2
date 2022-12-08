@@ -21,6 +21,9 @@ cscope.*
 #emfile
 emfile-*
 
+# IDE files used by various developer tools
+.idea
+
 # here are the files that are copied into the direct folder. They are modified
 # when they are copied. We don't want to track them.
 
