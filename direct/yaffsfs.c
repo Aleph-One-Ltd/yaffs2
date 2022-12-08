@@ -3110,14 +3110,17 @@ int yaffs_unmount2_common(struct yaffs_dev *dev, const YCHAR *path, int force)
 {
 	int retVal = -1;
 
-	if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
-		yaffsfs_SetError(-EFAULT);
-		return -1;
-	}
 
-	if (yaffsfs_CheckPath(path) < 0) {
-		yaffsfs_SetError(-ENAMETOOLONG);
-		return -1;
+	if (!dev) {
+		if (yaffsfs_CheckMemRegion(path, 0, 0) < 0) {
+			yaffsfs_SetError(-EFAULT);
+			return -1;
+		}
+
+		if (yaffsfs_CheckPath(path) < 0) {
+			yaffsfs_SetError(-ENAMETOOLONG);
+			return -1;
+		}
 	}
 
 	yaffsfs_Lock();
