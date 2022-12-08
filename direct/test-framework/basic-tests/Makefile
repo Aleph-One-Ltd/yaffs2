@@ -21,16 +21,20 @@
 YDI_DIR = ../../
 YDI_FRAMEWORK_DIR = ../
 
-TARGETS = directtest2k
+TARGETS = directtest2k reldevtest
 
 all: $(TARGETS)
 
 DIRECTTESTOBJS = $(COMMONTESTOBJS) dtest.o
+RELDEVOBJS =  $(COMMONTESTOBJS) reldevtest.o
 
-ALL_UNSORTED_OBJS += $(DIRECTTESTOBJS)
+ALL_UNSORTED_OBJS += $(DIRECTTESTOBJS) $(RELDEVOBJS)
 
 include ../FrameworkRules.mk
 
-directtest2k: $(FRAMEWORK_SOURCES) $(DIRECTTESTOBJS)
+directtest2k: $(FRAMEWORK_SOURCES) $(DIRECTTESTOBJS) Makefile
 	gcc -o $@ $(DIRECTTESTOBJS) -lpthread
+
+reldevtest: $(FRAMEWORK_SOURCES) $(RELDEVOBJS) Makefile
+	gcc -o $@ $(RELDEVOBJS) -lpthread
 
