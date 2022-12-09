@@ -13,6 +13,7 @@
 # Patch YAFFS into the kernel
 #
 #  args:  l/c : link or copy
+#         m/s : multi or single version
 #	  kpath  : Full path to kernel sources to be patched
 #
 #  Somewhat "inspired by" the mtd patchin script
@@ -147,6 +148,7 @@ else
    $CPY  $PWD/Makefile.kernel $LINUXDIR/fs/yaffs2/Makefile
    $CPY $PWD/$KCONFIG_SRC $LINUXDIR/fs/yaffs2/Kconfig
    $CPY $PWD/*.c $PWD/*.h  $LINUXDIR/fs/yaffs2
+   $CPY $PWD/../core/*.c $PWD/../core/*.h  $LINUXDIR/fs/yaffs2
    rm $LINUXDIR/fs/yaffs2/yaffs_vfs*.c $LINUXDIR/fs/yaffs2/yaffs_mtdif*.c
    rm $LINUXDIR/fs/yaffs2/yportenv*.h
    rm $LINUXDIR/fs/yaffs2/moduleconfig.h
