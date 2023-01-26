@@ -96,8 +96,8 @@ size_t strnlen(const char *s, size_t maxlen);
 #define Y_CURRENT_TIME yaffsfs_CurrentTime()
 #define Y_TIME_CONVERT(x) x
 
-#define YAFFS_ROOT_MODE			0666
-#define YAFFS_LOSTNFOUND_MODE		0666
+#define YAFFS_ROOT_MODE			0755
+#define YAFFS_LOSTNFOUND_MODE		0700
 
 #include "yaffs_list.h"
 
