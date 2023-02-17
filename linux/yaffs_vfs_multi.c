@@ -1808,6 +1808,12 @@ static void yaffs_remove_obj_callback(struct yaffs_obj *obj)
 /*-----------------------------------------------------------------*/
 
 #ifdef YAFFS_USE_DIR_ITERATE
+
+/*
+ * Note that this function makes unlocks before calling various kernel functions
+ * like dir_emit_dots() because these can cause page faults which would need
+ * yaffs to be unlocked.
+ */
 static int yaffs_iterate(struct file *f, struct dir_context *dc)
 {
 	struct yaffs_obj *obj;
@@ -1832,8 +1838,14 @@ static int yaffs_iterate(struct file *f, struct dir_context *dc)
 		goto out;
 	}
 
-	if (!dir_emit_dots(f, dc))
+	yaffs_gross_unlock(dev);
+
+	if (!dir_emit_dots(f, dc)) {
+		yaffs_gross_lock(dev);
 		goto out;
+	}
+
+	yaffs_gross_lock(dev);
 
 	curoffs = 1;
 
