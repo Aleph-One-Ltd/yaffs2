@@ -699,7 +699,7 @@ static void yaffs_load_oh_from_name(struct yaffs_dev *dev, YCHAR *oh_name,
 		}
 	} else {
 #else
-	dev = dev;
+    (void) dev;
 	{
 #endif
 		strncpy(oh_name, name, YAFFS_MAX_NAME_LENGTH - 1);
@@ -4753,7 +4753,7 @@ int yaffs_guts_initialise(struct yaffs_dev *dev)
 				dev->n_erased_blocks = 0;
 				dev->n_free_chunks = 0;
 				dev->alloc_block = -1;
-				dev->alloc_page = -1;
+				dev->alloc_page = 0xFFFFFFFFu;
 				dev->n_deleted_files = 0;
 				dev->n_unlinked_files = 0;
 				dev->n_bg_deletions = 0;

@@ -28,7 +28,6 @@ int yaffs1_scan(struct yaffs_dev *dev)
 	int result;
 	int chunk;
 	u32 c;
-	int deleted;
 	enum yaffs_block_state state;
 	LIST_HEAD(hard_list);
 	struct yaffs_block_info *bi;
@@ -88,8 +87,6 @@ int yaffs1_scan(struct yaffs_dev *dev)
 		bi = yaffs_get_block_info(dev, blk);
 		state = bi->block_state;
 
-		deleted = 0;
-
 		/* For each chunk in each block that needs scanning.... */
 		for (c = 0;
 			!alloc_failed && c < dev->param.chunks_per_block &&
@@ -109,7 +106,6 @@ int yaffs1_scan(struct yaffs_dev *dev)
 				/* YAFFS1 only...
 				 * A deleted chunk
 				 */
-				deleted++;
 				dev->n_free_chunks++;
 			} else if (!tags.chunk_used) {
 				/* An unassigned chunk in the block

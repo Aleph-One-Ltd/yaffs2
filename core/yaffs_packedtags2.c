@@ -35,7 +35,7 @@
 
 /* Also, the top 4 bits of the object Id are set to the object type. */
 #define EXTRA_OBJECT_TYPE_SHIFT (28)
-#define EXTRA_OBJECT_TYPE_MASK  ((0x0f) << EXTRA_OBJECT_TYPE_SHIFT)
+#define EXTRA_OBJECT_TYPE_MASK  ((0x0fu) << EXTRA_OBJECT_TYPE_SHIFT)
 
 static void yaffs_dump_packed_tags2_tags_only(
 				const struct yaffs_packed_tags2_tags_only *ptt)

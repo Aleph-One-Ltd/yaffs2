@@ -41,7 +41,7 @@ int yaffs_obj_cache_dirty(struct yaffs_obj *obj)
 	return 0;
 }
 
-void yaffs_flush_single_cache(struct yaffs_cache *cache, int discard)
+static void yaffs_flush_single_cache(struct yaffs_cache *cache, int discard)
 {
 
 	if (!cache || cache->locked)

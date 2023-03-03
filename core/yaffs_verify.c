@@ -224,7 +224,6 @@ void yaffs_verify_oh(struct yaffs_obj *obj, struct yaffs_obj_hdr *oh,
 void yaffs_verify_file(struct yaffs_obj *obj)
 {
 	u32 x;
-	int required_depth;
 	int last_chunk;
 	u32 offset_in_chunk;
 	u32 the_chunk;
@@ -250,10 +249,8 @@ void yaffs_verify_file(struct yaffs_obj *obj)
 				&last_chunk, &offset_in_chunk);
 	last_chunk++;
 	x = last_chunk >> YAFFS_TNODES_LEVEL0_BITS;
-	required_depth = 0;
 	while (x > 0) {
 		x >>= YAFFS_TNODES_INTERNAL_BITS;
-		required_depth++;
 	}
 
 	/* Check that the chunks in the tnode tree are all correct.

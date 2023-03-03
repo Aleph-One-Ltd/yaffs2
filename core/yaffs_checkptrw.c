@@ -177,8 +177,8 @@ static void yaffs2_checkpt_find_block(struct yaffs_dev *dev)
 					apply_chunk_offset(dev, chunk),
 					NULL, &tags);
 			yaffs_trace(YAFFS_TRACE_CHECKPOINT,
-				"find next checkpt block: search: block %d state %d oid %d seq %d eccr %d",
-				i, (int) state,
+				"find next checkpt block: search: block %d oid %d seq %d eccr %d",
+				i,
 				tags.obj_id, tags.seq_number,
 				tags.ecc_result);
 

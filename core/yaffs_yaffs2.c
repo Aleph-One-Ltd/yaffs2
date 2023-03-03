@@ -554,7 +554,7 @@ static void yaffs2_do_endian_tnode(struct yaffs_dev *dev, struct yaffs_tnode *tn
 		as_u32[i] = swap_u32(as_u32[i]);
 }
 
-struct yaffs_tnode *yaffs2_do_endian_tnode_copy(struct yaffs_dev *dev,
+static struct yaffs_tnode *yaffs2_do_endian_tnode_copy(struct yaffs_dev *dev,
 					       struct yaffs_tnode *tn)
 {
 	if (!dev->swap_endian)
@@ -1119,7 +1119,7 @@ static inline int yaffs2_scan_chunk(struct yaffs_dev *dev,
 	struct yaffs_obj *parent;
 	int equiv_id;
 	loff_t file_size;
-	int is_shrink;
+	unsigned is_shrink;
 	int is_unlinked;
 	struct yaffs_ext_tags tags;
 	int result;

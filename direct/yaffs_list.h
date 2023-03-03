@@ -110,7 +110,7 @@ static inline int list_empty(struct list_head *entry)
 
 
 #define list_entry(entry, type, member) \
-	((type *)((char *)(entry)-(unsigned long)(&((type *)NULL)->member)))
+	((type *)((char *)(entry)-(unsigned long)(offsetof(type, member))))
 
 
 /* list_for_each and list_for_each_safe  iterate over lists.
