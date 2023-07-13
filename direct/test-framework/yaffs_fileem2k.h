@@ -18,8 +18,11 @@
 
 struct yaffs_dev;
 
-struct yaffs_dev *yflash2_install_drv(const char *name);
+struct yaffs_dev *yflash2_install_drv(const char *name,
+                                      unsigned start_block,
+                                      unsigned end_block);
 
+int yflash2_get_n_blocks(void);
 
 #endif
 

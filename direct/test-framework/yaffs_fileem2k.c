@@ -31,8 +31,8 @@
 
 #if 1
 
-#define SIZE_IN_MB 32
-/* #define SIZE_IN_MB 128 */
+/* #define SIZE_IN_MB 32*/
+#define SIZE_IN_MB 128
 
 #define PAGE_DATA_SIZE (2048)
 #define PAGE_SPARE_SIZE  (64)
@@ -177,7 +177,7 @@ static int  CheckInit(void)
 }
 
 
-int yflash2_GetNumberOfBlocks(void)
+int yflash2_get_n_blocks(void)
 {
 	CheckInit();
 
@@ -337,7 +337,9 @@ static int yflash2_Initialise(struct yaffs_dev *dev)
 	return YAFFS_OK;
 }
 
-struct yaffs_dev *yflash2_install_drv(const char *name)
+struct yaffs_dev *yflash2_install_drv(const char *name,
+				      unsigned start_block,
+				      unsigned end_block)
 {
 	struct yaffs_dev *dev = NULL;
 	struct yaffs_param *param;
@@ -370,8 +372,8 @@ struct yaffs_dev *yflash2_install_drv(const char *name)
 
 	param->total_bytes_per_chunk = 2048;
 	param->chunks_per_block = 64;
-	param->start_block = 0;
-	param->end_block = yflash2_GetNumberOfBlocks()-1;
+	param->start_block = start_block;
+	param->end_block = end_block;
 	param->is_yaffs2 = 1;
 	param->use_nand_ecc=1;
 

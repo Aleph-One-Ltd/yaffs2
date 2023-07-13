@@ -53,6 +53,7 @@ unsigned yaffs_trace_mask =
 int yaffs_start_up(void)
 {
 	static int start_up_called = 0;
+	struct yaffs_dev *dev;
 
 	if(start_up_called)
 		return 0;
@@ -62,7 +63,15 @@ int yaffs_start_up(void)
 	yaffsfs_OSInitialisation();
 
 	/* Install the various devices and their device drivers */
-	yflash2_install_drv("yflash2");
+
+	printf("Partitioning yflash2. Total size is %d blocks\n",
+				yflash2_get_n_blocks());
+	dev = yflash2_install_drv("/sys", 0, 255);
+	printf("Creating /sys returned %p\n", dev);
+
+	dev = yflash2_install_drv("/user", 256, yflash2_get_n_blocks() - 1);
+	printf("Creating /user returned %p\n", dev);
+
 	yaffs_m18_install_drv("M18-1");
 	yaffs_nor_install_drv("nor");
 	yaffs_nandsim_install_drv("nand", "emfile-nand", 256, 4, 1);

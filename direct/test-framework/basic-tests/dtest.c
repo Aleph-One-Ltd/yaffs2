@@ -146,8 +146,6 @@ int dump_file_data(char *fn)
 	return ok;
 }
 
-
-
 void dump_file(const char *fn)
 {
 	int i;
@@ -170,7 +168,7 @@ void dump_file(const char *fn)
 	}
 }
 
-void create_file_of_size(const char *fn,int syze)
+int create_file_of_size(const char *fn,int syze)
 {
 	int h;
 	int n;
@@ -193,6 +191,8 @@ void create_file_of_size(const char *fn,int syze)
 		iteration++;
 	}
 	yaffs_close (h);
+
+	return h;
 }
 
 void verify_file_of_size(const char *fn,int syze)
@@ -3224,6 +3224,34 @@ void verify_big_sparse_file(int h)
 }
 
 
+
+void mount_partitions_test(char *part0, char *part1)
+{
+	int ret;
+	char name0[100];
+	char name1[100];
+
+	yaffs_trace_mask = 0;
+
+	yaffs_start_up();
+
+	ret = yaffs_mount(part0);
+	printf("Mounting partition %s returned %d\n", part0, ret);
+	ret = yaffs_mount(part1);
+	printf("Mounting partition %s returned %d\n", part1, ret);
+
+	sprintf(name0,"%s/file_on_part0", part0);
+	sprintf(name1,"%s/file_on_part1", part1);
+
+	printf("\n\nCreate a file on each partition...\n");
+	make_a_file(name0, 0x00, 10000);
+	make_a_file(name1, 0x01, 20000);
+
+	printf("\n\nDump the directories to view the contents\n");
+	dumpDir(part0);
+	dumpDir(part1);
+}
+
 void large_file_test(const char *mountpt)
 {
 	char xx_buffer[1000];
@@ -3515,6 +3543,71 @@ void create_delete_many_files_test(const char *mountpt)
 
 }
 
+
+void  create_sequence_test(const char *mountpt)
+{
+	char str[100];
+	int ret;
+
+	yaffs_trace_mask = 0;
+
+	yaffs_start_up();
+	ret = yaffs_mount(mountpt);
+	printf("yaffs_mount(\"%s\");\n", mountpt);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir0", mountpt);
+	ret = yaffs_mkdir(str, 0666);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir0/DirA", mountpt);
+	ret = yaffs_mkdir(str, 0666);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir0/DirB", mountpt);
+	ret = yaffs_mkdir(str, 0666);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir0/DirA/hello_world.txt", mountpt);
+	ret = create_file_of_size(str, 100);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir0/DirB/hello_world.txt", mountpt);
+	ret = create_file_of_size(str, 200);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir2", mountpt);
+	ret = yaffs_mkdir(str, 0666);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir2/DirC", mountpt);
+	ret = yaffs_mkdir(str, 0666);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir2/DirC/DirE", mountpt);
+	ret = yaffs_mkdir(str, 0666);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir2/DirC/DirE/DirF", mountpt);
+	ret = yaffs_mkdir(str, 0666);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+	sprintf(str, "%s/Dir2/DirC/DirE/DirF/hello_world.txt", mountpt);
+	ret = create_file_of_size(str, 300);
+	printf("Creating %s returned %d\n", str, ret);
+	dump_directory_tree(mountpt);
+
+}
+
 void find_device_check(void)
 {
 	yaffs_start_up();
@@ -3615,6 +3708,9 @@ int main(int argc, char *argv[])
 	(void) argv;
 
 	random_seed = time(NULL);
+
+	mount_partitions_test("/sys", "/user");
+
 	//return long_test(argc,argv);
 
 	//return cache_read_test();
@@ -3677,6 +3773,7 @@ int main(int argc, char *argv[])
 	 // link_follow_test("/nand");
 	 //basic_utime_test("/nand");
 
+	 //create_sequence_test("/nand");
 
 	//format_test("/nand");
 
@@ -3687,9 +3784,9 @@ int main(int argc, char *argv[])
 	 //large_file_test("/nand");
 	 //readdir_test("/nand");
 
-	 basic_utime_test("/nand");
-	 testing_swap_u64();
-	 size_utime_test("/nand");
+	 //basic_utime_test("/nand");
+	 //testing_swap_u64();
+	 //size_utime_test("/nand");
 	 //case_insensitive_test("/nand");
 
 	 //yy_test("/nand");
