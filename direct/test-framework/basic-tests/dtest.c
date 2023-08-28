@@ -2325,8 +2325,8 @@ void checkpoint_fill_test(const char *mountpt,int nmounts)
 {
 
 	char a[50];
-	char b[50];
-	char c[50];
+	char b[80];
+	char c[100];
 
 	int i;
 	int j;
@@ -2399,9 +2399,9 @@ void checkpoint_upgrade_test(const char *mountpt, int nmounts)
 {
 
 	char a[50];
-	char b[50];
-	char c[50];
-	char d[50];
+	char b[80];
+	char c[80];
+	char d[80];
 
 	int j;
 
