@@ -4273,7 +4273,7 @@ static void yaffs_fix_null_name(struct yaffs_obj *obj, YCHAR *name,
 				int buffer_size)
 {
 	/* Create an object name if we could not find one. */
-	if (strnlen(name, YAFFS_MAX_NAME_LENGTH) == 0) {
+	if (strnlen(name, buffer_size) == 0) {
 		YCHAR local_name[20];
 		YCHAR num_string[20];
 		YCHAR *x = &num_string[19];
