@@ -1079,6 +1079,7 @@ static const struct inode_operations yaffs_file_inode_operations = {
 };
 
 
+#if (YAFFS_NEW_GET_LINK != 1)
 static int yaffs_readlink(struct dentry *dentry, char __user * buffer,
 			  int buflen)
 {
@@ -1105,6 +1106,9 @@ static int yaffs_readlink(struct dentry *dentry, char __user * buffer,
 	return ret;
 }
 
+#endif
+
+
 #if (YAFFS_NEW_GET_LINK == 0)
 #if (YAFFS_NEW_FOLLOW_LINK == 1)
 static void *yaffs_follow_link(struct dentry *dentry, struct nameidata *nd)
@@ -1114,7 +1118,7 @@ static void *yaffs_follow_link(struct dentry *dentry, struct nameidata *nd)
 static int yaffs_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
 	int ret
-#endif
+#endif /* NEW_FOLLOW_LINK */
 	unsigned char *alias;
 	int ret_int = 0;
 	struct yaffs_dev *dev = yaffs_dentry_to_obj(dentry)->my_dev;
@@ -1145,7 +1149,7 @@ out:
 #endif
 }
 #else
-static const char *yaffs_get_link(struct dentry *dentry, struct inode *inode, struct delayed_call *done)
+const char *yaffs_get_link(struct dentry *dentry, struct inode *inode, struct delayed_call *done)
 {
 	unsigned char *alias;
 	struct yaffs_dev *dev;
@@ -1189,10 +1193,10 @@ void yaffs_put_link(struct dentry *dentry, struct nameidata *nd, void *alias)
 #endif
 
 static const struct inode_operations yaffs_symlink_inode_operations = {
-	.readlink = yaffs_readlink,
 #if (YAFFS_NEW_GET_LINK == 1)
 	.get_link = yaffs_get_link,
 #else
+	.readlink = yaffs_readlink,
 	.follow_link = yaffs_follow_link,
 #endif
 #if (YAFFS_NEW_FOLLOW_LINK == 1)

@@ -252,36 +252,6 @@ void yaffs_mtd_drv_install(struct yaffs_dev *dev)
 	drv->drv_deinitialise_fn = yaffs_mtd_deinitialise;
 }
 
-struct mtd_info * yaffs_get_mtd_device(dev_t sdev)
-{
-	struct mtd_info *mtd;
-
-	mtd = yaffs_get_mtd_device(sdev);
-
-	/* Check it's an mtd device..... */
-	if (MAJOR(sdev) != MTD_BLOCK_MAJOR)
-		return NULL;	/* This isn't an mtd device */
-
-	/* Check it's NAND */
-	if (mtd->type != MTD_NANDFLASH) {
-		yaffs_trace(YAFFS_TRACE_ALWAYS,
-			"yaffs: MTD device is not NAND it's type %d",
-			mtd->type);
-		return NULL;
-	}
-
-	yaffs_trace(YAFFS_TRACE_OS, " %s %d", WRITE_SIZE_STR, WRITE_SIZE(mtd));
-	yaffs_trace(YAFFS_TRACE_OS, " oobsize %d", mtd->oobsize);
-	yaffs_trace(YAFFS_TRACE_OS, " erasesize %d", mtd->erasesize);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 29)
-	yaffs_trace(YAFFS_TRACE_OS, " size %u", mtd->size);
-#else
-	yaffs_trace(YAFFS_TRACE_OS, " size %lld", mtd->size);
-#endif
-
-	return mtd;
-}
-
 int yaffs_verify_mtd(struct mtd_info *mtd, int yaffs_version, int inband_tags)
 {
 	if (yaffs_version == 2) {
