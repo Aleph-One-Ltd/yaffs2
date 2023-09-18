@@ -321,6 +321,35 @@ static int ryfs_rename(
 	return rv;
 }
 
+
+static int ryfs_statvfs(
+	const rtems_filesystem_location_info_t *root_loc,
+    struct statvfs *sb)
+{
+
+    struct yaffs_dev *dev = (struct yaffs_dev *)root_loc->mt_entry->fs_info;   // get our device
+	ylock(dev);
+
+    u32 blocks = (dev->param.end_block - dev->param.start_block + 1) - dev->param.n_reserved_blocks;
+	fsblkcnt_t pages = (fsblkcnt_t)blocks * (fsblkcnt_t)dev->param.chunks_per_block;
+
+    // Report stats - in statbuf a "block" is a nand "page"
+    sb->f_bsize = dev->data_bytes_per_chunk;            // what yaffs thinks the block size is
+    sb->f_frsize = dev->param.total_bytes_per_chunk;    // fundamental block size
+    sb->f_blocks = pages;                               // total number of blocks available
+    sb->f_bfree = yaffs_get_n_free_chunks(dev);         // number of free blocks
+    sb->f_bavail = 0;
+    sb->f_files = 0;
+    sb->f_ffree = 0;
+    sb->f_favail = 0;
+    sb->f_flag = 0;
+    sb->f_namemax = YAFFS_MAX_NAME_LENGTH;
+
+	yunlock(dev);
+    return 0;
+}
+
+
 static ssize_t ryfs_dir_read(rtems_libio_t *iop, void *buffer, size_t count)
 {
 	struct yaffs_obj *obj;
@@ -799,5 +828,5 @@ static const rtems_filesystem_operations_table yaffs_ops = {
 	.symlink_h = ryfs_symlink,
 	.readlink_h = ryfs_readlink,
 	.rename_h = ryfs_rename,
-	.statvfs_h = rtems_filesystem_default_statvfs
+	.statvfs_h = ryfs_statvfs
 };
