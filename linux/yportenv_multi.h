@@ -62,19 +62,19 @@
 #define YAFFS_ROOT_MODE			0755
 #define YAFFS_LOSTNFOUND_MODE		0700
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 5, 0))
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4,12,0))
-#define Y_CURRENT_TIME CURRENT_TIME.tv_sec
-#else
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0,0))
+#define Y_CURRENT_TIME ktime_get_seconds()
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4,12,0))
 #define Y_CURRENT_TIME current_kernel_time().tv_sec
+#else
+#define Y_CURRENT_TIME CURRENT_TIME.tv_sec
 #endif
+
+
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 5, 0))
 #define Y_TIME_CONVERT(x) (x).tv_sec
 #else
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4,12,0))
-#define Y_CURRENT_TIME CURRENT_TIME
-#else
-#define Y_CURRENT_TIME current_kernel_time()
-#endif
 #define Y_TIME_CONVERT(x) (x)
 #endif
 
