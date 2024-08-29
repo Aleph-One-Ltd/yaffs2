@@ -42,7 +42,7 @@ do { \
 #endif
 
 
-void (*ext_fatal)(void) = NULL;
+extern void (*ext_fatal)(void);
 
 static unsigned powerUps;
 static unsigned cycleStarts;
