@@ -21,17 +21,22 @@
 YDI_DIR = ../../
 YDI_FRAMEWORK_DIR = ../
 
-TARGETS = yaffs2_image_maker
+TARGETS =  yaffs2_image_maker
+TARGETS += yaffs2_dumper
 
 all: $(TARGETS)
 
-DIRECTTESTOBJS = $(COMMONTESTOBJS) yaffs2_image_maker.o
+IMAGEMAKEROBJS = $(COMMONTESTOBJS) yaffs2_image_maker.o
+IMAGEDUMPEROBJS = $(COMMONTESTOBJS) yaffs2_dumper.o
 
-ALL_UNSORTED_OBJS += $(DIRECTTESTOBJS)
+ALL_UNSORTED_OBJS += $(IMAGEMAKEROBJS) $(IMAGEDUMPEROBJS)
 
 include ../FrameworkRules.mk
 
+yaffs2_dumper: $(FRAMEWORK_SOURCES) $(IMAGEDUMPEROBJS)
+	gcc -o $@ $(IMAGEDUMPEROBJS) -lpthread
 
-yaffs2_image_maker: $(FRAMEWORK_SOURCES) $(DIRECTTESTOBJS)
-	gcc -o $@ $(DIRECTTESTOBJS) -lpthread
+yaffs2_image_maker: $(FRAMEWORK_SOURCES) $(IMAGEMAKEROBJS)
+	gcc -o $@ $(IMAGEMAKEROBJS) -lpthread
+
 
