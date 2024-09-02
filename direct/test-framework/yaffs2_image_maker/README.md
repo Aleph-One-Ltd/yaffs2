@@ -40,15 +40,10 @@ Note:
 
 The purpose of the dumper is to view or extract files from a Yaffs2 flash image.
 
-Note that the input image file must be large enough to mount which typically means at
-least 8 or so blocks.
-
-You can pad out the file using something like:
+It is suggested t first do a listing by not specifying an output directory.
 
 ```
-dd if=/dev/zero ibs=128k count=10 | LC_ALL=C tr "\000" "\377" >padded_file.bin
-dd if=origin_file.bin of=padded_file.bin conv=notrunc
-./yaffs2_dumper -i padded_file.bin -I -c 2048 -B 64
+./yaffs2_dumper -i rfs.bin -I -c 2048 -B 64
 ```
 Output is something like:
 
@@ -70,6 +65,18 @@ yroot/lost+found/obj296 inode 296 length 2032 mode 4000 directory
 yroot/lost+found/obj296/expand inode 312 length 17 mode A1FF symlink -->"../../bin/busybox"
 yroot/lost+found/obj296/sv inode 313 length 17 mode A1FF symlink -->"../../bin/busybox"
 yroot/lost+found/obj296/man inode 314 length 17 mode A1FF symlink -->"../../bin/busybox"
-
+...
 Free space in yroot is 904240
 ```
+
+
+To actually dump the files you need to specify an output directory.
+
+```
+./yaffs2_dumper -i rfs.bin -o foo -I -c 2048 -N 64
+```
+
+The program will abort if the output directory exists. It is your job to
+clean that up first.
+You're writing to the main file system here, so it is a good idea to first
+do just a listing.

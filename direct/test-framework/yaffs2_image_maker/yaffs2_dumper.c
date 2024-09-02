@@ -7,7 +7,7 @@
  *
  * Note that this utility first generates a "working file" which is
  * a simulation of the NAND from the input image file.
- * 
+ *
  * It then dumps out the files in the image.
  *
  */
@@ -109,17 +109,17 @@ static void calc_n_blocks(char *file_name)
 		invalidate_geometry();
 		return;
 	}
-	
+
 	block_size = chunk_size * chunks_per_block;
-	
+
 	h = open(file_name, O_RDONLY);
 	file_size = lseek(h, 0, SEEK_END);
 	close(h);
 
 	printf("input file %s size is %ld\n", file_name, file_size);
-	
+
 	n_blocks = file_size / block_size;
-	
+
 	if (file_size % block_size)
 		printf("warning: file is not an integer number of blocks!\n");
 	if (n_blocks < 5) {
@@ -128,12 +128,93 @@ static void calc_n_blocks(char *file_name)
 	}
 }
 
+static void handle_file(const char *fname, int fsize)
+{
+	char out_fname[1000];
+	int yh;
+	int oh;
+	uint8_t buffer[2048];
+	int n_to_read;
+	int n_read;
+	//int total = 0;
+
+	printf("data file\n");
+
+	if (!output_dir)
+		return;
+
+	snprintf(out_fname, sizeof(out_fname), "%s/%s",
+		 output_dir, fname);
+
+	printf("Outputting yaffs file %s size %d to file %s\n",
+		fname, fsize, out_fname);
+
+	yh = yaffs_open(fname, O_RDONLY, 0);
+	oh = open(out_fname, O_RDWR | O_CREAT | O_TRUNC, 0666);
+
+	while(fsize > 0) {
+
+		n_to_read = fsize;
+		if (n_to_read > (int)sizeof(buffer))
+			n_to_read = sizeof(buffer);
+
+		n_read = yaffs_read(yh, buffer, n_to_read);
+
+		//total += n_read;
+		//printf("%d bytes read, total %d\n", n_read, total);
+		write(oh, buffer, n_read);
+		fsize -= n_to_read;
+	}
+	yaffs_close(yh);
+	close(oh);
+}
+
+static void handle_directory(const char *dname)
+{
+
+	char out_dname[1000];
+
+	printf("directory\n");
+
+	if (!output_dir)
+		return;
+
+	snprintf(out_dname, sizeof(out_dname), "%s/%s",
+		 output_dir, dname);
+
+	printf("Creating directory %s\n", out_dname);
+	mkdir(out_dname, 0777);
+}
+
+static void handle_symlink(const char *lname)
+{
+	char target_str[1000];
+	char out_lname[1000];
+
+	printf("symlink -->");
+	if(yaffs_readlink(lname, target_str,sizeof(target_str)) < 0) {
+		printf("no alias\n");
+		strcpy(target_str, "unknown_link");
+	} else
+		printf("\"%s\"\n",target_str);
+
+	if (!output_dir)
+		return;
+
+	snprintf(out_lname, sizeof(out_lname), "%s/%s",
+		 output_dir, lname);
+
+	printf("Creating symlink %s\n", out_lname);
+	symlink(target_str, out_lname);
+
+}
+
 void dump_directory_tree_worker(const char *dname,int recursive)
 {
 	yaffs_DIR *d;
 	struct yaffs_dirent *de;
 	struct yaffs_stat s;
-	char str[1000];
+	char fname[1000];
 
 	d = yaffs_opendir(dname);
 
@@ -145,29 +226,21 @@ void dump_directory_tree_worker(const char *dname,int recursive)
 	{
 		while((de = yaffs_readdir(d)) != NULL)
 		{
-			sprintf(str,"%s/%s",dname,de->d_name);
+			sprintf(fname,"%s/%s",dname, de->d_name);
 
-			yaffs_lstat(str,&s);
+			yaffs_lstat(fname, &s);
 
 			printf("%s inode %d length %d mode %X ",
-				str, s.st_ino, (int)s.st_size, s.st_mode);
-			switch(s.st_mode & S_IFMT)
-			{
-				case S_IFREG: printf("data file"); break;
-				case S_IFDIR: printf("directory"); break;
-				case S_IFLNK: printf("symlink -->");
-							  if(yaffs_readlink(str,str,100) < 0)
-								printf("no alias");
-							  else
-								printf("\"%s\"",str);
-							  break;
-				default: printf("unknown"); break;
+				fname, s.st_ino, (int)s.st_size, s.st_mode);
+			switch(s.st_mode & S_IFMT) {
+			case S_IFREG: handle_file(fname, (int)s.st_size); break;
+			case S_IFDIR: handle_directory(fname); break;
+			case S_IFLNK: handle_symlink(fname); break;
+			default: printf("unknown\n"); break;
 			}
 
-			printf("\n");
-
 			if((s.st_mode & S_IFMT) == S_IFDIR && recursive)
-				dump_directory_tree_worker(str,1);
+				dump_directory_tree_worker(fname, 1);
 
 		}
 
@@ -187,7 +260,7 @@ int main(int argc, char *argv[])
 {
 	struct yaffs_dev * dev;
 	int ret;
-	
+
 	(void)ret;
 
 	yaffs_trace_mask = 0;
@@ -199,16 +272,25 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if(output_dir) {
+
+		if (access(output_dir, F_OK) == 0) {
+			printf("Output directory \"%s\" exists... aborting\n",
+				output_dir);
+			exit(1);
+		}
+	}
+
 	if (output_dir)
 		printf("Generating output directory from file %s into directory %s\n",
 			input_file, output_dir);
 	else
-		printf("Generating listing from file %s\n",
+		printf("Generating only a listing from file %s\n",
 			input_file);
-		
+
 	printf("Output file is in %s endian\n",
 		(endian == 'l') ? "little" : "big");
-		
+
 	calc_n_blocks(input_file);
 
 	/*
@@ -222,7 +304,7 @@ int main(int argc, char *argv[])
 		tags_size = sizeof(struct yaffs_packed_tags2);
 
 	record_size = chunk_size + tags_size;
-	
+
 	printf( "Flash geometry is:\n"
 		"    chunk_size........%d\n"
 		"    total page size...%d\n"
@@ -230,7 +312,7 @@ int main(int argc, char *argv[])
 		"    block size........%d\n"
 		"    n blocks..........%d\n"
 		"    inband tags.......%s\n",
-		chunk_size, record_size, chunks_per_block, block_size, 
+		chunk_size, record_size, chunks_per_block, block_size,
 		n_blocks,
 		inband_tags ? "yes" : "no");
 
@@ -250,7 +332,8 @@ int main(int argc, char *argv[])
 				page_spare_size);
 
 	if (!dev) {
-		printf("Failed to create yaffs working file from %s\n", input_file);
+		printf("Failed to create yaffs working file from file %s\n",
+			input_file);
 		exit(1);
 	}
 
@@ -284,10 +367,27 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if(output_dir) {
+		char root_dir_name[1000];
+		int ret;
+
+		sprintf(root_dir_name, "%s/%s", output_dir, "yroot");
+		ret = mkdir(output_dir, 0777);
+		if (ret != 0) {
+			printf("Failed to create directory %s ... aborting\n",
+				output_dir);
+		}
+
+		mkdir(root_dir_name, 0777);
+		if (ret != 0) {
+			printf("Failed to create directory %s ... aborting\n",
+				root_dir_name);
+		}	}
+
 	dump_directory_tree("yroot");
 
 	yaffs_unmount("yroot");
-	
-	
+
+
 	return 0;
 }
