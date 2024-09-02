@@ -242,6 +242,7 @@ int main(int argc, char *argv[])
 	dev = yaffs_flexible_file_sim_create(
 				"yroot",
 				input_file,
+				1,
 				n_blocks,
 				0, n_blocks - 1,
 				chunks_per_block,

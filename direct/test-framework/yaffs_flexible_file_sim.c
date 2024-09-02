@@ -28,6 +28,7 @@
 struct sim_data {
 	char *file_name;
 	int handle;
+	int read_only;
 	uint32_t n_blocks;
 	uint32_t chunks_per_block;
 	uint32_t chunk_size;
@@ -93,17 +94,23 @@ static int yflex_rd_chunk (struct yaffs_dev *dev, int page_id,
 {
 	struct sim_data *sim = dev_to_sim(dev);
 	uint32_t page_start;
+	int nread;
 
 	page_start = page_id * sim->total_chunk_size;
 
 	if(data) {
 		lseek(sim->handle, page_start, SEEK_SET);
-		read(sim->handle, data,data_length);
+		nread = read(sim->handle, data, data_length);
+		if (nread != data_length)
+			memset(data, 0xff, data_length);
+
 	}
 
 	if(spare) {
 		lseek(sim->handle, page_start + sim->chunk_size, SEEK_SET);
-		read(sim->handle, spare,spare_length);
+		nread = read(sim->handle, spare, spare_length);
+		if (nread != spare_length)
+			memset(spare, 0xff, spare_length);
 	}
 
 	if (ecc_result)
@@ -134,12 +141,34 @@ static int yflex_wr_chunk (struct yaffs_dev *dev, int page_id,
 	return YAFFS_OK;
 }
 
+static int yflex_wr_chunk_read_only (struct yaffs_dev *dev, int page_id,
+			     const u8 *data, int data_length,
+			     const u8 *spare, int spare_length)
+{
+
+	(void) dev;
+	(void) page_id;
+	(void) data;
+	(void) data_length;
+	(void) spare;
+	(void) spare_length;
+
+	return YAFFS_FAIL;
+}
 
 static int yflex_erase(struct yaffs_dev *dev, int block_id)
 {
 	struct sim_data *sim = dev_to_sim(dev);
 
 	return yflex_erase_internal(sim, block_id);
+}
+
+static int yflex_erase_read_only(struct yaffs_dev *dev, int block_id)
+{
+	(void) dev;
+	(void) block_id;
+
+	return YAFFS_FAIL;
 }
 
 static int yflex_check_block_bad(struct yaffs_dev *dev, int block_id)
@@ -169,13 +198,14 @@ static int yflex_sim_init(struct sim_data *sim)
 
 	sim->buffer = malloc(sim->total_bytes_per_block);
 
-	h = open(sim->file_name, O_RDWR);
+	h = open(sim->file_name, sim->read_only ? O_RDONLY : O_RDWR);
 	if (h >= 0) {
 		fsize = lseek(h, 0, SEEK_END);
 		lseek(h, 0, SEEK_SET);
 	}
 
-	if (fsize != sim->total_bytes_per_block * sim->n_blocks) {
+	if (!sim->read_only &&
+	    fsize != sim->total_bytes_per_block * sim->n_blocks) {
 		/* Need to create the file. */
 		close(h);
 		unlink(sim->file_name);
@@ -188,6 +218,9 @@ static int yflex_sim_init(struct sim_data *sim)
 		sim->handle = h;
 	}
 
+	if (sim->handle < 0)
+		return YAFFS_FAIL;
+
 	return YAFFS_OK;
 }
 
@@ -195,6 +228,7 @@ static int yflex_sim_init(struct sim_data *sim)
 struct yaffs_dev *yaffs_flexible_file_sim_create(
 				const char *name,
 				const char *sim_file_name,
+				uint32_t read_only,
 				uint32_t n_blocks,
 				uint32_t start_block, uint32_t end_block,
 				uint32_t chunks_per_block,
@@ -220,6 +254,7 @@ struct yaffs_dev *yaffs_flexible_file_sim_create(
 	/* Set up sim */
 	sim->file_name = strdup(sim_file_name);
 	sim->chunks_per_block = chunks_per_block;
+	sim->read_only = read_only;
 	sim->chunk_size = bytes_per_chunk;
 	sim->spare_size = bytes_per_spare;
 	sim->n_blocks = n_blocks;
@@ -252,10 +287,15 @@ struct yaffs_dev *yaffs_flexible_file_sim_create(
 	d->drv_initialise_fn = yflex_initialise;
 	d->drv_deinitialise_fn = yflex_deinitialise;
 	d->drv_read_chunk_fn = yflex_rd_chunk;
-	d->drv_write_chunk_fn = yflex_wr_chunk;
-	d->drv_erase_fn = yflex_erase;
 	d->drv_check_bad_fn = yflex_check_block_bad;
 	d->drv_mark_bad_fn = yflex_mark_block_bad;
+	if (sim->read_only) {
+		d->drv_write_chunk_fn = yflex_wr_chunk_read_only;
+		d->drv_erase_fn = yflex_erase_read_only;
+	} else  {
+		d->drv_write_chunk_fn = yflex_wr_chunk;
+		d->drv_erase_fn = yflex_erase;
+	}
 
 	yaffs_add_device(dev);
 

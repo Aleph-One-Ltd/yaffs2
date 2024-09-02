@@ -25,6 +25,7 @@ struct yaffs_dev;
 struct yaffs_dev *yaffs_flexible_file_sim_create(
 				const char *name,
 				const char *sim_file_name,
+				uint32_t read_only,
 				uint32_t n_blocks,
 				uint32_t start_block, uint32_t end_block,
 				uint32_t chunks_per_block,
