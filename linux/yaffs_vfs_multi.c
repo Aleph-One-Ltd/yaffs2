@@ -1657,19 +1657,18 @@ static int yaffs_rename(struct inode *old_dir, struct dentry *old_dentry,
 					   yaffs_inode_to_obj(new_dir),
 					   new_dentry->d_name.name);
 	}
-	yaffs_gross_unlock(dev);
 
 	if (ret_val == YAFFS_OK) {
 		if (target)
 			inode_dec_link_count(new_dentry->d_inode);
-
+		yaffs_gross_unlock(dev);
 		update_dir_time(old_dir);
 		if (old_dir != new_dir)
 			update_dir_time(new_dir);
 		return 0;
-	} else {
-		return -ENOTEMPTY;
 	}
+	yaffs_gross_unlock(dev);
+	return -ENOTEMPTY;
 }
 
 
