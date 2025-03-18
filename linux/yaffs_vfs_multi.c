@@ -1657,19 +1657,18 @@ static int yaffs_rename(struct inode *old_dir, struct dentry *old_dentry,
 					   yaffs_inode_to_obj(new_dir),
 					   new_dentry->d_name.name);
 	}
-	yaffs_gross_unlock(dev);
 
 	if (ret_val == YAFFS_OK) {
 		if (target)
 			inode_dec_link_count(new_dentry->d_inode);
-
+		yaffs_gross_unlock(dev);
 		update_dir_time(old_dir);
 		if (old_dir != new_dir)
 			update_dir_time(new_dir);
 		return 0;
-	} else {
-		return -ENOTEMPTY;
 	}
+	yaffs_gross_unlock(dev);
+	return -ENOTEMPTY;
 }
 
 
@@ -3723,13 +3722,16 @@ static struct file_system_to_install fs_to_install[] = {
 #ifdef YAFFS_NEW_PROCFS
 static int yaffs_proc_show(struct seq_file *m, void *v)
 {
-	/* FIXME: Unify in a better way? */
-	char buffer[512];
 	char *start;
-	int len;
+	int step, len;
+	char buffer[1024];
 
-	len = yaffs_proc_read(buffer, &start, 0, sizeof(buffer), NULL, NULL);
-	seq_puts(m, buffer);
+	for (step = 0; ; step++) {
+		len = yaffs_proc_read(buffer, &start, step, sizeof(buffer), NULL, NULL);
+		if (len <= 0)
+			break;
+		seq_puts(m, buffer);
+	}
 	return 0;
 }
 
