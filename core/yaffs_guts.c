@@ -1643,6 +1643,7 @@ static struct yaffs_obj *yaffs_alloc_empty_obj(struct yaffs_dev *dev)
 	INIT_LIST_HEAD(&(obj->hard_links));
 	INIT_LIST_HEAD(&(obj->hash_link));
 	INIT_LIST_HEAD(&obj->siblings);
+	INIT_LIST_HEAD(&obj->lnf);
 
 	/* Now make the directory sane */
 	if (dev->root_dir) {
@@ -4159,23 +4160,47 @@ static void yaffs_fix_hanging_objs(struct yaffs_dev *dev)
 /*
  * Delete directory contents for cleaning up lost and found.
  */
-static void yaffs_del_dir_contents(struct yaffs_obj *dir)
+static void yaffs_del_dir_contents(struct yaffs_obj *lnf_dir)
 {
 	struct yaffs_obj *obj;
-	struct list_head *lh;
-	struct list_head *n;
+	struct yaffs_obj *parent_obj;
+	struct list_head *lh, *n;
+	LIST_HEAD(delete_list);
 
-	if (dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
+	if (lnf_dir->variant_type != YAFFS_OBJECT_TYPE_DIRECTORY)
 		BUG();
 
-	list_for_each_safe(lh, n, &dir->variant.dir_variant.children) {
-		obj = list_entry(lh, struct yaffs_obj, siblings);
-		if (obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY)
-			yaffs_del_dir_contents(obj);
-		yaffs_trace(YAFFS_TRACE_SCAN,
-			"Deleting lost_found object %d",
-			obj->obj_id);
-		yaffs_unlink_obj(obj);
+	list_add(&lnf_dir->lnf, &delete_list);
+
+	while (!list_empty(&delete_list)) {
+		parent_obj = list_first_entry(&delete_list, struct yaffs_obj, lnf);
+
+		if (list_empty(&parent_obj->variant.dir_variant.children)) {
+			/* no son obj found, delete itself */
+			list_del(&parent_obj->lnf);
+			if (parent_obj != lnf_dir) {
+				yaffs_trace(YAFFS_TRACE_SCAN,
+					"Deleting lost_found object %d",
+					parent_obj->obj_id);
+				yaffs_unlink_obj(parent_obj);
+			}
+			continue;
+		}
+
+		list_for_each_safe(lh, n, &parent_obj->variant.dir_variant.children) {
+			obj = list_entry(lh, struct yaffs_obj, siblings);
+
+			if (obj->variant_type == YAFFS_OBJECT_TYPE_DIRECTORY) {
+				/* if son obj is dir, add to list then break */
+				list_add(&obj->lnf, &delete_list);
+				break;
+			} else {
+				yaffs_trace(YAFFS_TRACE_SCAN,
+					"Deleting lost_found object %d",
+					obj->obj_id);
+				yaffs_unlink_obj(obj);
+			}
+		}
 	}
 }
 

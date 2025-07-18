@@ -475,6 +475,7 @@ struct yaffs_obj {
 	/* also used for linking up the free list */
 	struct yaffs_obj *parent;
 	struct list_head siblings;
+	struct list_head lnf;
 
 	/* Where's my object header in NAND? */
 	int hdr_chunk;
