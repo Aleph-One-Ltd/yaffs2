@@ -322,4 +322,5 @@ void yaffs_cache_deinit(struct yaffs_dev *dev)
 
 	kfree(mgr->cache);
 	mgr->cache = NULL;
+	mgr->n_caches = 0;
 }
