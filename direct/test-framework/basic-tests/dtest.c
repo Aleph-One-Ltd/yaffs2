@@ -1918,7 +1918,7 @@ void simple_rw_test(const char *mountpt)
 
 void scan_deleted_files_test(const char *mountpt)
 {
-	char fn[100];
+	char fn[150];
 	char sub[100];
 
 	const char *p;
