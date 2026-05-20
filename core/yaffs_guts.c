@@ -159,7 +159,7 @@ u8 *yaffs_get_temp_buffer(struct yaffs_dev * dev)
 	 */
 
 	dev->unmanaged_buffer_allocs++;
-	return kmalloc(dev->data_bytes_per_chunk, GFP_NOFS);
+	return kmalloc(dev->param.total_bytes_per_chunk, GFP_NOFS);
 
 }
 
