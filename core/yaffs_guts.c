@@ -1126,7 +1126,7 @@ int yaffs_put_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 
 	struct yaffs_tnode *tn;
 	struct yaffs_dev *dev = in->my_dev;
-	int existing_cunk;
+	int existing_chunk;
 	struct yaffs_ext_tags existing_tags;
 	struct yaffs_ext_tags new_tags;
 	unsigned existing_serial, new_serial;
@@ -1157,7 +1157,7 @@ int yaffs_put_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 		/* Dummy insert, bail now */
 		return YAFFS_OK;
 
-	existing_cunk = yaffs_get_group_base(dev, tn, inode_chunk);
+	existing_chunk = yaffs_get_group_base(dev, tn, inode_chunk);
 
 	if (in_scan != 0) {
 		/* If we're scanning then we need to test for duplicates
@@ -1171,7 +1171,7 @@ int yaffs_put_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 		 * so this is quite cheap.
 		 */
 
-		if (existing_cunk > 0) {
+		if (existing_chunk > 0) {
 			/* NB Right now existing chunk will not be real
 			 * chunk_id if the chunk group size > 1
 			 * thus we have to do a FindChunkInFile to get the
@@ -1193,12 +1193,12 @@ int yaffs_put_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 							 NULL, &new_tags);
 
 				/* Do a proper find */
-				existing_cunk =
+				existing_chunk =
 				    yaffs_find_chunk_in_file(in, inode_chunk,
 							     &existing_tags);
 			}
 
-			if (existing_cunk <= 0) {
+			if (existing_chunk <= 0) {
 				/*Hoosterman - how did this happen? */
 
 				yaffs_trace(YAFFS_TRACE_ERROR,
@@ -1217,14 +1217,14 @@ int yaffs_put_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 			}
 
 			if ((in_scan > 0) &&
-			    (existing_cunk <= 0 ||
+			    (existing_chunk <= 0 ||
 			     ((existing_serial + 1) & 3) == new_serial)) {
 				/* Forward scanning.
 				 * Use new
 				 * Delete the old one and drop through to
 				 * update the tnode
 				 */
-				yaffs_chunk_del(dev, existing_cunk, 1,
+				yaffs_chunk_del(dev, existing_chunk, 1,
 						__LINE__);
 			} else {
 				/* Backward scanning or we want to use the
@@ -1239,7 +1239,7 @@ int yaffs_put_chunk_in_file(struct yaffs_obj *in, int inode_chunk,
 
 	}
 
-	if (existing_cunk == 0)
+	if (existing_chunk == 0)
 		in->n_data_chunks++;
 
 	yaffs_load_tnode_0(dev, tn, inode_chunk, nand_chunk);
