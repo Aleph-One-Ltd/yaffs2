@@ -12,7 +12,7 @@
  * Note: Only YAFFS headers are LGPL, YAFFS C code is covered by GPL.
  */
 
-#ifndef __test_yaffs__access_ELOOP_dir_h__
+#ifndef __test_yaffs_access_ELOOP_dir_h__
 #define __test_yaffs_access_ELOOP_dir_h__
 #include "lib.h"
 #include "yaffsfs.h"
