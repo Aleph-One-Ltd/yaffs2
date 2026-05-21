@@ -699,7 +699,7 @@ static void yaffs_load_oh_from_name(struct yaffs_dev *dev, YCHAR *oh_name,
 		}
 	} else {
 #else
-	dev = dev;
+	(void) dev; /* dev unused */
 	{
 #endif
 		strncpy(oh_name, name, YAFFS_MAX_NAME_LENGTH - 1);
