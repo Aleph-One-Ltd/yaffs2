@@ -159,10 +159,7 @@ char logfile[1024];
 
 
 void
-vwarnc(code, fmt, ap)
-	int code;
-	const char *fmt;
-	va_list ap;
+vwarnc(int code, const char *fmt, va_list ap)
 {
 	fprintf(stderr, "fsx: ");
 	if (fmt != NULL) {
@@ -605,7 +602,7 @@ dotruncate(unsigned size)
 
 
 void
-writefileimage()
+writefileimage(void)
 {
 	ssize_t iret;
 
