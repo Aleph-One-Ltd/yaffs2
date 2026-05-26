@@ -254,14 +254,16 @@ static void yaffs_handle_chunk_wr_error(struct yaffs_dev *dev, int nand_chunk,
  */
 
 /*
- *  Simple hash function. Needs to have a reasonable spread
+ * Simple hash function. Needs to have a reasonable spread.
+ * This was a %, but now explicitly uses & and expects
+ * YAFFS_NOBJECT_BUCKETS to be a power of 2.
  */
 
 static inline int yaffs_hash_fn(int n)
 {
 	if (n < 0)
 		n = -n;
-	return n % YAFFS_NOBJECT_BUCKETS;
+	return n & (YAFFS_NOBJECT_BUCKETS - 1);
 }
 
 /*
@@ -1677,7 +1679,7 @@ static int yaffs_find_nice_bucket(struct yaffs_dev *dev)
 
 	for (i = 0; i < 10 && lowest > 4; i++) {
 		dev->bucket_finder++;
-		dev->bucket_finder %= YAFFS_NOBJECT_BUCKETS;
+		dev->bucket_finder &= (YAFFS_NOBJECT_BUCKETS - 1);
 		if (dev->obj_bucket[dev->bucket_finder].count < lowest) {
 			lowest = dev->obj_bucket[dev->bucket_finder].count;
 			l = dev->bucket_finder;
