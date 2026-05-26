@@ -10,6 +10,9 @@
  * published by the Free Software Foundation.
  */
 
+/*
+ * These are the  attribute functions for the Linux VFS wrapper.
+ */
 #include "yaffs_guts.h"
 #include "yaffs_attribs.h"
 

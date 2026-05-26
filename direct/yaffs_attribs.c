@@ -10,6 +10,9 @@
  * published by the Free Software Foundation.
  */
 
+/*
+ * These are the attribs functions for Yaffs Direct. Not for Linux VFS.
+ */
 #include "yaffs_attribs.h"
 
 
