@@ -497,7 +497,7 @@ static int yaffs_write_new_chunk(struct yaffs_dev *dev,
 	yaffs2_checkpt_invalidate(dev);
 
 	do {
-		struct yaffs_block_info *bi = 0;
+		struct yaffs_block_info *bi = NULL;
 		int erased_ok = 0;
 
 		chunk = yaffs_alloc_chunk(dev, use_reserver, &bi);
