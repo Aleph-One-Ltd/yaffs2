@@ -98,60 +98,9 @@ void join_paths(char *path1,char *path2,char *new_path ){
 	append_to_buffer(&message_buffer,path1,MESSAGE_LEVEL_BASIC_TASKS,NPRINT);
 	append_to_buffer(&message_buffer, " and ",MESSAGE_LEVEL_BASIC_TASKS,NPRINT);
 	append_to_buffer(&message_buffer, path2,MESSAGE_LEVEL_BASIC_TASKS,PRINT);
-	if ( (path1[(sizeof(path1)/sizeof(char))-2]=='/') && path2[0]!='/') {
-		/*paths are compatiable. concatanate them. note -2 is because of \0*/  
-		strcat(new_path,path1);
-		strcat(new_path,path2);		
-		//char new_path[(sizeof(path1)/sizeof(char))+(sizeof(path2)/sizeof(char))];
-		//strcpy(new_path,strcat(path1,path2)); 
-		//return new_path;
-	}	
-	else if ((path1[(sizeof(path1)/sizeof(char))-2]!='/') && path2[0]=='/') {
-		/*paths are compatiable. concatanate them*/  
-		strcat(new_path,path1);
-		strcat(new_path,path2);		
-		//char new_path[(sizeof(path1)/sizeof(char))+(sizeof(path2)/sizeof(char))];
-		//strcpy(new_path,strcat(path1,path2)); 
-		//return new_path;
-	}
-	else if ((path1[(sizeof(path1)/sizeof(char))-2]!='/') && path2[0]!='/') {
-			/*need to add a "/". */  
-		strcat(new_path,path1);
-		strcat(new_path,"/");
-		strcat(new_path,path2);
-		//strcpy(new_path,strcat(path1,strcat("/\0",path2)));
-
-#if 0
-		copy_array(path1,new_path,0,0);
-		copy_array('\0',new_path,0,(sizeof(path1)/sizeof(char)));
-		copy_array(path2,new_path,0,(sizeof(path1)/sizeof(char))+1);
- old method now trying to use copy_array
-		//char new_path[(sizeof(path1)/sizeof(char))+(sizeof(path2)/sizeof(char))+1];
-		for (x=0;x<=(sizeof(path1)/sizeof(char))-1;x++){ 
-			new_path[x]=path1[x];
-		}
-		new_path[x+1]='/';
-		for (x=(sizeof(path1)/sizeof(char)) ,i=0 ;i<=(sizeof(path2)/sizeof(char));x++,i++){ 
-			new_path[x]=path2[i]; 
-		}
-#endif
-
-		//return new_path;
-	}
-	else if ((path1[(sizeof(path1)/sizeof(char))-2]=='/') && path2[0]=='/') {
-		/*need to remove a "/". */
-		/*yaffs does not mind the extra slash. */
-		//char new_path[(sizeof(path1)/sizeof(char))+(sizeof(path2)/sizeof(char))-1];
-		
-		strcat(new_path,path1);
-		strcat(new_path,path2);
-		//strcpy(new_path,strcat(path1,strncat("",path2,(sizeof(path1)/sizeof(char))-1))); 
-		//return new_path;
-	} 
-	else{
-		//error 
-		//return -1;
-	}
+	strcpy(new_path, path1);
+	strcat(new_path,"/");
+	strcat(new_path,path2);
 }
 
 void open_random_file(char *yaffs_test_dir, handle_regster *P_open_handles_array){
@@ -357,22 +306,15 @@ void test(char*yaffs_test_dir){
 }
 void  generate_random_string(char *ptr,int length_of_str){
 	unsigned int x;
-	unsigned int length=((rand() %length_of_str)+1);	/*creates a int with the number of charecters been between 1 and 51*/ 		
-	char letter='\0';
+	unsigned int length=((rand() % length_of_str) + 1);
+	const char selection_list[] = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 	//printf("generating string\n");
 	//printf("string length is %d\n",length);
-	for (x=0; x <= (length-2) &&length>2 ; x++)
+	for (x=0; x < length ; x++)
 	{
-		//printf("x=%d\n",x);	
-		/* keep generating a charecter until the charecter is legal*/
-		while((letter=='\0' )||(letter=='/')||(letter=='\\')){
-			letter=(rand() % 126-32)+32;	/*generate a number between 32 and 126 and uses it as a charecter (letter) */
-		}	
-		ptr[x]=letter;
-		//printf("charecter generated is %c\n",ptr[x]);
+		ptr[x]= selection_list[rand() % sizeof(selection_list)];
 	}
-	ptr[x+1]='\0';	/*adds NULL charecter to turn it into a string*/
-	
+	ptr[length]='\0';
 }
 

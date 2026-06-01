@@ -53,7 +53,6 @@
 #define FILE_PATH "/yflash2/test_dir/foo"
 #define FILE_PATH2 "/yflash2/test_dir/foo2"
 
-void join_paths(char *path1,char *path2,char *new_path );
 void print_message(char *message,char print_level);
 void set_print_level(int new_level);
 void set_exit_on_error(int num);
