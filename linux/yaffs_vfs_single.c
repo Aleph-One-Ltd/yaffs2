@@ -368,10 +368,11 @@ static struct dentry *yaffs_lookup(struct inode *dir, struct dentry *dentry,
 {
 	struct yaffs_obj *obj;
 	struct inode *inode = NULL;
+	int obj_id = 0;
+
 	struct yaffs_dev *dev = yaffs_inode_to_obj(dir)->my_dev;
 
-	if (current != yaffs_dev_to_lc(dev)->readdir_process)
-		yaffs_gross_lock(dev);
+    yaffs_gross_lock(dev);
 
 	yaffs_trace(YAFFS_TRACE_OS,
 		"yaffs_lookup for %d:%s",
@@ -381,23 +382,24 @@ static struct dentry *yaffs_lookup(struct inode *dir, struct dentry *dentry,
 
 	obj = yaffs_get_equivalent_obj(obj);	/* in case it was a hardlink */
 
-	/* Can't hold gross lock when calling yaffs_get_inode() */
-	if (current != yaffs_dev_to_lc(dev)->readdir_process)
-		yaffs_gross_unlock(dev);
+   /* Save obj_id before releasing lock: obj pointer may become stale
+    * after gross_lock is dropped if a concurrent GC or delete frees it
+    * while obj->my_inode is still NULL.
+    */
 
-	if (obj) {
+	if (obj)
+		obj_id = obj->obj_id;
+
+	/* Can't hold gross lock when calling Y_IGET() */
+	yaffs_gross_unlock(dev);
+
+	if (obj_id) {
 		yaffs_trace(YAFFS_TRACE_OS,
-			"yaffs_lookup found %d", obj->obj_id);
+			"yaffs_lookup found %d", obj_id);
 
-		inode = yaffs_get_inode(dir->i_sb, obj->yst_mode, 0, obj);
-
-		if (inode) {
-			yaffs_trace(YAFFS_TRACE_OS, "yaffs_loookup dentry");
-			d_add(dentry, inode);
-			/* return dentry; */
-			return NULL;
-		}
-
+		inode = Y_IGET(dir->i_sb, obj_id);
+		if (IS_ERR(inode))
+			inode = NULL;
 	} else {
 		yaffs_trace(YAFFS_TRACE_OS, "yaffs_lookup not found");
 
@@ -491,7 +493,7 @@ static int yaffs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	}
 
 	if (ret_val == YAFFS_OK) {
-		if (target)
+		if (target && new_dentry->d_inode)
 			inode_dec_link_count(new_dentry->d_inode);
 		yaffs_gross_unlock(dev);
 		update_dir_time(old_dir);
