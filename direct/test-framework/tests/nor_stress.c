@@ -437,6 +437,7 @@ void NorStressTestInitialise(const char *prefix)
 void NorStressTestRun(const char *prefix, int n_cycles, int do_fsx, int skip_verification)
 {
 
+  printf("Starting NorStressTestRun %s %d %d %d\n", prefix, n_cycles, do_fsx, skip_verification);
   interleave_fsx = do_fsx;
   no_verification = skip_verification;
 
