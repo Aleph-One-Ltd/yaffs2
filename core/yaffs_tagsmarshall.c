@@ -37,6 +37,7 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 	/* For yaffs2 writing there must be both data and tags.
 	 * If we're using inband tags, then the tags are stuffed into
 	 * the end of the data buffer.
+	 * Inband tags uses the encryption layer.
 	 */
 	if (!data || !tags)
 		BUG();
@@ -47,14 +48,18 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 							dev->
 							data_bytes_per_chunk);
 		yaffs_pack_tags2_tags_only(dev, pt2tp, tags);
+
+		retval = dev->enc.enc_write_chunk_fn(dev, nand_chunk,
+			data, dev->param.total_bytes_per_chunk,
+			NULL, 0);
 	} else {
 		yaffs_pack_tags2(dev, &pt, tags, !dev->param.no_tags_ecc);
-	}
 
-	retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
+
+		retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
 			data, dev->param.total_bytes_per_chunk,
-			(dev->param.inband_tags) ? NULL : packed_tags_ptr,
-			(dev->param.inband_tags) ? 0 : packed_tags_size);
+			packed_tags_ptr, packed_tags_size);
+	}
 
 	return retval;
 }
@@ -86,7 +91,12 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 		}
 	}
 
-	if (dev->param.inband_tags || (data && !tags))
+	if (dev->param.inband_tags)
+		retval = dev->enc.enc_read_chunk_fn(dev, nand_chunk,
+					data, dev->param.total_bytes_per_chunk,
+					NULL, 0,
+					&ecc_result);
+	else if (data && !tags)
 		retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 					data, dev->param.total_bytes_per_chunk,
 					NULL, 0,

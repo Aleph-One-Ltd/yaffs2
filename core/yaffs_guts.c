@@ -17,6 +17,7 @@
 
 #include "yaffs_cache.h"
 #include "yaffs_endian.h"
+#include "yaffs_encryption.h"
 #include "yaffs_getblockinfo.h"
 #include "yaffs_tagscompat.h"
 #include "yaffs_tagsmarshall.h"
@@ -4529,11 +4530,15 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 		return YAFFS_FAIL;
 	}
 
+	/* Sort out encryption layer, if need be. */
+	yaffs_encryption_init(dev);
+
 	/* Sort out space for inband tags, if required */
 	if (dev->param.inband_tags)
 		dev->data_bytes_per_chunk =
 		    dev->param.total_bytes_per_chunk -
-		    sizeof(struct yaffs_packed_tags2_tags_only);
+		    sizeof(struct yaffs_packed_tags2_tags_only) -
+		    dev->enc.enc_reserved_bytes;
 	else
 		dev->data_bytes_per_chunk = dev->param.total_bytes_per_chunk;
 

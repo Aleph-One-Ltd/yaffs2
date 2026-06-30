@@ -31,6 +31,7 @@ CFLAGS +=    -Wextra -Wpointer-arith
 CLEAN_OBJS += emfile-2k-0 emfile-nand emfile-nand128MB
 
 COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o yaffs_error.o\
+		 yaffs_encrypt_mbedtls.o\
 		 yaffs_ecc.o yaffs_fileem.o yaffs_fileem2k.o yaffsfs.o yaffs_guts.o \
 		 yaffs_flexible_file_sim.o \
 		 yaffs_packedtags1.o yaffs_ramdisk.o yaffs_ramem2k.o \
@@ -39,6 +40,7 @@ COMMONTESTOBJS = yaffscfg2k.o yaffs_osglue.o yaffs_hweight.o yaffs_error.o\
 		 yaffs_cache.o \
 		 yaffs_checkptrw.o  \
 		 yaffs_endian.o \
+		 yaffs_encryption.o \
 		 yaffs_nameval.o yaffs_attribs.o \
 		 yaffs_m18_drv.o  yaffs_nor_drv.o ynorsim.o \
 		 yaffs_nand_drv.o \
@@ -65,6 +67,7 @@ YAFFSDIRECTSYMLINKS =  \
           yportenv.h \
           yaffs_hweight.c yaffs_hweight.h \
           yaffs_endian.c yaffs_endian.h \
+          yaffs_encryption.c yaffs_encryption.h \
 	  yaffs_error.c \
           yaffs_ecc.c yaffs_ecc.h yaffs_guts.c yaffs_guts.h \
           yaffs_tagscompat.c yaffs_tagscompat.h \
@@ -93,7 +96,8 @@ FRAMEWORKEXTRASYMLINKS = \
 		nand_chip.h nanddrv.c nanddrv.h nandsim.c nandsim.h nand_store.h \
 		nandsim_file.c nandsim_file.h nandstore_file.c nandstore_file.h \
 		yaffs_nandsim_file.c yaffs_nandsim_file.h \
-		ynorsim.h ynorsim.c yaffs_osglue.c
+		ynorsim.h ynorsim.c yaffs_osglue.c \
+		yaffs_encrypt_mbedtls.c yaffs_encrypt_mbedtls.h
 
 FRAMEWORK_SOURCES = $(YAFFSDIRECTSYMLINKS) $(FRAMEWORKEXTRASYMLINKS)
 

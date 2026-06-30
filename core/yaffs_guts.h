@@ -631,6 +631,20 @@ struct yaffs_driver {
 	int (*drv_deinitialise_fn) (struct yaffs_dev *dev);
 };
 
+struct yaffs_encryptor {
+	int (*enc_write_chunk_fn) (struct yaffs_dev *dev, int nand_chunk,
+				   const u8 *data, int data_len,
+				   const u8 *oob, int oob_len);
+	int (*enc_read_chunk_fn) (struct yaffs_dev *dev, int nand_chunk,
+				   u8 *data, int data_len,
+				   u8 *oob, int oob_len,
+				   enum yaffs_ecc_result *ecc_result);
+	int (*enc_initialise_fn) (struct yaffs_dev *dev);
+	int (*enc_deinitialise_fn) (struct yaffs_dev *dev);
+	int enc_reserved_bytes;
+	const char *enc_name;
+};
+
 struct yaffs_tags_handler {
 	int (*write_chunk_tags_fn) (struct yaffs_dev *dev,
 				    int nand_chunk, const u8 *data,
@@ -648,12 +662,20 @@ struct yaffs_tags_handler {
 struct yaffs_dev {
 	struct yaffs_param param;
 	struct yaffs_driver drv;
+	struct yaffs_encryptor enc;
 	struct yaffs_tags_handler tagger;
 
-	/* Context storage. Holds extra OS specific data for this device */
+	/*
+	 * Private context storage.
+	 * Holds extra specific data for this device.
+	 * This is done like this because different OSs, entryptors and drivers
+	 * need different private implementation specific information.
+	 * The implementation casts the void * to whatever is needed.
+	 */
 
 	void *os_context;
 	void *driver_context;
+	void *encryption_context;
 
 	struct list_head dev_list;
 
