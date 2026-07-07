@@ -15,8 +15,9 @@
 #ifndef __Y_ENCTRYPT_MBEDTLS_H__
 #define __Y_ENCTRYPT_MBEDTLS_H__
 
-struct yaffs_dev;
+#include "yaffs_guts.h"
 
-int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev);
+int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev, const u8 *key,
+				  int key_size_bytes);
 
 #endif

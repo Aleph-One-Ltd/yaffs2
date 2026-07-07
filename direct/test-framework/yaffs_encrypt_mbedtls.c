@@ -55,20 +55,158 @@
  * +-------------------------------------------+
  */
 
+ /*
+  * This is the local context information - private to the functions
+  * in this file and stores the implementation-specific context information.
+  *
+  * mbedTLS AES is used for the encryption and decryption.
+  * mbedTLS is used ONLY to initialise the IV, could use other mechanisms too.
+  */
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/aes.h"
+
+#define IV_SIZE_BYTES	(16)
+#define KEY_SIZE_BYTES	(16)
+#define KEY_SIZE_BITS	(KEY_SIZE_BYTES * 8)
+#define ENCRYPTOR_NAME  "yaffs mbedtls encryptor"
+
+struct yaffs_enc_context {
+	u8 iv[IV_SIZE_BYTES];
+	u8 key[KEY_SIZE_BYTES];
+	mbedtls_aes_context aes;
+	u8 *encrypted_buffer;
+	int initialised;
+};
+
+/*
+ * Macro to re-cast the void pointer back to the the local context type.
+ */
+#define dev_to_context(dev) \
+	(struct yaffs_enc_context *)((dev)->encryption_context)
+
+static int yaffs_encrypt_mbedtls_write_chunk(
+				   struct yaffs_dev *dev, int nand_chunk,
+				   const u8 *data, int data_len,
+				   const u8 *oob, int oob_len)
+{
+	return dev->drv.drv_write_chunk_fn(dev, nand_chunk,
+					   data, data_len,
+					   oob, oob_len);
+}
+
+static int yaffs_encrypt_mbedtls_read_chunk(
+				   struct yaffs_dev *dev, int nand_chunk,
+				   u8 *data, int data_len,
+				   u8 *oob, int oob_len,
+				   enum yaffs_ecc_result *ecc_result)
+{
+	return dev->drv.drv_read_chunk_fn(dev, nand_chunk,
+					  data, data_len,
+					  oob, oob_len,
+					  ecc_result);
+}
+
+/*
+ *
+ * Just use mbedtls to randomise the IV. Could use other functions too.
+ */
+static void randomise_iv(u8 *iv, int iv_size)
+{
+	int ret;
+	/*
+	 * The entropy and ctr_drbg are just used for providing random
+	 * data for the initial IV data.
+	 */
+
+	mbedtls_entropy_context entropy;
+	mbedtls_ctr_drbg_context ctr_drbg;
+
+	mbedtls_entropy_init(&entropy);
+	mbedtls_ctr_drbg_init(&ctr_drbg);
+        mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
+				(const unsigned char *) "RANDOM JUNK", 12);
+	ret = mbedtls_ctr_drbg_random(&ctr_drbg, iv, iv_size);
+	if (ret != 0)
+		printf("random function returned %d\n", ret);
+
+        mbedtls_entropy_free(&entropy);
+        mbedtls_ctr_drbg_free(&ctr_drbg);
+}
+
+/*
+ * Initialise the context and randomise the IV.
+ */
+static int yaffs_encrypt_mbedtls_init(struct yaffs_dev *dev)
+{
+	struct yaffs_enc_context *context = dev_to_context(dev);
+	u8 *buffer = kmalloc(dev->param.total_bytes_per_chunk, 0);
+
+	if (!buffer)
+		return 0;
+
+	context->encrypted_buffer = buffer;
+	mbedtls_aes_init(&context->aes);
+	randomise_iv(context->iv, IV_SIZE_BYTES);
+	context->initialised = 1;
+
+	return 0;
+}
+
+/*
+ *  Free the context.
+ */
+static int yaffs_encrypt_mbedtls_deinit(struct yaffs_dev *dev)
+{
+	struct yaffs_enc_context *context = dev_to_context(dev);
+
+	if (!context->initialised)
+		return -1;
+
+	mbedtls_aes_free(&context->aes);
+	kfree(context->encrypted_buffer);
+	context->encrypted_buffer = NULL;
+	context->initialised = 0;
+
+	return 0;
+}
+
 /*
  * The installer function just installs the various field: handler functions and
  * some values the rest of Yaffs needs to know about and a name (just for
  * debugging purposes).
  */
-int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev)
+int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev, const u8 *key,
+				  int key_size_bytes)
 {
-	struct yaffs_encryptor *enc = &dev->enc;
+	struct yaffs_enc_context *new_context;
+	struct yaffs_encryptor *enc;
 
-	enc->enc_initialise_fn = NULL;
-	enc->enc_deinitialise_fn = NULL;
-	enc->enc_read_chunk_fn = NULL;
-	enc->enc_write_chunk_fn = NULL;
-	enc->enc_reserved_bytes = 0;
-	enc->enc_name = "yaffs mbedtls encryptor";
+	/*
+	 * Set up the encryption context.
+	 * At this stage we will set up an empty context and just load the key.
+	 * The rest of the context will be set up during the initialisation.
+	 */
+
+	new_context = malloc(sizeof(struct yaffs_enc_context));
+	memset(new_context, 0, sizeof(struct yaffs_enc_context));
+
+	if (key_size_bytes > KEY_SIZE_BYTES)
+		key_size_bytes = KEY_SIZE_BYTES;
+
+	memcpy(new_context->key, key, key_size_bytes);
+
+	dev->encryption_context = new_context;
+
+	/*
+	 * Set up the encryptor interface.
+	 */
+	enc = &dev->enc;
+	enc->enc_initialise_fn = yaffs_encrypt_mbedtls_init;
+	enc->enc_deinitialise_fn = yaffs_encrypt_mbedtls_deinit;
+	enc->enc_read_chunk_fn = yaffs_encrypt_mbedtls_read_chunk;
+	enc->enc_write_chunk_fn = yaffs_encrypt_mbedtls_write_chunk;
+	enc->enc_reserved_bytes =IV_SIZE_BYTES;
+	enc->enc_name = ENCRYPTOR_NAME;
 	return 0;
 }

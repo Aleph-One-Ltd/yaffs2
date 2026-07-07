@@ -4,7 +4,7 @@ set -x
 
 iterations=100000
 n_procs=$(nproc)
-instances=$((n_procs / 4))
+instances=$((n_procs / 5))
 
 [ -z $1 ]  || iterations=$1
 [ -z $2 ]  || instances=$2
@@ -28,5 +28,6 @@ do
   xterm  -e "$LAUNCHDIR/manage_nor_test.sh  $i $iterations"&
   xterm  -e "$LAUNCHDIR/manage_m18_test.sh  $i $iterations"&
   xterm  -e "$LAUNCHDIR/manage_nand_test.sh $i $iterations"&
+  xterm  -e "$LAUNCHDIR/manage_nand_encrypted_test.sh $i $iterations"&
 done
 

@@ -50,6 +50,10 @@ unsigned yaffs_trace_mask =
 #include "yaffs_nor_drv.h"
 #include "yaffs_nand_drv.h"
 
+
+u8 key[16] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+	       0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
 int yaffs_start_up(void)
 {
 	struct yaffs_dev *dev;
@@ -63,13 +67,23 @@ int yaffs_start_up(void)
 	/* Call the OS initialisation (eg. set up lock semaphore */
 	yaffsfs_OSInitialisation();
 
-	/* Install the various devices and their device drivers */
+	/* Install the various devices and their device drivers.
+	 * If they do not have encryption, then the default encryption layer
+	 * (no encryption) is used.
+	 */
 	yflash2_install_drv("yflash2");
 	yaffs_m18_install_drv("M18-1");
 	yaffs_nor_install_drv("nor");
-	dev = yaffs_nandsim_install_drv("nand", "emfile-nand", 256, 4, 1);
-	yaffs_encrypt_mbedtls_install(dev);
-	dev = yaffs_nandsim_install_drv("nand128MB", "emfile-nand128MB", 1024, 4, 1);
+	yaffs_nandsim_install_drv("nand", "emfile-nand", 256, 4, 1);
+	/*
+	 * Set up nand_enc as an encrypted partition by installing the
+	 * encryption layer after creating the dev.
+	 */
+
+	dev = yaffs_nandsim_install_drv("nand_enc", "emfile-nand_enc", 256, 4, 1);
+	yaffs_encrypt_mbedtls_install(dev, key, 16);
+
+	//yaffs_nandsim_install_drv("nand128MB", "emfile-nand128MB", 1024, 4, 1);
 	return 0;
 }
 
