@@ -3974,13 +3974,14 @@ int yaffs_rename_obj(struct yaffs_obj *old_dir, const YCHAR *old_name,
 			 *
 			 */
 			dev->gc_disable = 1;
-			yaffs_change_obj_name(obj, new_dir, new_name, force,
+			result = yaffs_change_obj_name(obj, new_dir, new_name, force,
 					      existing_target->obj_id);
+			if (result != YAFFS_OK)
+				return YAFFS_FAIL;
+			dev->gc_disable = 0;
 			existing_target->is_shadowed = 1;
 			yaffs_unlink_obj(existing_target);
-			dev->gc_disable = 0;
 		}
-
 		result = yaffs_change_obj_name(obj, new_dir, new_name, 1, 0);
 
 		yaffs_update_parent(old_dir);
