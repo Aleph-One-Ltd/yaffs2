@@ -657,6 +657,7 @@ struct yaffs_tags_handler {
 			       enum yaffs_block_state *state,
 			       u32 *seq_number);
 	int (*mark_bad_fn) (struct yaffs_dev *dev, int block_no);
+	int tagger_reserved_bytes;
 };
 
 struct yaffs_dev {
@@ -682,6 +683,7 @@ struct yaffs_dev {
 	int ll_init;
 	/* Runtime parameters. Set up by YAFFS. */
 	u32 data_bytes_per_chunk;
+	u32 payload_bytes_per_chunk;
 
 	/* Non-wide tnode stuff */
 	u16 chunk_grp_bits;	/* Number of bits that need to be resolved if

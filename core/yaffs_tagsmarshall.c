@@ -44,20 +44,20 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 	else if (dev->param.inband_tags) {
 		struct yaffs_packed_tags2_tags_only *pt2tp;
 		pt2tp =
-		    (struct yaffs_packed_tags2_tags_only *)(data +
-							dev->
-							data_bytes_per_chunk);
+		    (struct yaffs_packed_tags2_tags_only *)
+				(data + dev->data_bytes_per_chunk);
+
 		yaffs_pack_tags2_tags_only(dev, pt2tp, tags);
 
 		retval = dev->enc.enc_write_chunk_fn(dev, nand_chunk,
-			data, dev->param.total_bytes_per_chunk,
+			data, dev->payload_bytes_per_chunk,
 			NULL, 0);
 	} else {
 		yaffs_pack_tags2(dev, &pt, tags, !dev->param.no_tags_ecc);
 
 
 		retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
-			data, dev->param.total_bytes_per_chunk,
+			data, dev->payload_bytes_per_chunk,
 			packed_tags_ptr, packed_tags_size);
 	}
 
@@ -93,17 +93,17 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 
 	if (dev->param.inband_tags)
 		retval = dev->enc.enc_read_chunk_fn(dev, nand_chunk,
-					data, dev->param.total_bytes_per_chunk,
+					data, dev->payload_bytes_per_chunk,
 					NULL, 0,
 					&ecc_result);
 	else if (data && !tags)
 		retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
-					data, dev->param.total_bytes_per_chunk,
+					data, dev->payload_bytes_per_chunk,
 					NULL, 0,
 					&ecc_result);
 	else if (tags)
 		retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
-					data, dev->param.total_bytes_per_chunk,
+					data, dev->payload_bytes_per_chunk,
 					spare_buffer, packed_tags_size,
 					&ecc_result);
 	else
@@ -192,7 +192,6 @@ static int yaffs_tags_marshall_query_block(struct yaffs_dev *dev, int block_no,
 static int yaffs_tags_marshall_mark_bad(struct yaffs_dev *dev, int block_no)
 {
 	return dev->drv.drv_mark_bad_fn(dev, block_no);
-
 }
 
 
@@ -201,16 +200,13 @@ void yaffs_tags_marshall_install(struct yaffs_dev *dev)
 	if (!dev->param.is_yaffs2)
 		return;
 
-	if (!dev->tagger.write_chunk_tags_fn)
+	if (!dev->tagger.write_chunk_tags_fn) {
 		dev->tagger.write_chunk_tags_fn = yaffs_tags_marshall_write;
-
-	if (!dev->tagger.read_chunk_tags_fn)
 		dev->tagger.read_chunk_tags_fn = yaffs_tags_marshall_read;
-
-	if (!dev->tagger.query_block_fn)
 		dev->tagger.query_block_fn = yaffs_tags_marshall_query_block;
-
-	if (!dev->tagger.mark_bad_fn)
 		dev->tagger.mark_bad_fn = yaffs_tags_marshall_mark_bad;
+		dev->tagger.tagger_reserved_bytes =
+			sizeof(struct yaffs_packed_tags2_tags_only);
+	}
 
 }

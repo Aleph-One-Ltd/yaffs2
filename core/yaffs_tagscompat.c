@@ -388,12 +388,11 @@ void yaffs_tags_compat_install(struct yaffs_dev *dev)
 {
 	if(dev->param.is_yaffs2)
 		return;
-	if(!dev->tagger.write_chunk_tags_fn)
+	if(!dev->tagger.write_chunk_tags_fn) {
 		dev->tagger.write_chunk_tags_fn = yaffs_tags_compat_wr;
-	if(!dev->tagger.read_chunk_tags_fn)
 		dev->tagger.read_chunk_tags_fn = yaffs_tags_compat_rd;
-	if(!dev->tagger.query_block_fn)
 		dev->tagger.query_block_fn = yaffs_tags_compat_query_block;
-	if(!dev->tagger.mark_bad_fn)
 		dev->tagger.mark_bad_fn = yaffs_tags_compat_mark_bad;
+		dev->tagger.tagger_reserved_bytes = 0;
+	}
 }

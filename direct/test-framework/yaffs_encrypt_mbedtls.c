@@ -90,9 +90,32 @@ static int yaffs_encrypt_mbedtls_write_chunk(
 				   const u8 *data, int data_len,
 				   const u8 *oob, int oob_len)
 {
+	struct yaffs_enc_context *context = dev_to_context(dev);
+	int eret;
+
+	/*
+	 * We use the first byte of the stored IV to determine if the chunk is empty.
+	 * Force it to a non-FF value.
+	 */
+	context->iv[0] &= 0x55;
+
+	memcpy(&context->encrypted_buffer[data_len], context->iv, IV_SIZE_BYTES);
+
+#if JUST_COPY
+	(void) eret;
+	memcpy(context->encrypted_buffer, data, data_len);
+#else
+	mbedtls_aes_setkey_enc(&context->aes, context->key, 128);
+	eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_ENCRYPT,
+				    data_len, context->iv,
+				    data, context->encrypted_buffer);
+	if (eret)
+		printf("encryption eret = %d\n", eret);
+#endif
+
 	return dev->drv.drv_write_chunk_fn(dev, nand_chunk,
-					   data, data_len,
-					   oob, oob_len);
+		context->encrypted_buffer, dev->param.total_bytes_per_chunk,
+		oob, oob_len);
 }
 
 static int yaffs_encrypt_mbedtls_read_chunk(
@@ -101,10 +124,47 @@ static int yaffs_encrypt_mbedtls_read_chunk(
 				   u8 *oob, int oob_len,
 				   enum yaffs_ecc_result *ecc_result)
 {
-	return dev->drv.drv_read_chunk_fn(dev, nand_chunk,
-					  data, data_len,
-					  oob, oob_len,
-					  ecc_result);
+	struct yaffs_enc_context *context = dev_to_context(dev);
+	int ret;
+	int eret;
+	u8 *decrypt_iv;
+
+	ret =  dev->drv.drv_read_chunk_fn(dev, nand_chunk,
+		context->encrypted_buffer, dev->param.total_bytes_per_chunk,
+		oob, oob_len,
+		ecc_result);
+	/*
+	 * Now we need to check if the chunk was empty. We can do that by
+	 * checking the read-back IV is not 0xff.
+	 */
+	decrypt_iv = &context->encrypted_buffer[data_len];
+
+	if (decrypt_iv[0] == 0xff) {
+		/*
+		 * The first byte of the IV area is FF, so the page is unwritten.
+		 * Write FF to the output buffer.
+		 */
+
+		memset(data, 0xff, data_len);
+
+	} else {
+		/*
+		 * Decrypt into the data buffer.
+		 */
+
+#if JUST_COPY
+		(void) eret;
+		memcpy(data, context->encrypted_buffer, data_len);
+#else
+		mbedtls_aes_setkey_dec(&context->aes, context->key, 128);
+		eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_DECRYPT,
+				    data_len, decrypt_iv,
+				    context->encrypted_buffer, data);
+	if (eret)
+		printf("decryption eret = %d\n", eret);
+#endif
+	}
+	return ret;
 }
 
 /*
@@ -140,7 +200,9 @@ static void randomise_iv(u8 *iv, int iv_size)
 static int yaffs_encrypt_mbedtls_init(struct yaffs_dev *dev)
 {
 	struct yaffs_enc_context *context = dev_to_context(dev);
-	u8 *buffer = kmalloc(dev->param.total_bytes_per_chunk, 0);
+	u8 *buffer;
+
+	buffer = kmalloc(dev->param.total_bytes_per_chunk, 0);
 
 	if (!buffer)
 		return 0;

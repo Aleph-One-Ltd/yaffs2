@@ -4424,10 +4424,6 @@ static int yaffs_check_dev_fns(struct yaffs_dev *dev)
 	     (!drv->drv_mark_bad_fn  || !drv->drv_check_bad_fn))
 		return 0;
 
-	/* Install the default tags marshalling functions if needed. */
-	yaffs_tags_compat_install(dev);
-	yaffs_tags_marshall_install(dev);
-
 	/* Check we now have the marshalling functions required. */
 	if (!tagger->write_chunk_tags_fn ||
 	    !tagger->read_chunk_tags_fn ||
@@ -4530,17 +4526,24 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 		return YAFFS_FAIL;
 	}
 
+	/* Install the default tags marshalling functions if needed. */
+	yaffs_tags_compat_install(dev);
+	yaffs_tags_marshall_install(dev);
+
 	/* Sort out encryption layer, if need be. */
 	yaffs_encryption_init(dev);
 
-	/* Sort out space for inband tags, if required */
-	if (dev->param.inband_tags)
-		dev->data_bytes_per_chunk =
-		    dev->param.total_bytes_per_chunk -
-		    sizeof(struct yaffs_packed_tags2_tags_only) -
-		    dev->enc.enc_reserved_bytes;
-	else
-		dev->data_bytes_per_chunk = dev->param.total_bytes_per_chunk;
+	/* Sort out space for inband tags and encryption, if required */
+
+	dev->data_bytes_per_chunk =
+		dev->param.total_bytes_per_chunk -
+		dev->tagger.tagger_reserved_bytes -
+		dev->enc.enc_reserved_bytes;
+
+	dev->payload_bytes_per_chunk =
+		dev->data_bytes_per_chunk +
+		dev->tagger.tagger_reserved_bytes;
+
 
 	/* Got the right mix of functions? */
 	if (!yaffs_check_dev_fns(dev)) {
