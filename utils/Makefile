@@ -45,7 +45,7 @@ ALL_LINKS = $(BASE_LINKS) $(DIRECT_LINKS)
 all: mkyaffsimage mkyaffs2image
 
 $(BASE_LINKS):
-	ln -s ../$@ $@
+	ln -s ../core/$@ $@
 
 $(DIRECT_LINKS):
 	ln -s ../direct/$@ $@
