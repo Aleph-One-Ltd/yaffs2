@@ -69,7 +69,12 @@
 #define IV_SIZE_BYTES	(16)
 #define KEY_SIZE_BYTES	(16)
 #define KEY_SIZE_BITS	(KEY_SIZE_BYTES * 8)
-#define ENCRYPTOR_NAME  "yaffs mbedtls encryptor"
+
+/*
+ * Note the name should NOT have any spaces or such.
+ * This is for the test tools.
+ */
+#define ENCRYPTOR_NAME  "yaffs_mbedtls_encryptor"
 
 struct yaffs_enc_context {
 	u8 iv[IV_SIZE_BYTES];
@@ -97,7 +102,7 @@ static int yaffs_encrypt_mbedtls_write_chunk(
 	 * We use the first byte of the stored IV to determine if the chunk is empty.
 	 * Force it to a non-FF value.
 	 */
-	context->iv[0] &= 0x55;
+	context->iv[0] = 'Y';
 
 	memcpy(&context->encrypted_buffer[data_len], context->iv, IV_SIZE_BYTES);
 
