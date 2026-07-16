@@ -658,6 +658,7 @@ struct yaffs_tags_handler {
 			       u32 *seq_number);
 	int (*mark_bad_fn) (struct yaffs_dev *dev, int block_no);
 	int tagger_reserved_bytes;
+	const char *tagger_name;
 };
 
 struct yaffs_dev {

@@ -18,7 +18,7 @@
 
 struct yaffs_dev;
 
-struct yaffs_dev *yflash2_install_drv(const char *name);
+struct yaffs_dev *yflash2_install_drv(const char *name, const char *backingFileName);
 
 
 #endif

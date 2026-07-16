@@ -17,7 +17,7 @@
 #define __YAFFS_NOR_DRV_H__
 
 struct yaffs_dev;
-struct yaffs_dev *yaffs_nor_install_drv(const char *name);
+struct yaffs_dev *yaffs_nor_install_drv(const char *name, const char *backing_file_name);
 
 #endif
 

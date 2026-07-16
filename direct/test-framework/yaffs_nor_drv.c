@@ -47,6 +47,7 @@
 #define FORMAT_OFFSET		(CHUNKS_PER_BLOCK * BYTES_PER_CHUNK)
 #define FORMAT_VALUE		0x1234
 
+static char *ynor_backing_file_name;
 #if 1
 
 /* Compile this for a simulation */
@@ -54,7 +55,7 @@
 
 static struct nor_sim *nor_sim;
 
-#define nor_drv_FlashInit() do {nor_sim = ynorsim_initialise("emfile-nor", BLOCKS_IN_DEVICE, BLOCK_SIZE_IN_BYTES); } while(0)
+#define nor_drv_FlashInit() do {nor_sim = ynorsim_initialise(ynor_backing_file_name, BLOCKS_IN_DEVICE, BLOCK_SIZE_IN_BYTES); } while(0)
 #define nor_drv_FlashDeinit() ynorsim_shutdown(nor_sim)
 #define nor_drv_FlashWrite32(addr,buf,nwords) ynorsim_wr32(nor_sim,addr,buf,nwords)
 #define nor_drv_FlashRead32(addr,buf,nwords) ynorsim_rd32(nor_sim,addr,buf,nwords)
@@ -301,7 +302,8 @@ static int nor_drv_Deinitialise_flash_fn(struct yaffs_dev *dev)
 }
 
 
-struct yaffs_dev *yaffs_nor_install_drv(const char *name)
+struct yaffs_dev *yaffs_nor_install_drv(const char *name,
+					const char *backing_file_name)
 {
 
 	struct yaffs_dev *dev = malloc(sizeof(struct yaffs_dev));
@@ -309,10 +311,12 @@ struct yaffs_dev *yaffs_nor_install_drv(const char *name)
 	struct yaffs_param *param;
 	struct yaffs_driver *drv;
 
+	ynor_backing_file_name = strdup(backing_file_name);
 
-	if(!dev || !name_copy) {
+	if(!dev || !name_copy || !ynor_backing_file_name) {
 		free(name_copy);
 		free(dev);
+		free(ynor_backing_file_name);
 		return NULL;
 	}
 
@@ -344,5 +348,5 @@ struct yaffs_dev *yaffs_nor_install_drv(const char *name)
 
 	yaffs_add_device(dev);
 
-	return NULL;
+	return dev;
 }

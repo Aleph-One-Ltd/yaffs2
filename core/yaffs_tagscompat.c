@@ -394,5 +394,6 @@ void yaffs_tags_compat_install(struct yaffs_dev *dev)
 		dev->tagger.query_block_fn = yaffs_tags_compat_query_block;
 		dev->tagger.mark_bad_fn = yaffs_tags_compat_mark_bad;
 		dev->tagger.tagger_reserved_bytes = 0;
+		dev->tagger.tagger_name = "tags_compat";
 	}
 }

@@ -207,6 +207,7 @@ void yaffs_tags_marshall_install(struct yaffs_dev *dev)
 		dev->tagger.mark_bad_fn = yaffs_tags_marshall_mark_bad;
 		dev->tagger.tagger_reserved_bytes =
 			sizeof(struct yaffs_packed_tags2_tags_only);
+		dev->tagger.tagger_name = "tags_marshall";
 	}
 
 }

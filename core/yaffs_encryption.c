@@ -21,7 +21,7 @@ int yaffs_encryption_init(struct yaffs_dev *dev)
 {
 	if (!yaffs_has_encryption_layer (dev)) {
 		dev->enc.enc_reserved_bytes = 0;
-		dev->enc.enc_name = "encryption not supported";
+		dev->enc.enc_name = "encryption_disabled";
 		return 0;
 	}
 
@@ -36,7 +36,7 @@ int yaffs_encryption_init(struct yaffs_dev *dev)
 	dev->enc.enc_write_chunk_fn = dev->drv.drv_write_chunk_fn;
 	dev->enc.enc_deinitialise_fn = NULL;
 	dev->enc.enc_reserved_bytes = 0;
-	dev->enc.enc_name = "NULL encryption";
+	dev->enc.enc_name = "null_encryption";
 	return 0;
 }
 

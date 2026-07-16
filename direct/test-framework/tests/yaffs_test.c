@@ -1,5 +1,5 @@
 /*
- * YAFFS: Yet another FFS. A NAND-flash specific file system. 
+ * YAFFS: Yet another FFS. A NAND-flash specific file system.
  *
  * Copyright (C) 2002-2018 Aleph One Ltd.
  *
@@ -10,9 +10,6 @@
  * published by the Free Software Foundation.
  *
  */
-
-
-
 
 #include <stdio.h>
 #include <string.h>
@@ -27,9 +24,9 @@
 
 #include "nor_stress.h"
 #include "yaffs_fsx.h"
+#include "yaffs_guts.h"
 
 void (*ext_fatal)(void);
-
 
 int random_seed;
 int simulate_power_failure = 0;
@@ -41,7 +38,8 @@ int do_bash_around;
 int init_test;
 int do_upgrade;
 int n_cycles = -1;
-int fuzz_test=0;
+int fuzz_test;
+int verbose;
 
 
 int yaffs_test_max_mallocs;
@@ -63,16 +61,16 @@ void yaffs_bash_around(const char *mountpt, int n_cycles)
 	int n1;
 	int start_op;
 	int op_max = 99;
-	
+
 	int cycle = 0;
-	
+
 	sprintf(name,"%s/bashdir",mountpt);
-	
+
 	yaffs_mkdir(name,0666);
 
 	for(i = 0; i < BASH_HANDLES; i++)
 		h[i] = -1;
-		
+
 	while(n_cycles){
 		if(cycle % 100 == 0){
 			printf("CYCLE %8d mo %2d inodes %d space %d ",cycle,op_max,
@@ -90,12 +88,12 @@ void yaffs_bash_around(const char *mountpt, int n_cycles)
 		pos = rand() & 20000000;
 		n = rand() % 100;
 		n1 = rand() % 100;
-		
+
 		sprintf(name,"%s/bashdir/xx%d",mountpt,n);
 		sprintf(name1,"%s/bashdir/xx%d",mountpt,n1);
 
 		start_op = op;
-		
+
 		op-=1;
 		if(op < 0){
 			if(h[i]>= 0){
@@ -137,11 +135,11 @@ void yaffs_bash_around(const char *mountpt, int n_cycles)
 			yaffs_rmdir(name);
 			continue;
 		}
-		
+
 		op_max = start_op-op;
 	}
-		
-	
+
+
 }
 
 void BadUsage(void)
@@ -150,13 +148,15 @@ void BadUsage(void)
 	printf("options\n");
 	printf(" f: do fsx testing\n");
 	printf(" i: initialise for upgrade testing\n");
-	printf(" l: multiply number of operations by 5\n");
+	printf(" l: list the devices and exit\n");
+	printf(" L: multiply number of operations by 5\n");
 	printf(" m: random max number of mallocs\n");
 	printf(" n nnn: number of cycles\n");
 	printf(" p: simulate power fail testing\n");
 	printf(" s sss: set seed\n");
 	printf(" u: do upgrade test\n");
 	printf(" b: bash-about test\n");
+	printf(" v: print extra info\n");
 	printf(" z: fuzz test - ignore verification errors\n");
 	exit(2);
 }
@@ -170,12 +170,12 @@ void test_fatal(void)
 		sleep(1);
 		sleep_time++;
 	}
-	
+
 	signal(SIGSEGV,SIG_IGN);
 	signal(SIGBUS,SIG_IGN);
 	signal(SIGABRT,SIG_IGN);
 	sleep_exit = 0;
-	
+
 }
 
 void bad_ptr_handler(int sig)
@@ -184,18 +184,64 @@ void bad_ptr_handler(int sig)
 	test_fatal();
 }
 
+
+void list_devices(void)
+{
+	struct yaffs_dev *dev;
+
+	yaffs_dev_rewind();
+
+	/*
+	 * Note that the tagger is only attached during the mount, so the tagger
+	 * info is not yet available.
+	 */
+	while ((dev = yaffs_next_dev()) != NULL) {
+		printf("Device name=%s type=%s tags=%s total_bytes=%d encryptor=%s encrypt_reserved=%d\n",
+			dev->param.name,
+			dev->param.is_yaffs2 ? "yaffs2" : "yaffs1",
+			dev->param.inband_tags ? "inband-tags" : "oob-tags",
+			dev->param.total_bytes_per_chunk,
+			dev->enc.enc_name ? dev->enc.enc_name : "none",
+			dev->enc.enc_reserved_bytes);
+	}
+}
+
+static void show_dev_info(const char *mount_point)
+{
+	struct yaffs_dev *dev = (struct yaffs_dev *)yaffs_getdev(mount_point);
+
+	if(!dev)
+		return;
+
+	printf("\tname............. %s\n", dev->param.name);
+	printf("\ttype............. %s\n", dev->param.is_yaffs2 ? "yaffs2" : "yaffs1");
+	printf("\ttags............. %s\n", dev->param.inband_tags ? "inband" : "oob");
+	printf("\ttotal data bytes. %d\n", dev->param.total_bytes_per_chunk);
+	printf("\tspare bytes...... %d\n", dev->param.spare_bytes_per_chunk);
+	printf("\tstart block...... %d\n", dev->param.start_block);
+	printf("\tend block........ %d\n", dev->param.end_block);
+	printf("\tencryptor........ %s\n", dev->enc.enc_name ? dev->enc.enc_name : "none");
+	printf("\tencryptor bytes.. %d\n", dev->enc.enc_reserved_bytes);
+	printf("\ttagger........... %s\n", dev->tagger.tagger_name ? dev->tagger.tagger_name : "none");
+	printf("\ttagger bytes..... %d\n", dev->tagger.tagger_reserved_bytes);
+	printf("\tdata bytes....... %d\n", dev->data_bytes_per_chunk);
+	printf("\tpayload bytes.... %d\n", dev->payload_bytes_per_chunk);
+}
+
+
 int main(int argc, char **argv)
 {
 	int ch;
 	int random_mallocs=0;
 	ext_fatal = test_fatal;
+	int do_list_devices = 0;
 
 #if 1
 	signal(SIGSEGV,bad_ptr_handler);
 	signal(SIGBUS,bad_ptr_handler);
 	signal(SIGABRT,bad_ptr_handler);
-#endif	
-	while ((ch = getopt(argc,argv, "bfilmn:ps:t:uz"))
+#endif
+	while ((ch = getopt(argc,argv, "bfilLmn:ps:t:uvz"))
 	       != EOF)
 		switch (ch) {
 		case 's':
@@ -214,6 +260,9 @@ int main(int argc, char **argv)
 			do_fsx = 1;
 			break;
 		case 'l':
+			do_list_devices = 1;
+			break;
+		case 'L':
 			ops_multiplier *= 5;
 			break;
 		case 'u':
@@ -228,7 +277,11 @@ int main(int argc, char **argv)
 		case 't':
 			yaffs_trace_mask = strtol(optarg,NULL,0);
 			break;
-		case 'z':fuzz_test=1;
+		case 'v':
+			verbose=1;
+			break;
+		case 'z':
+			fuzz_test=1;
 			break;
 		default:
 			BadUsage();
@@ -236,16 +289,22 @@ int main(int argc, char **argv)
 		}
 	argc -= optind;
 	argv += optind;
-	
+
 	if(random_mallocs){
 		yaffs_test_max_mallocs = 0xFFF & random_seed;
 	}
-	
+
+	if (do_list_devices) {
+		yaffs_start_up();
+		list_devices();
+		return 0;
+	}
+
 	if(argc == 1) {
 		int result;
 
 		strcpy(mount_point,argv[0]);
-		
+
 		if(simulate_power_failure)
 			n_cycles = -1;
 		printf("Running test %s %s %s %s %s seed %d cycles %d\n",
@@ -261,14 +320,17 @@ int main(int argc, char **argv)
 		if(result < 0){
 			printf("Mount of %s failed\n",mount_point);
 			printf("pid %d sleeping\n",getpid());
-			
+
 			while(!sleep_exit){
 				sleep(1);
 				sleep_time++;
 			}
 		}
 		printf("Mount complete\n");
-			
+
+		if (verbose)
+			show_dev_info(mount_point);
+
 		if(do_upgrade && init_test){
 			simulate_power_failure = 0;
 			NorStressTestInitialise(mount_point);
@@ -279,12 +341,12 @@ int main(int argc, char **argv)
 			yaffs_fsx_main(mount_point,n_cycles);
 		} else if(do_bash_around){
 			yaffs_bash_around(mount_point,n_cycles);
-		}else {
+		}else if (!verbose){
 			printf("No test to run!\n");
 			BadUsage();
 		}
 		yaffs_unmount(mount_point);
-		
+
 		printf("Test run completed!\n");
 	}
 	else

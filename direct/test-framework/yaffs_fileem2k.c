@@ -106,21 +106,24 @@ static void yflash2_MaybePowerFail(unsigned int nand_chunk, int failPoint)
   }
 }
 
-static char *NToName(char *buf,int n)
+static char *NToName(char *buf, const char *prefix, int n)
 {
-	sprintf(buf,"emfile-2k-%d",n);
+	sprintf(buf,"%s-%d", prefix, n);
 	return buf;
 }
 
+
+static char *fileNamePrefix;
+
 static char dummyBuffer[BLOCK_SIZE];
 
-static int GetBlockFileHandle(int n)
+static int GetBlockFileHandle(const char *fileNamePrefix, int n)
 {
 	int h;
 	int requiredSize;
 
 	char name[40];
-	NToName(name,n);
+	NToName(name, fileNamePrefix, n);
 	int fSize;
 	int i;
 
@@ -168,7 +171,7 @@ static int  CheckInit(void)
 		filedisk.handle[i] = -1;
 
 	for(i = 0,blk = 0; blk < filedisk.nBlocks; blk+=BLOCKS_PER_HANDLE,i++)
-		filedisk.handle[i] = GetBlockFileHandle(i);
+		filedisk.handle[i] = GetBlockFileHandle(fileNamePrefix, i);
 
 
 	return 1;
@@ -335,7 +338,7 @@ static int yflash2_Initialise(struct yaffs_dev *dev)
 	return YAFFS_OK;
 }
 
-struct yaffs_dev *yflash2_install_drv(const char *name)
+struct yaffs_dev *yflash2_install_drv(const char *name, const char *backingFileName)
 {
 	struct yaffs_dev *dev = NULL;
 	struct yaffs_param *param;
@@ -354,6 +357,8 @@ struct yaffs_dev *yflash2_install_drv(const char *name)
 		free(dev);
 		return NULL;
 	}
+
+	fileNamePrefix = strdup(backingFileName);
 
 	drv = &dev->drv;
 

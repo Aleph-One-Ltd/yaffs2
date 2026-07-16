@@ -69,7 +69,7 @@
 
 static struct nor_sim *nor_sim;
 
-#define m18_drv_FlashInit() do {nor_sim = ynorsim_initialise("emfile-m18", BLOCKS_IN_DEVICE, BLOCK_SIZE_IN_BYTES); } while(0)
+#define m18_drv_FlashInit(backing_file_name) do {nor_sim = ynorsim_initialise(backing_file_name, BLOCKS_IN_DEVICE, BLOCK_SIZE_IN_BYTES); } while(0)
 #define m18_drv_FlashDeinit() ynorsim_shutdown(nor_sim)
 #define m18_drv_FlashWrite32(addr,buf,nwords) ynorsim_wr32(nor_sim,addr,buf,nwords)
 #define m18_drv_FlashRead32(addr,buf,nwords) ynorsim_rd32(nor_sim,addr,buf,nwords)
@@ -303,12 +303,13 @@ static int m18_drv_EraseBlockInNAND(struct yaffs_dev *dev, int blockNumber)
 	}
 
 }
+static char *this_backing_file_name;
 
 static int m18_drv_InitialiseNAND(struct yaffs_dev *dev)
 {
 	u32 i;
 
-	m18_drv_FlashInit();
+	m18_drv_FlashInit(this_backing_file_name);
 	/* Go through the blocks formatting them if they are not formatted */
 	for(i = dev->param.start_block; i <= dev->param.end_block; i++){
 		if(!m18_drv_IsBlockFormatted(dev,i)){
@@ -328,7 +329,7 @@ static int m18_drv_Deinitialise_flash_fn(struct yaffs_dev *dev)
 }
 
 
-struct yaffs_dev *yaffs_m18_install_drv(const char *name)
+struct yaffs_dev *yaffs_m18_install_drv(const char *name, const char *backing_file_name)
 {
 
 	struct yaffs_dev *dev = malloc(sizeof(struct yaffs_dev));
@@ -336,9 +337,11 @@ struct yaffs_dev *yaffs_m18_install_drv(const char *name)
 	struct yaffs_param *param;
 	struct yaffs_driver *drv;
 
+	this_backing_file_name = strdup(backing_file_name);
 
-	if(!dev || !name_copy) {
+	if(!dev || !name_copy || !this_backing_file_name) {
 		free(name_copy);
+		free(this_backing_file_name);
 		free(dev);
 		return NULL;
 	}
