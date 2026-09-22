@@ -159,7 +159,7 @@ static int yaffs_tags_marshall_query_block(struct yaffs_dev *dev, int block_no,
 	} else {
 		struct yaffs_ext_tags t;
 
-		yaffs_tags_marshall_read(dev,
+		dev->tagger.read_chunk_tags_fn(dev,
 				    block_no * dev->param.chunks_per_block,
 				    NULL, &t);
 
