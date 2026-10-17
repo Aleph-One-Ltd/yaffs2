@@ -10,8 +10,9 @@
  * published by the Free Software Foundation.
  *
  * This file handles the marshalling (ie internal<-->external structure
- * translation between the internal tags and the stored tags in Yaffs2-style
+ * translation between the internal tags and the stored tags in yaffs2-style
  * tags storage.
+ * See yaffs_tagscompat.c for yaffs1 style flash layouts.
  */
 
 #include "yaffs_tagsmarshall.h"
@@ -37,7 +38,6 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 	/* For yaffs2 writing there must be both data and tags.
 	 * If we're using inband tags, then the tags are stuffed into
 	 * the end of the data buffer.
-	 * Inband tags uses the encryption layer.
 	 */
 	if (!data || !tags)
 		BUG();
@@ -56,7 +56,7 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 		yaffs_pack_tags2(dev, &pt, tags, !dev->param.no_tags_ecc);
 
 
-		retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
+		retval = dev->enc.enc_write_chunk_fn(dev, nand_chunk,
 			data, dev->payload_bytes_per_chunk,
 			packed_tags_ptr, packed_tags_size);
 	}
@@ -97,12 +97,12 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 					NULL, 0,
 					&ecc_result);
 	else if (data && !tags)
-		retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
+		retval = dev->enc.enc_read_chunk_fn(dev, nand_chunk,
 					data, dev->payload_bytes_per_chunk,
 					NULL, 0,
 					&ecc_result);
 	else if (tags)
-		retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
+		retval = dev->enc.enc_read_chunk_fn(dev, nand_chunk,
 					data, dev->payload_bytes_per_chunk,
 					spare_buffer, packed_tags_size,
 					&ecc_result);

@@ -76,7 +76,7 @@ int yaffs_start_up(void)
 	 */
 	yflash2_install_drv("yflash2", "emfile-yflash2");
 	yaffs_m18_install_drv("M18-1", "emfile-M18-1");
-	yaffs_nor_install_drv("nor", "emfile-nor");
+	//yaffs_nor_install_drv("nor", "emfile-nor");
 	yaffs_nandsim_install_drv("nand", "emfile-nand", 256, 4, 1);
 	/*
 	 * Set up nand_enc as an encrypted partition by installing the

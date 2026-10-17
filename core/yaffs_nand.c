@@ -8,6 +8,12 @@
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
+ *
+ * This is the abstracted NAND interface that Yaffs works with.
+ * All the tags handling, driver handling and encryption etc is handled
+ * in or below this layer.
+ * This layer also converts the yaffs chunk IDs into physical chunk IDs by
+ * applying an offset.
  */
 
 #include "yaffs_nand.h"

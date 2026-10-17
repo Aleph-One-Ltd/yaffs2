@@ -34,11 +34,11 @@ ALL_UNSORTED_OBJS += $(DIRECTTESTOBJS) $(RELDEVOBJS) $(UNLINKFILLOBJS)
 include ../FrameworkRules.mk
 
 directtest2k: $(FRAMEWORK_SOURCES) $(DIRECTTESTOBJS) Makefile
-	gcc -o $@ $(DIRECTTESTOBJS) -lpthread
+	gcc -o $@ $(DIRECTTESTOBJS) -lpthread -lmbedtls -lmbedcrypto
 
 reldevtest: $(FRAMEWORK_SOURCES) $(RELDEVOBJS) Makefile
-	gcc -o $@ $(RELDEVOBJS) -lpthread
+	gcc -o $@ $(RELDEVOBJS) -lpthread -lmbedtls -lmbedcrypto
 
 unlinkfilltest: $(FRAMEWORK_SOURCES) $(UNLINKFILLOBJS) Makefile
-	gcc -o $@ $(UNLINKFILLOBJS) -lpthread
+	gcc -o $@ $(UNLINKFILLOBJS) -lpthread -lmbedtls -lmbedcrypto
 

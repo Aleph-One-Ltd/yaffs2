@@ -14,7 +14,8 @@
 
 int yaffs_has_encryption_layer(struct yaffs_dev *dev)
 {
-	return (dev->param.inband_tags && dev->param.is_yaffs2);
+	return 1 ||dev->param.is_yaffs2;
+	//(dev->param.inband_tags && dev->param.is_yaffs2);
 }
 
 int yaffs_encryption_init(struct yaffs_dev *dev)

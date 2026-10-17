@@ -43,16 +43,39 @@
  * The encrypted payload is then further split into the data portion (a file
  * header chuck or file data) and tags, but that is invisible to the encryptor.
  *
+ * Inband tags:
  * +-------------------------------------------------------+-------------------+
  * |   NAND Data Page area (2048 bytes)                    | Spare (64 bytes)  |
  * |   File system info                                    | Bad block, ECC etc|
- * +-------------------------------------------+-----------+-------------------+
- * |   Encryped payload     (2032 bytes)       | Encryption|
- * |   File system info                        | IV (16 b) |
- * +----------------------------+--------------+-----------+
- * |   File system data (2016 b)| Tags (16 b)  |
- * |   Header chunk or file data| Metadata     |
- * +-------------------------------------------+
+ * +-----------+-------------------------------+-----------+-------------------+
+ * | Encryption|   Encryped payload     (2032 bytes)       |
+ * | IV (16 b) |  File system info                         |
+ * +-----------+----------------+-----------+--------------+
+ *             |   File system data (2016 b)| Tags (16 b)  |
+ *             |   Header chunk or file data| Metadata     |
+ *             +----------------------------+--------------+
+ *
+ * OOB tags:
+ * +-------------------------------------------------+-------------------------+
+ * |   NAND Data Page area (2048 bytes)              | Spare (64 bytes)        |
+ * |   File system info                              | Tags, Bad block, ECC etc|
+ * +-----------+-------------------------------------+-------------------------+
+ * | Encryption|  Encryped payload     (2032 bytes)  |
+ * | IV (16 b) |   File system info                  |
+ * +-----------+-------------------------------------+
+ *             |   File system data (2032 bytes)     |
+ *             |   Header chunk or file data         |
+ *             +-------------------------------------+
+ *
+ * Thus, for inband tags:
+ * - data buffer is always present (because we need that to store the tags -
+ *   even during scanning)
+ * - oob is always NULL since that is not used by Yaffs internals.
+ * - Both data and tags are in the encrypted payload.
+ *
+ * And, for oob tags:
+ * - data buffer might be NULL (eg. reading tags during scanning).
+ * - data is encrypted, tags are not.
  */
 
  /*
@@ -98,22 +121,31 @@ static int yaffs_encrypt_mbedtls_write_chunk(
 	struct yaffs_enc_context *context = dev_to_context(dev);
 	int eret;
 
+	if (!data) {
+		/*
+		 * Just writing oob (yaffs1), no need for encryption.
+		 */
+		return dev->drv.drv_write_chunk_fn(dev, nand_chunk,
+				NULL, 0,
+				oob, oob_len);
+	}
+
 	/*
 	 * We use the first byte of the stored IV to determine if the chunk is empty.
 	 * Force it to a non-FF value.
 	 */
 	context->iv[0] = 'Y';
 
-	memcpy(&context->encrypted_buffer[data_len], context->iv, IV_SIZE_BYTES);
+	memcpy(context->encrypted_buffer, context->iv, IV_SIZE_BYTES);
 
 #if JUST_COPY
 	(void) eret;
-	memcpy(context->encrypted_buffer, data, data_len);
+	memcpy(&context->encrypted_buffer[IV_SIZE_BYTES], data, data_len);
 #else
 	mbedtls_aes_setkey_enc(&context->aes, context->key, 128);
 	eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_ENCRYPT,
 				    data_len, context->iv,
-				    data, context->encrypted_buffer);
+				    data, &context->encrypted_buffer[IV_SIZE_BYTES]);
 	if (eret)
 		printf("encryption eret = %d\n", eret);
 #endif
@@ -134,6 +166,20 @@ static int yaffs_encrypt_mbedtls_read_chunk(
 	int eret;
 	u8 *decrypt_iv;
 
+	if (!data) {
+		/*
+		 * This is the path for yaffs1 only reading OOB during scanning.
+		 */
+		return dev->drv.drv_read_chunk_fn(dev, nand_chunk,
+						NULL, 0,
+						oob, oob_len,
+						ecc_result);
+	}
+
+
+	/*
+	 * Get here if data was requested (and not just spare/oob).
+	 */
 	ret =  dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 		context->encrypted_buffer, dev->param.total_bytes_per_chunk,
 		oob, oob_len,
@@ -142,7 +188,7 @@ static int yaffs_encrypt_mbedtls_read_chunk(
 	 * Now we need to check if the chunk was empty. We can do that by
 	 * checking the read-back IV is not 0xff.
 	 */
-	decrypt_iv = &context->encrypted_buffer[data_len];
+	decrypt_iv = context->encrypted_buffer;
 
 	if (decrypt_iv[0] == 0xff) {
 		/*
@@ -159,14 +205,14 @@ static int yaffs_encrypt_mbedtls_read_chunk(
 
 #if JUST_COPY
 		(void) eret;
-		memcpy(data, context->encrypted_buffer, data_len);
+		memcpy(data, &context->encrypted_buffer[IV_SIZE_BYTES], data_len);
 #else
 		mbedtls_aes_setkey_dec(&context->aes, context->key, 128);
 		eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_DECRYPT,
 				    data_len, decrypt_iv,
-				    context->encrypted_buffer, data);
-	if (eret)
-		printf("decryption eret = %d\n", eret);
+				    &context->encrypted_buffer[IV_SIZE_BYTES], data);
+		if (eret)
+			printf("decryption eret = %d\n", eret);
 #endif
 	}
 	return ret;
