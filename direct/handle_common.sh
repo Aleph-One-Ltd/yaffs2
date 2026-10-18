@@ -23,7 +23,34 @@ YAFFS_COMMON_SOURCES="\
           "
 
 
+do_copy=0
+do_clean=0
+
 if [ "$1" = "copy" ] ; then
+	do_copy=1
+elif [ "$1" = "clean" ] ; then
+	do_clean=1
+elif [ "$1" = "refresh" ] ; then
+	do_clean=1
+	do_copy=1
+else
+	echo "please specify: copy, clean or refresh"
+	echo "    copy: Copies core code into direct, doing some massages"
+	echo "    clean: Cleans (removes the copied code)"
+	echo "    refresh: Does a clean then a copy"
+	exit 1
+fi
+
+
+if [ "${do_clean}" = "1" ] ; then
+	echo "Cleaning old core source"
+	for i in $YAFFS_COMMON_SOURCES ; do
+		rm -rf $i
+	done
+fi
+
+if [ "${do_copy}" = "1" ] ; then
+	echo "Copying new core source"
 set -e -x
 	for i in $YAFFS_COMMON_SOURCES ; do
 		sed ../core/$i \
@@ -38,11 +65,5 @@ set -e -x
 
 		chmod 0444 $i
 	done
-elif [ "$1" = "clean" ] ; then 
-	for i in $YAFFS_COMMON_SOURCES ; do
-		rm -rf $i
-	done
-else
-	echo "please specify copy or clean"
-	exit 1
 fi
+
