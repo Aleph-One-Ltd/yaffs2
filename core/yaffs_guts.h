@@ -632,13 +632,14 @@ struct yaffs_driver {
 };
 
 struct yaffs_encryptor {
-	int (*enc_write_chunk_fn) (struct yaffs_dev *dev, int nand_chunk,
-				   const u8 *data, int data_len,
-				   const u8 *oob, int oob_len);
-	int (*enc_read_chunk_fn) (struct yaffs_dev *dev, int nand_chunk,
-				   u8 *data, int data_len,
-				   u8 *oob, int oob_len,
-				   enum yaffs_ecc_result *ecc_result);
+	int (*enc_encrypt_fn) (struct yaffs_dev *dev,
+			       const u8 *data, int data_len);
+	int (*enc_decrypt_fn) (struct yaffs_dev *dev,
+				   u8 *data, int data_len);
+	const u8 *(*enc_get_write_buffer_fn) (struct yaffs_dev *dev,
+					      const u8 *data_buffer);
+	u8 *(*enc_get_read_buffer_fn) (struct yaffs_dev *dev,
+				       u8 *data_buffer);
 	int (*enc_initialise_fn) (struct yaffs_dev *dev);
 	int (*enc_deinitialise_fn) (struct yaffs_dev *dev);
 	int enc_reserved_bytes;

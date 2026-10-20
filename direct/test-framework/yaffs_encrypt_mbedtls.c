@@ -93,6 +93,7 @@
 #define KEY_SIZE_BYTES	(16)
 #define KEY_SIZE_BITS	(KEY_SIZE_BYTES * 8)
 
+
 /*
  * Note the name should NOT have any spaces or such.
  * This is for the test tools.
@@ -113,22 +114,32 @@ struct yaffs_enc_context {
 #define dev_to_context(dev) \
 	(struct yaffs_enc_context *)((dev)->encryption_context)
 
-static int yaffs_encrypt_mbedtls_write_chunk(
-				   struct yaffs_dev *dev, int nand_chunk,
-				   const u8 *data, int data_len,
-				   const u8 *oob, int oob_len)
+static const u8 *yaffs_encrypt_mbedtls_get_write_buffer(struct yaffs_dev *dev,
+							const u8 *data_buffer)
 {
 	struct yaffs_enc_context *context = dev_to_context(dev);
-	int eret;
 
-	if (!data) {
-		/*
-		 * Just writing oob (yaffs1), no need for encryption.
-		 */
-		return dev->drv.drv_write_chunk_fn(dev, nand_chunk,
-				NULL, 0,
-				oob, oob_len);
-	}
+	(void) data_buffer;
+
+	return context->encrypted_buffer;
+}
+
+static u8 *yaffs_encrypt_mbedtls_get_read_buffer(struct yaffs_dev *dev,
+						     u8 *data_buffer)
+{
+	struct yaffs_enc_context *context = dev_to_context(dev);
+
+	(void) data_buffer;
+
+	return context->encrypted_buffer;
+}
+
+
+static int yaffs_encrypt_mbedtls_encrypt(struct yaffs_dev *dev,
+					 const u8 *data, int data_len)
+{
+	struct yaffs_enc_context *context = dev_to_context(dev);
+	int eret = 0;
 
 	/*
 	 * We use the first byte of the stored IV to determine if the chunk is empty.
@@ -150,40 +161,16 @@ static int yaffs_encrypt_mbedtls_write_chunk(
 		printf("encryption eret = %d\n", eret);
 #endif
 
-	return dev->drv.drv_write_chunk_fn(dev, nand_chunk,
-		context->encrypted_buffer, dev->param.total_bytes_per_chunk,
-		oob, oob_len);
+	return eret;
 }
 
-static int yaffs_encrypt_mbedtls_read_chunk(
-				   struct yaffs_dev *dev, int nand_chunk,
-				   u8 *data, int data_len,
-				   u8 *oob, int oob_len,
-				   enum yaffs_ecc_result *ecc_result)
+static int yaffs_encrypt_mbedtls_decrypt(struct yaffs_dev *dev,
+					 u8 *data, int data_len)
 {
 	struct yaffs_enc_context *context = dev_to_context(dev);
-	int ret;
-	int eret;
+	int eret = 0;
 	u8 *decrypt_iv;
 
-	if (!data) {
-		/*
-		 * This is the path for yaffs1 only reading OOB during scanning.
-		 */
-		return dev->drv.drv_read_chunk_fn(dev, nand_chunk,
-						NULL, 0,
-						oob, oob_len,
-						ecc_result);
-	}
-
-
-	/*
-	 * Get here if data was requested (and not just spare/oob).
-	 */
-	ret =  dev->drv.drv_read_chunk_fn(dev, nand_chunk,
-		context->encrypted_buffer, dev->param.total_bytes_per_chunk,
-		oob, oob_len,
-		ecc_result);
 	/*
 	 * Now we need to check if the chunk was empty. We can do that by
 	 * checking the read-back IV is not 0xff.
@@ -210,12 +197,13 @@ static int yaffs_encrypt_mbedtls_read_chunk(
 		mbedtls_aes_setkey_dec(&context->aes, context->key, 128);
 		eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_DECRYPT,
 				    data_len, decrypt_iv,
-				    &context->encrypted_buffer[IV_SIZE_BYTES], data);
+				    &context->encrypted_buffer[IV_SIZE_BYTES],
+				    data);
 		if (eret)
 			printf("decryption eret = %d\n", eret);
 #endif
 	}
-	return ret;
+	return eret;
 }
 
 /*
@@ -317,8 +305,10 @@ int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev, const u8 *key,
 	enc = &dev->enc;
 	enc->enc_initialise_fn = yaffs_encrypt_mbedtls_init;
 	enc->enc_deinitialise_fn = yaffs_encrypt_mbedtls_deinit;
-	enc->enc_read_chunk_fn = yaffs_encrypt_mbedtls_read_chunk;
-	enc->enc_write_chunk_fn = yaffs_encrypt_mbedtls_write_chunk;
+	enc->enc_decrypt_fn = yaffs_encrypt_mbedtls_decrypt;
+	enc->enc_encrypt_fn = yaffs_encrypt_mbedtls_encrypt;
+	enc->enc_get_read_buffer_fn = yaffs_encrypt_mbedtls_get_read_buffer;
+	enc->enc_get_write_buffer_fn = yaffs_encrypt_mbedtls_get_write_buffer;
 	enc->enc_reserved_bytes =IV_SIZE_BYTES;
 	enc->enc_name = ENCRYPTOR_NAME;
 	return 0;

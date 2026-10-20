@@ -142,7 +142,7 @@ static int yaffs_wr_nand(struct yaffs_dev *dev,
 {
 	int data_size = dev->data_bytes_per_chunk;
 
-	return dev->enc.enc_write_chunk_fn(dev, nand_chunk,
+	return dev->drv.drv_write_chunk_fn(dev, nand_chunk,
 				data, data_size,
 				(u8 *) spare, sizeof(*spare));
 }
@@ -170,7 +170,7 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 	spare_size = sizeof(struct yaffs_spare);
 
 	if (dev->param.use_nand_ecc)
-		return dev->enc.enc_read_chunk_fn(dev, nand_chunk,
+		return dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 						data, data_size,
 						(u8 *) spare, spare_size,
 						ecc_result);
@@ -178,7 +178,7 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 
 	/* Handle the ECC at this level. */
 
-	ret_val = dev->enc.enc_read_chunk_fn(dev, nand_chunk,
+	ret_val = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 						 data, data_size,
 						 (u8 *)spare, spare_size,
 						NULL);

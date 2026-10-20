@@ -19,12 +19,19 @@
 #include "yaffs_trace.h"
 #include "yaffs_packedtags2.h"
 
+/*
+ * For writing, we are going to set up the data part of the chunk, then
+ * encrypt is and write to flash.
+ * For inband tags the tags are written into the data part of the chunk, for
+ * oob tags the tags are wrapped in ECC and written to the spare area.
+ */
 static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 				    int nand_chunk, const u8 *data,
 				    const struct yaffs_ext_tags *tags)
 {
 	struct yaffs_packed_tags2 pt;
 	int retval;
+	const u8 *transfer_buffer;
 
 	int packed_tags_size =
 	    dev->param.no_tags_ecc ? sizeof(pt.t) : sizeof(pt);
@@ -39,6 +46,9 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 	 * If we're using inband tags, then the tags are stuffed into
 	 * the end of the data buffer.
 	 */
+
+	transfer_buffer = dev->enc.enc_get_write_buffer_fn(dev, data);
+
 	if (!data || !tags)
 		BUG();
 	else if (dev->param.inband_tags) {
@@ -49,31 +59,44 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 
 		yaffs_pack_tags2_tags_only(dev, pt2tp, tags);
 
-		retval = dev->enc.enc_write_chunk_fn(dev, nand_chunk,
-			data, dev->payload_bytes_per_chunk,
+		/* The encryption step places data into the transfer buffer. */
+		retval = dev->enc.enc_encrypt_fn(dev,
+					data, dev->payload_bytes_per_chunk);
+		retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
+			transfer_buffer, dev->param.total_bytes_per_chunk,
 			NULL, 0);
 	} else {
 		yaffs_pack_tags2(dev, &pt, tags, !dev->param.no_tags_ecc);
 
-
-		retval = dev->enc.enc_write_chunk_fn(dev, nand_chunk,
-			data, dev->payload_bytes_per_chunk,
+		/* The encryption step places data into the transfer buffer. */
+		retval = dev->enc.enc_encrypt_fn(dev,
+					data, dev->payload_bytes_per_chunk);
+		retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
+			transfer_buffer, dev->param.total_bytes_per_chunk,
 			packed_tags_ptr, packed_tags_size);
 	}
 
 	return retval;
 }
 
+/*
+ * For reading, we first read into the transfer buffer. The decryption will
+ * move data into the data buffer where the inband tags can be extracted if
+ * need be.
+ */
+
 static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 				   int nand_chunk, u8 *data,
 				   struct yaffs_ext_tags *tags)
 {
 	int retval = 0;
+	int ret_enc = 0;
 	int local_data = 0;
 	u8 spare_buffer[100];
 	enum yaffs_ecc_result ecc_result;
-
+	u8 *transfer_buffer;
 	struct yaffs_packed_tags2 pt;
+	int read_spare;
 
 	int packed_tags_size =
 	    dev->param.no_tags_ecc ? sizeof(pt.t) : sizeof(pt);
@@ -92,23 +115,28 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 	}
 
 	if (dev->param.inband_tags)
-		retval = dev->enc.enc_read_chunk_fn(dev, nand_chunk,
-					data, dev->payload_bytes_per_chunk,
-					NULL, 0,
-					&ecc_result);
+		read_spare = 0;
 	else if (data && !tags)
-		retval = dev->enc.enc_read_chunk_fn(dev, nand_chunk,
-					data, dev->payload_bytes_per_chunk,
-					NULL, 0,
-					&ecc_result);
+		read_spare = 0;
 	else if (tags)
-		retval = dev->enc.enc_read_chunk_fn(dev, nand_chunk,
-					data, dev->payload_bytes_per_chunk,
-					spare_buffer, packed_tags_size,
-					&ecc_result);
+		read_spare = 1;
 	else
 		BUG();
 
+	transfer_buffer = dev->enc.enc_get_read_buffer_fn(dev, data);
+
+	retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
+					transfer_buffer,
+					dev->param.total_bytes_per_chunk,
+					(read_spare)? spare_buffer : NULL,
+					(read_spare)? packed_tags_size : 0,
+					&ecc_result);
+
+	/* Note encryption functions should return 0. */
+	ret_enc = dev->enc.enc_decrypt_fn(dev,
+					data, dev->payload_bytes_per_chunk);
+	if (ret_enc != 0)
+		retval = YAFFS_FAIL;
 
 	if (retval == YAFFS_FAIL) {
 		if (local_data)
