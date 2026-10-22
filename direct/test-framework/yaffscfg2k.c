@@ -74,12 +74,12 @@ int yaffs_start_up(void)
 	 * Note that the test framework expects the backing file names to be
 	 * "emfile-xxx" where "xxx" is the mount point name.
 	 */
-	yflash2_install_drv("yflash2", "emfile-yflash2");
-	yaffs_m18_install_drv("M18-1", "emfile-M18-1");
-	//yaffs_nor_install_drv("nor", "emfile-nor");
+	//yflash2_install_drv("yflash2", "emfile-yflash2");
+	//yaffs_m18_install_drv("M18-1", "emfile-M18-1");
+	yaffs_nor_install_drv("nor", "emfile-nor");
 	yaffs_nandsim_install_drv("nand", "emfile-nand", 256, 4, 1);
 	/*
-	 * Set up nand_enc as an encrypted partition by installing the
+	 * Set up nor_enc and nand_enc as an encrypted partition by installing the
 	 * encryption layer after creating the dev.
 	 */
 	dev = yaffs_nor_install_drv("nor_enc", "emfile-nor_enc");
