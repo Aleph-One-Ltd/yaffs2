@@ -137,26 +137,26 @@ static void yaffs_spare_init(struct yaffs_spare *spare)
 }
 
 static int yaffs_wr_nand(struct yaffs_dev *dev,
-			 int nand_chunk, const u8 *data,
+			 int nand_chunk, const u8 *buffer,
 			 struct yaffs_spare *spare)
 {
-	int data_size = dev->data_bytes_per_chunk;
+	int buffer_size = dev->param.total_bytes_per_chunk;
 
 	return dev->drv.drv_write_chunk_fn(dev, nand_chunk,
-				data, data_size,
+				buffer, buffer_size,
 				(u8 *) spare, sizeof(*spare));
 }
 
 static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 			       int nand_chunk,
-			       u8 *data,
+			       u8 *buffer,
 			       struct yaffs_spare *spare,
 			       enum yaffs_ecc_result *ecc_result,
 			       int correct_errors)
 {
 	int ret_val;
 	struct yaffs_spare local_spare;
-	int data_size;
+	int buffer_size;
 	int spare_size;
 	int ecc_result1, ecc_result2;
 	u8 calc_ecc[3];
@@ -166,12 +166,12 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 		/* Need this for the calculation of the ecc */
 		spare = &local_spare;
 	}
-	data_size = dev->data_bytes_per_chunk;
+	buffer_size = dev->param.total_bytes_per_chunk;
 	spare_size = sizeof(struct yaffs_spare);
 
 	if (dev->param.use_nand_ecc)
 		return dev->drv.drv_read_chunk_fn(dev, nand_chunk,
-						data, data_size,
+						buffer, buffer_size,
 						(u8 *) spare, spare_size,
 						ecc_result);
 
@@ -179,17 +179,17 @@ static int yaffs_rd_chunk_nand(struct yaffs_dev *dev,
 	/* Handle the ECC at this level. */
 
 	ret_val = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
-						 data, data_size,
+						 buffer, buffer_size,
 						 (u8 *)spare, spare_size,
 						NULL);
-	if (!data || !correct_errors)
+	if (!buffer || !correct_errors)
 		return ret_val;
 
 	/* Do ECC correction if needed. */
-	yaffs_ecc_calc(data, calc_ecc);
-	ecc_result1 = yaffs_ecc_correct(data, spare->ecc1, calc_ecc);
-	yaffs_ecc_calc(&data[256], calc_ecc);
-	ecc_result2 = yaffs_ecc_correct(&data[256], spare->ecc2, calc_ecc);
+	yaffs_ecc_calc(buffer, calc_ecc);
+	ecc_result1 = yaffs_ecc_correct(buffer, spare->ecc1, calc_ecc);
+	yaffs_ecc_calc(&buffer[256], calc_ecc);
+	ecc_result2 = yaffs_ecc_correct(&buffer[256], spare->ecc2, calc_ecc);
 
 	if (ecc_result1 > 0) {
 		yaffs_trace(YAFFS_TRACE_ERROR,
@@ -258,8 +258,23 @@ static int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 {
 	struct yaffs_spare spare;
 	struct yaffs_tags tags;
+	const u8 *transfer_buffer;
 
 	yaffs_spare_init(&spare);
+
+	if (data)
+		transfer_buffer = dev->enc.enc_get_write_buffer_fn(dev, data);
+	else
+		transfer_buffer = NULL;
+
+	if (data)
+		dev->enc.enc_encrypt_fn(dev,
+					data, dev->payload_bytes_per_chunk);
+
+	/*
+	 * The encryption step has placed the data into the transfer_buffer, if
+	 * it exists.
+	 */
 
 	if (ext_tags->is_deleted)
 		spare.page_status = 0;
@@ -276,14 +291,14 @@ static int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 
 		tags.serial_number = ext_tags->serial_number;
 
-		if (!dev->param.use_nand_ecc && data) {
-			yaffs_ecc_calc(data, spare.ecc1);
-			yaffs_ecc_calc(&data[256], spare.ecc2);
+		if (!dev->param.use_nand_ecc && transfer_buffer) {
+			yaffs_ecc_calc(transfer_buffer, spare.ecc1);
+			yaffs_ecc_calc(&transfer_buffer[256], spare.ecc2);
 		}
 
 		yaffs_load_tags_to_spare(dev, &spare, &tags);
 	}
-	return yaffs_wr_nand(dev, nand_chunk, data, &spare);
+	return yaffs_wr_nand(dev, nand_chunk, transfer_buffer, &spare);
 }
 
 static int yaffs_tags_compat_rd(struct yaffs_dev *dev,
@@ -296,6 +311,12 @@ static int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 	static struct yaffs_spare spare_ff;
 	static int init;
 	int deleted;
+	u8 *transfer_buffer;
+
+	if (data)
+		transfer_buffer = dev->enc.enc_get_read_buffer_fn(dev, data);
+	else
+		transfer_buffer = NULL;
 
 	if (!init) {
 		memset(&spare_ff, 0xff, sizeof(spare_ff));
@@ -303,35 +324,38 @@ static int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 	}
 
 	if (!yaffs_rd_chunk_nand(dev, nand_chunk,
-					data, &spare, &ecc_result, 1))
+				 transfer_buffer, &spare, &ecc_result, 1))
 		return YAFFS_FAIL;
 
 	/* ext_tags may be NULL */
-	if (!ext_tags)
-		return YAFFS_OK;
+	if (ext_tags) {
 
-	deleted = (hweight8(spare.page_status) < 7) ? 1 : 0;
+		deleted = (hweight8(spare.page_status) < 7) ? 1 : 0;
 
-	ext_tags->is_deleted = deleted;
-	ext_tags->ecc_result = ecc_result;
-	ext_tags->block_bad = 0;	/* We're reading it */
-	/* therefore it is not a bad block */
-	ext_tags->chunk_used =
-		memcmp(&spare_ff, &spare, sizeof(spare_ff)) ? 1 : 0;
+		ext_tags->is_deleted = deleted;
+		ext_tags->ecc_result = ecc_result;
+		ext_tags->block_bad = 0;	/* We're reading it therefore */
+						/* it is not a bad block */
+		ext_tags->chunk_used =
+			memcmp(&spare_ff, &spare, sizeof(spare_ff)) ? 1 : 0;
 
-	if (ext_tags->chunk_used) {
-		yaffs_get_tags_from_spare(dev, &spare, &tags);
+		if (ext_tags->chunk_used) {
+			yaffs_get_tags_from_spare(dev, &spare, &tags);
 
-		ext_tags->obj_id = tags.obj_id;
-		ext_tags->chunk_id = tags.chunk_id;
-		ext_tags->n_bytes = tags.n_bytes_lsb;
+			ext_tags->obj_id = tags.obj_id;
+			ext_tags->chunk_id = tags.chunk_id;
+			ext_tags->n_bytes = tags.n_bytes_lsb;
 
-		if (dev->data_bytes_per_chunk >= 1024)
-			ext_tags->n_bytes |=
-				(((unsigned)tags.n_bytes_msb) << 10);
+			if (dev->data_bytes_per_chunk >= 1024)
+				ext_tags->n_bytes |=
+					(((unsigned)tags.n_bytes_msb) << 10);
 
-		ext_tags->serial_number = tags.serial_number;
+			ext_tags->serial_number = tags.serial_number;
+		}
 	}
+
+	if (data)
+		dev->enc.enc_decrypt_fn(dev, data, dev->payload_bytes_per_chunk);
 
 	return YAFFS_OK;
 }
