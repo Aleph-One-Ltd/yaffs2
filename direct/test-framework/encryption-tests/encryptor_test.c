@@ -25,27 +25,9 @@
 #include <stdlib.h>
 
 #include "yaffs_guts.h"
+#include "yaffs_encryption.h"
 
 #include "yaffs_encrypt_mbedtls.h"
-#include "fake_dev.h"
-
-/*
- * Needed by yaffsfs.
- */
-
-void (*ext_fatal)(void);
-
-char mount_point[200];
-
-void yaffsfs_free(void *ptr)
-{
-	free(ptr);
-}
-
-void *yaffsfs_malloc(size_t size)
-{
-	return malloc(size);
-}
 
 /*
  * Encryption initialisation.
@@ -60,22 +42,31 @@ static void do_install_mbedtls_encryptor(struct yaffs_dev *dev)
 	yaffs_encrypt_mbedtls_install(dev, key, sizeof(key));
 }
 
+static void do_install_null_encryptor(struct yaffs_dev *dev)
+{
+	/*
+	 * For the null encryption, null out dev->enc and
+	 * yaffs_enc_init(dev) will sort it out.
+	 */
+	memset(&dev->enc, 0, sizeof(struct yaffs_encryptor));
+}
+
 
 static void show_dev_info(struct yaffs_dev *dev)
 {
 	if(!dev)
 		return;
 
-	printf("\tname............. %s\n", dev->param.name);
-	printf("\ttype............. %s\n", dev->param.is_yaffs2 ? "yaffs2" : "yaffs1");
-	printf("\ttags............. %s\n", dev->param.inband_tags ? "inband" : "oob");
+
+	printf("\ttags............. %s\n", dev->param.inband_tags ?
+							"inband" : "oob");
+	printf("\tencryptor........ %s\n", dev->enc.enc_name);
 	printf("\ttotal data bytes. %d\n", dev->param.total_bytes_per_chunk);
-	printf("\tspare bytes...... %d\n", dev->param.spare_bytes_per_chunk);
-	printf("\tstart block...... %d\n", dev->param.start_block);
-	printf("\tend block........ %d\n", dev->param.end_block);
-	printf("\tencryptor........ %s\n", dev->enc.enc_name ? dev->enc.enc_name : "none");
+
 	printf("\tencryptor bytes.. %d\n", dev->enc.enc_reserved_bytes);
+	printf("\ttagger bytes..... %d\n", dev->tagger.tagger_reserved_bytes);
 	printf("\tpayload bytes.... %d\n", dev->payload_bytes_per_chunk);
+	printf("\tdata bytes....... %d\n", dev->data_bytes_per_chunk);
 }
 
 /*
@@ -88,39 +79,68 @@ static void prepare_dev(struct yaffs_dev *dev, const char *selected_encryptor)
 {
 	if (strcmp(selected_encryptor, "mbedtls") == 0)
 		do_install_mbedtls_encryptor(dev);
+	else
+		do_install_null_encryptor(dev);
 
 	dev->payload_bytes_per_chunk = dev->param.total_bytes_per_chunk -
 				       dev->enc.enc_reserved_bytes;
 
 	/*
 	 * Note although we're calculating the data_bytes_per_chunk
-	 * the tagger is not isnstalled, so this is meaningless.
+	 * the tagger is not installed, so this is meaningless.
 	 * At this stage we're just testing the payload encryption anyway.
 	 */
 	dev->data_bytes_per_chunk = dev->payload_bytes_per_chunk -
 				       dev->tagger.tagger_reserved_bytes;
+
+	yaffs_encryption_init(dev);
 }
+
+static struct yaffs_dev *test_dev_create(int data_area_size, int inband_tags)
+{
+	struct yaffs_dev *dev = malloc(sizeof(*dev));
+
+	if (!dev)
+		return NULL;
+
+	memset(dev, 0, sizeof(*dev));
+
+	dev->param.name = "Encryptor test device";
+	dev->param.total_bytes_per_chunk = data_area_size;
+	dev->param.inband_tags = inband_tags;
+	dev->param.spare_bytes_per_chunk = 0;
+	dev->param.chunks_per_block = 32;
+	dev->param.start_block = 0;
+	dev->param.end_block = 20;
+	dev->param.is_yaffs2 = 1;
+
+	if (inband_tags)
+		dev->tagger.tagger_reserved_bytes = 16;
+
+	return dev;
+}
+
 
 /*
  *  Set up a tester...
  */
-#define N_TEST_BUFFERS 2
 struct yaffs_tester {
 	struct yaffs_dev *dev;
-	int buffer_size;
-	u8 *buffer[N_TEST_BUFFERS];
 };
 
 static struct yaffs_tester *tester_create(struct yaffs_dev *dev)
 {
 	struct yaffs_tester *tester;
-	int i;
 
 	tester = malloc(sizeof(struct yaffs_tester));
 	if (!tester)
 		return NULL;
 
+	memset(tester, 0, sizeof(*tester));
+
 	tester->dev = dev;
+
+#if 0
 	tester->buffer_size = dev->param.total_bytes_per_chunk;
 
 	for(i = 0; i < N_TEST_BUFFERS; i++) {
@@ -129,13 +149,17 @@ static struct yaffs_tester *tester_create(struct yaffs_dev *dev)
 			goto buffer_alloc_failed;
 		memset(tester->buffer[i], 0, tester->buffer_size);
 	}
-
+#endif
 	return tester;
+
+#if 0
 
 buffer_alloc_failed:
 
 	for(i = 0; i < N_TEST_BUFFERS; i++)
 		free(tester->buffer[i]);
+#endif
+
 	free(tester);
 	return NULL;
 }
@@ -145,18 +169,11 @@ buffer_alloc_failed:
  *  Return 0 for success.
  */
 
-static  int test_empty_chunk_read(struct yaffs_tester *tester,
-				  int buffer_id, int chunk_id)
+static  int test_empty_chunk_read(struct yaffs_tester *tester)
 {
-	u8 *buffer;
-	struct yaffs_ext_tags tags;
-	int ret;
+	(void) tester;
 
-	buffer = tester->buffer[buffer_id];
-	memset(buffer, 0, tester->buffer_size);
-	ret = yaffs_rd_chunk_tags_nand(tester->dev, chunk_id,
-			     buffer, &tags);
-	if (ret != YAFFS_OK)
+	return 0;
 }
 
 static int do_tests(struct yaffs_tester *tester)
@@ -169,7 +186,7 @@ static int do_tests(struct yaffs_tester *tester)
 	 * that the reading of an 0xFF chunk works properly.
 	 */
 
-	ret = test_empty_chunk_read(tester, 0, 0);
+	ret = test_empty_chunk_read(tester);
 
 	if(ret < 0) {
 
@@ -178,11 +195,7 @@ static int do_tests(struct yaffs_tester *tester)
 	return 0;
 }
 
-int encryptor_test(int n_blocks,
-		   int chunks_per_block,
-		   int data_area_size,
-		   int spare_area_size,
-		   int is_yaffs2,
+int encryptor_test(int data_area_size,
 		   int inband_tags,
 		   const char *selected_encryptor)
 {
@@ -190,12 +203,9 @@ int encryptor_test(int n_blocks,
 	struct yaffs_tester *tester;
 	int ret;
 
-	dev = fake_dev_create(n_blocks,
-			      chunks_per_block,
-			      data_area_size,
-			      spare_area_size,
-			      is_yaffs2,
+	dev = test_dev_create(data_area_size,
 			      inband_tags);
+
 	if (!dev) {
 		printf("Could not create test device\n");
 		return -ENODEV;

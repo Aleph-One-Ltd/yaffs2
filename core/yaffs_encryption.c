@@ -69,9 +69,9 @@ static int yaffs_enc_null_deinitialise(struct yaffs_dev *dev)
 }
 
 /*
- * Set up a NULL encryption layer.
+ * Set up a null encryption layer.
  */
-static int yaffs_enc_null_initialise(struct yaffs_dev *dev)
+static int yaffs_encryption_initialise_null(struct yaffs_dev *dev)
 {
 	dev->enc.enc_encrypt_fn = yaffs_enc_null_encrypt;
 	dev->enc.enc_decrypt_fn = yaffs_enc_null_decrypt;
@@ -82,7 +82,6 @@ static int yaffs_enc_null_initialise(struct yaffs_dev *dev)
 	dev->enc.enc_name = "null_encryption";
 	return 0;
 }
-
 
 /*
  * Initialise the encryption layer.
@@ -100,7 +99,7 @@ int yaffs_encryption_init(struct yaffs_dev *dev)
 	if(dev->enc.enc_initialise_fn)
 		return dev->enc.enc_initialise_fn(dev);
 
-	return yaffs_enc_null_initialise(dev);
+	return yaffs_encryption_initialise_null(dev);
 }
 
 int yaffs_encryption_deinit(struct yaffs_dev *dev)

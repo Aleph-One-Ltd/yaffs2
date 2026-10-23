@@ -24,7 +24,7 @@ all: $(TARGETS)
 
 ENCRYPTOR_TEST_OBJS = encryptor_test_main.o\
                       encryptor_test.o\
-		      fake_dev.o \
+                      yaffs_encryption.o\
 		      yaffs_encrypt_mbedtls.o
 
 ALL_UNSORTED_OBJS += $(ENCRYPTOR_TEST_OBJS)

@@ -30,6 +30,18 @@ int verbose;
 
 int sleep_exit = 0;
 int sleep_time = 0;
+
+
+void *yaffsfs_malloc(size_t size)
+{
+	return malloc(size);
+}
+
+void yaffsfs_free(void *ptr)
+{
+	free(ptr);
+}
+
 void test_fatal(void)
 {
 	printf("fatal yaffs test pid %d sleeping\n",getpid());
@@ -56,9 +68,7 @@ static void bad_usage(const char * str)
 	fprintf(stderr, "Usage: encryptor_test [options]\n");
 	fprintf(stderr, "options\n");
 	fprintf(stderr, " d  data_byes: Size of data page\n");
-	fprintf(stderr, " s  spare_byes: Size of spare area\n");
 	fprintf(stderr, " t  type: \"inband\" or \"oob\"\n");
-	fprintf(stderr, " y  mode: \"yaffs1\" or \"yaffs2\"\n");
 	fprintf(stderr, " e encryptor: encryptor id\n");
 	fprintf(stderr, " v: verbose\n");
 	exit(2);
@@ -68,30 +78,21 @@ int main(int argc, char **argv)
 {
 	int ch;
 	int total_data_bytes;
-	int spare_bytes;
-	int is_yaffs2;
 	int inband_tags;
 	char *tag_type = "";
-	char *yaffs_mode = "";
 	char *selected_encryptor = "";
 	int ret;
 
 	signal(SIGSEGV,bad_ptr_handler);
 	signal(SIGBUS,bad_ptr_handler);
 	signal(SIGABRT,bad_ptr_handler);
-	while ((ch = getopt(argc,argv, "d:s:t:y:e:v")) != EOF)
+	while ((ch = getopt(argc,argv, "d:t:y:e:v")) != EOF)
 		switch (ch) {
 		case 'd':
 			total_data_bytes = atoi(optarg);
 			break;
-		case 's':
-			spare_bytes = atoi(optarg);
-			break;
 		case 't':
 			tag_type = strdup(optarg);
-			break;
-		case 'y':
-			yaffs_mode = strdup(optarg);
 			break;
 		case 'e':
 			selected_encryptor = strdup(optarg);
@@ -106,11 +107,8 @@ int main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (total_data_bytes <= 0)
-		bad_usage("Need a data bytes argument");
-
-	if (spare_bytes < 0)
-		bad_usage("Need a spare bytes argument");
+	if (total_data_bytes < 512)
+		bad_usage("Need a data bytes argument >= 512");
 
 	if(strcmp(tag_type, "inband") == 0)
 		inband_tags = 1;
@@ -119,22 +117,11 @@ int main(int argc, char **argv)
 	else
 		bad_usage("Need a valid tag type (oob or inband)");
 
-	if(strcmp(yaffs_mode, "yaffs1") == 0)
-		is_yaffs2 = 0;
-	else if(strcmp(yaffs_mode, "yaffs2") == 0)
-		is_yaffs2 = 1;
-	else
-		bad_usage("Need a valid yaffs mode (yaffs1 or yaffs2)");
-
 	if(strcmp(selected_encryptor, "mbedtls") &&
 	   strcmp(selected_encryptor, "unencrypted"))
 		bad_usage("Need a valid encryptor (mbedtls, unencrypted)");
 
-	ret = encryptor_test(2, // blocks
-			     8, // chunks per block
-			     total_data_bytes,
-			     spare_bytes,
-			     is_yaffs2,
+	ret = encryptor_test(total_data_bytes,
 			     inband_tags,
 			     selected_encryptor);
 
