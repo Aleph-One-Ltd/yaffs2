@@ -12,8 +12,8 @@
  * This is a test harness for a Yaffs encryptor.
  * This allows the encryptor to be tested without the whole of Yaffs.
  *
- * This works by setting up a very stripped down yaffs_dev that has a
- * fake driver layer and can prod and observe the encryptor.
+ * This works by setting up a very stripped down yaffs_dev that
+ * can prod and observe the encryptor.
  */
 #include "encryptor_test.h"
 
@@ -28,6 +28,11 @@
 #include "yaffs_encryption.h"
 
 #include "yaffs_encrypt_mbedtls.h"
+
+extern int verbose;
+
+#define dprintf(format, ...) \
+	do{ if(verbose) printf(format, ##__VA_ARGS__); } while (0)
 
 /*
  * Encryption initialisation.
@@ -51,13 +56,13 @@ static void do_install_null_encryptor(struct yaffs_dev *dev)
 	memset(&dev->enc, 0, sizeof(struct yaffs_encryptor));
 }
 
-
 static void show_dev_info(struct yaffs_dev *dev)
 {
 	if(!dev)
 		return;
 
 
+	printf("Test conditions:\n");
 	printf("\ttags............. %s\n", dev->param.inband_tags ?
 							"inband" : "oob");
 	printf("\tencryptor........ %s\n", dev->enc.enc_name);
@@ -96,6 +101,11 @@ static void prepare_dev(struct yaffs_dev *dev, const char *selected_encryptor)
 	yaffs_encryption_init(dev);
 }
 
+/*
+ * We only need a small amount of the yaffs_dev to do the encryptor testing.
+ * The device is not mounted and the driver is not needed - just some minimal
+ * stuff around the encryptor.
+ */
 static struct yaffs_dev *test_dev_create(int data_area_size, int inband_tags)
 {
 	struct yaffs_dev *dev = malloc(sizeof(*dev));
@@ -120,17 +130,21 @@ static struct yaffs_dev *test_dev_create(int data_area_size, int inband_tags)
 	return dev;
 }
 
-
 /*
  *  Set up a tester...
  */
+#define TESTER_N_BUFFERS 2
 struct yaffs_tester {
 	struct yaffs_dev *dev;
+	int buffer_size;
+	u8 *flash_buffer[TESTER_N_BUFFERS];
+	u8 *plaintext_buffer[TESTER_N_BUFFERS];
 };
 
 static struct yaffs_tester *tester_create(struct yaffs_dev *dev)
 {
 	struct yaffs_tester *tester;
+	int i;
 
 	tester = malloc(sizeof(struct yaffs_tester));
 	if (!tester)
@@ -140,25 +154,25 @@ static struct yaffs_tester *tester_create(struct yaffs_dev *dev)
 
 	tester->dev = dev;
 
-#if 0
 	tester->buffer_size = dev->param.total_bytes_per_chunk;
 
-	for(i = 0; i < N_TEST_BUFFERS; i++) {
-		tester->buffer[i] = malloc(tester->buffer_size);
-		if (!tester->buffer[i])
+	for(i = 0; i < TESTER_N_BUFFERS; i++) {
+		tester->flash_buffer[i] = malloc(tester->buffer_size);
+		tester->plaintext_buffer[i] = malloc(tester->buffer_size);
+		if (!tester->flash_buffer[i] ||
+		    !tester->plaintext_buffer[i])
 			goto buffer_alloc_failed;
-		memset(tester->buffer[i], 0, tester->buffer_size);
+		memset(tester->flash_buffer[i], 0, tester->buffer_size);
+		memset(tester->plaintext_buffer[i], 0, tester->buffer_size);
 	}
-#endif
 	return tester;
-
-#if 0
 
 buffer_alloc_failed:
 
-	for(i = 0; i < N_TEST_BUFFERS; i++)
-		free(tester->buffer[i]);
-#endif
+	for(i = 0; i < TESTER_N_BUFFERS; i++) {
+		free(tester->flash_buffer[i]);
+		free(tester->plaintext_buffer[i]);
+	}
 
 	free(tester);
 	return NULL;
@@ -169,30 +183,143 @@ buffer_alloc_failed:
  *  Return 0 for success.
  */
 
-static  int test_empty_chunk_read(struct yaffs_tester *tester)
-{
-	(void) tester;
 
+static int test_is_all_ff(const u8 *buffer, int n)
+{
+	int i;
+	dprintf("Checking for %d 0xFF bytes\n", n);
+	for (i = 0; i < n; i++) {
+		if (buffer[i] != 0xff) {
+			dprintf("Check failed at byte %d\n",
+				 i);
+			return 0;
+		}
+	}
+
+	dprintf("Check OK\n");
+	return 1;
+}
+
+/*
+ * Testing that the read of an unwritten buffer (all 0xff) results
+ * in a buffer that is all 0xff. ie. The encryptor must not modify
+ * unwritten pages.
+ */
+static int test_erased_chunk_read(struct yaffs_tester *tester)
+{
+	struct yaffs_dev *dev;
+	u8 *result_buffer;
+	u8 *read_buffer;
+
+	dprintf("test_erased_chunk_read()\n"
+		"\tWhen an erased chunk (all 0xFF) is read, this must be passed\n"
+		"\tthrough unmodified. The encryptor should not attempt to\n"
+		"\tdecrypt the chunk. It must end up still being 0xff bytes so\n"
+		"\tthat Yaffs can see it as an erased page.\n"
+		);
+
+	dev = tester->dev;
+	result_buffer = tester->plaintext_buffer[0];
+
+	memset(result_buffer, 0x55, dev->payload_bytes_per_chunk);
+
+	read_buffer = dev->enc.enc_get_read_buffer_fn(dev, result_buffer);
+
+	dprintf("Copying %d 0xFF bytes to read buffer simulating the read of an erased chunk.\n",
+				dev->param.total_bytes_per_chunk);
+	memset(read_buffer, 0xff, dev->param.total_bytes_per_chunk);
+
+	dev->enc.enc_decrypt_fn(dev, result_buffer,
+				dev->payload_bytes_per_chunk);
+	if (!test_is_all_ff(read_buffer, dev->payload_bytes_per_chunk)) {
+		printf("test_empty_chunk_read() failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * Basic test: set up a plaintext buffer, encrypt it then decrypt it into
+ * a different buffer and check both are the same.
+ */
+static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
+{
+	struct yaffs_dev *dev;
+	u8 *start_buffer;
+	u8 *output_buffer;
+	const u8 *write_buffer;
+	u8 *read_buffer;
+	u32 i;
+
+	dprintf("test_basic_encrypt_decrypt()\n"
+		"\tBasic test setting up a plaintext buffer then encrypting it\n"
+		"\tand decrypting it into a different buffer and comparing them.\n"
+		);
+
+	dev = tester->dev;
+	start_buffer = tester->plaintext_buffer[0];
+	output_buffer = tester->plaintext_buffer[1];
+
+	for(i = 0; i < dev->payload_bytes_per_chunk; i++) {
+		start_buffer[i] = i;
+	}
+
+	memset(output_buffer, 0x55, dev->payload_bytes_per_chunk);
+
+	write_buffer = dev->enc.enc_get_write_buffer_fn(dev, start_buffer);
+
+	dprintf("Encrypting start plaintext buffer\n");
+	dev->enc.enc_encrypt_fn(dev, start_buffer,
+				dev->payload_bytes_per_chunk);
+
+	dprintf("Copy write data to flash buffer (simulate flash write\n");
+	memcpy(tester->flash_buffer[0], write_buffer,
+				dev->param.total_bytes_per_chunk);
+
+	/*
+	 * Start read simulation and decrypt.
+	 */
+	read_buffer = dev->enc.enc_get_read_buffer_fn(dev, output_buffer);
+
+	dprintf("Copy flash data to read data (simulate flash read\n");
+	memcpy(read_buffer, tester->flash_buffer[0],
+				dev->param.total_bytes_per_chunk);
+
+	dprintf("Decrypt into output plaintext buffer\n");
+	dev->enc.enc_decrypt_fn(dev, output_buffer,
+				dev->payload_bytes_per_chunk);
+
+	dprintf("Compare plaintext buffers\n");
+	if (memcmp(start_buffer, output_buffer,
+		    dev->payload_bytes_per_chunk) != 0) {
+		printf("Plaintext buffer compare failed\n");
+		return -1;
+	}
 	return 0;
 }
 
 static int do_tests(struct yaffs_tester *tester)
 {
 	int ret;
+	int fail_count = 0;
 
-	/*
-	 * The fake device is initialised as erased.
-	 * We're just reading a chunk into a buffer to check
-	 * that the reading of an 0xFF chunk works properly.
-	 */
-
-	ret = test_empty_chunk_read(tester);
-
+	dprintf("\nStarting tests\n");
+	ret = test_erased_chunk_read(tester);
 	if(ret < 0) {
-
+		printf("Encryptor enc_decrypt_fn() should not modify an erased page.\n");
+		fail_count++;
+	}  else {
+		dprintf("test_erased_chunk_read() passed.\n\n");
 	}
 
-	return 0;
+	ret = test_basic_encrypt_decrypt(tester);
+	if(ret < 0) {
+		printf("Basic encrypt/decrypt failed\n");
+		fail_count++;
+	}  else {
+		dprintf("test_basic_encrypt_decrypt() passed.\n\n");
+	}
+	return -fail_count;
 }
 
 int encryptor_test(int data_area_size,
@@ -226,7 +353,7 @@ int encryptor_test(int data_area_size,
 	if (ret == 0) {
 		printf("All tests ran OK\n");
 	} else {
-		printf("Some errors in tests\n");
+		printf("Errors in %d tests\n", -ret);
 	}
 
 	if (ret)
