@@ -68,7 +68,7 @@ static void show_dev_info(struct yaffs_dev *dev)
 	printf("\tencryptor........ %s\n", dev->enc.enc_name);
 	printf("\ttotal data bytes. %d\n", dev->param.total_bytes_per_chunk);
 
-	printf("\tencryptor bytes.. %d\n", dev->enc.enc_reserved_bytes);
+	printf("\tencryptor bytes.. %d\n", yaffs_encryption_get_reserved_bytes(dev));
 	printf("\ttagger bytes..... %d\n", dev->tagger.tagger_reserved_bytes);
 	printf("\tpayload bytes.... %d\n", dev->payload_bytes_per_chunk);
 	printf("\tdata bytes....... %d\n", dev->data_bytes_per_chunk);
@@ -88,7 +88,7 @@ static void prepare_dev(struct yaffs_dev *dev, const char *selected_encryptor)
 		do_install_null_encryptor(dev);
 
 	dev->payload_bytes_per_chunk = dev->param.total_bytes_per_chunk -
-				       dev->enc.enc_reserved_bytes;
+				       yaffs_encryption_get_reserved_bytes(dev);
 
 	/*
 	 * Note although we're calculating the data_bytes_per_chunk
@@ -210,6 +210,7 @@ static int test_erased_chunk_read(struct yaffs_tester *tester)
 	struct yaffs_dev *dev;
 	u8 *result_buffer;
 	u8 *read_buffer;
+	int ret;
 
 	dprintf("test_erased_chunk_read()\n"
 		"\tWhen an erased chunk (all 0xFF) is read, this must be passed\n"
@@ -223,14 +224,24 @@ static int test_erased_chunk_read(struct yaffs_tester *tester)
 
 	memset(result_buffer, 0x55, dev->payload_bytes_per_chunk);
 
-	read_buffer = dev->enc.enc_get_read_buffer_fn(dev, result_buffer);
+	read_buffer = yaffs_encryption_get_read_buffer(dev, result_buffer);
+
+	if(!read_buffer) {
+		printf("Read buffer was NULL!\n");
+		return -1;
+	}
 
 	dprintf("Copying %d 0xFF bytes to read buffer simulating the read of an erased chunk.\n",
 				dev->param.total_bytes_per_chunk);
 	memset(read_buffer, 0xff, dev->param.total_bytes_per_chunk);
 
-	dev->enc.enc_decrypt_fn(dev, result_buffer,
-				dev->payload_bytes_per_chunk);
+	ret = yaffs_encryption_decrypt(dev, result_buffer,
+				       dev->payload_bytes_per_chunk);
+	if (ret != 0) {
+		printf("Expecting decryption function to return 0.");
+		return -1;
+	}
+
 	if (!test_is_all_ff(read_buffer, dev->payload_bytes_per_chunk)) {
 		printf("test_empty_chunk_read() failed\n");
 		return -1;
@@ -250,6 +261,7 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 	const u8 *write_buffer;
 	u8 *read_buffer;
 	u32 i;
+	int ret;
 
 	dprintf("test_basic_encrypt_decrypt()\n"
 		"\tBasic test setting up a plaintext buffer then encrypting it\n"
@@ -266,11 +278,15 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 
 	memset(output_buffer, 0x55, dev->payload_bytes_per_chunk);
 
-	write_buffer = dev->enc.enc_get_write_buffer_fn(dev, start_buffer);
+	write_buffer = yaffs_encryption_get_write_buffer(dev, start_buffer);
 
 	dprintf("Encrypting start plaintext buffer\n");
-	dev->enc.enc_encrypt_fn(dev, start_buffer,
-				dev->payload_bytes_per_chunk);
+	ret = yaffs_encryption_encrypt(dev, start_buffer,
+				       dev->payload_bytes_per_chunk);
+	if (ret != 0) {
+		printf("Expecting encryption function to return 0.");
+		return -1;
+	}
 
 	dprintf("Copy write data to flash buffer (simulate flash write\n");
 	memcpy(tester->flash_buffer[0], write_buffer,
@@ -279,19 +295,23 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 	/*
 	 * Start read simulation and decrypt.
 	 */
-	read_buffer = dev->enc.enc_get_read_buffer_fn(dev, output_buffer);
+	read_buffer = yaffs_encryption_get_read_buffer(dev, output_buffer);
 
 	dprintf("Copy flash data to read data (simulate flash read\n");
 	memcpy(read_buffer, tester->flash_buffer[0],
-				dev->param.total_bytes_per_chunk);
+			    dev->param.total_bytes_per_chunk);
 
 	dprintf("Decrypt into output plaintext buffer\n");
-	dev->enc.enc_decrypt_fn(dev, output_buffer,
-				dev->payload_bytes_per_chunk);
+	ret = yaffs_encryption_decrypt(dev, output_buffer,
+				       dev->payload_bytes_per_chunk);
+	if (ret != 0) {
+		printf("Expecting decryption function to return 0.");
+		return -1;
+	}
 
 	dprintf("Compare plaintext buffers\n");
 	if (memcmp(start_buffer, output_buffer,
-		    dev->payload_bytes_per_chunk) != 0) {
+		   dev->payload_bytes_per_chunk) != 0) {
 		printf("Plaintext buffer compare failed\n");
 		return -1;
 	}

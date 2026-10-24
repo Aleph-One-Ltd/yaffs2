@@ -25,6 +25,7 @@
 #include "nor_stress.h"
 #include "yaffs_fsx.h"
 #include "yaffs_guts.h"
+#include "yaffs_encryption.h"
 
 void (*ext_fatal)(void);
 
@@ -196,13 +197,15 @@ void list_devices(void)
 	 * info is not yet available.
 	 */
 	while ((dev = yaffs_next_dev()) != NULL) {
+		const char *encryptor_name = yaffs_encryption_get_name(dev);
+
 		printf("Device name=%s type=%s tags=%s total_bytes=%d encryptor=%s encrypt_reserved=%d\n",
 			dev->param.name,
 			dev->param.is_yaffs2 ? "yaffs2" : "yaffs1",
 			dev->param.inband_tags ? "inband-tags" : "oob-tags",
 			dev->param.total_bytes_per_chunk,
-			dev->enc.enc_name ? dev->enc.enc_name : "none",
-			dev->enc.enc_reserved_bytes);
+			encryptor_name ? encryptor_name : "unencrypted",
+			yaffs_encryption_get_reserved_bytes(dev));
 	}
 }
 
@@ -220,8 +223,8 @@ static void show_dev_info(const char *mount_point)
 	printf("\tspare bytes...... %d\n", dev->param.spare_bytes_per_chunk);
 	printf("\tstart block...... %d\n", dev->param.start_block);
 	printf("\tend block........ %d\n", dev->param.end_block);
-	printf("\tencryptor........ %s\n", dev->enc.enc_name ? dev->enc.enc_name : "none");
-	printf("\tencryptor bytes.. %d\n", dev->enc.enc_reserved_bytes);
+	printf("\tencryptor........ %s\n", yaffs_encryption_get_name(dev));
+	printf("\tencryptor bytes.. %d\n", yaffs_encryption_get_reserved_bytes(dev));
 	printf("\ttagger........... %s\n", dev->tagger.tagger_name ? dev->tagger.tagger_name : "none");
 	printf("\ttagger bytes..... %d\n", dev->tagger.tagger_reserved_bytes);
 	printf("\tdata bytes....... %d\n", dev->data_bytes_per_chunk);

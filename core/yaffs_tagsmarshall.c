@@ -18,6 +18,7 @@
 #include "yaffs_tagsmarshall.h"
 #include "yaffs_trace.h"
 #include "yaffs_packedtags2.h"
+#include "yaffs_encryption.h"
 
 /*
  * For writing, we are going to set up the data part of the chunk, then
@@ -47,7 +48,7 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 	 * the end of the data buffer.
 	 */
 
-	transfer_buffer = dev->enc.enc_get_write_buffer_fn(dev, data);
+	transfer_buffer = yaffs_encryption_get_write_buffer(dev, data);
 
 	if (!data || !tags)
 		BUG();
@@ -60,7 +61,7 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 		yaffs_pack_tags2_tags_only(dev, pt2tp, tags);
 
 		/* The encryption step places data into the transfer buffer. */
-		retval = dev->enc.enc_encrypt_fn(dev,
+		retval = yaffs_encryption_encrypt(dev,
 					data, dev->payload_bytes_per_chunk);
 		retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
 			transfer_buffer, dev->param.total_bytes_per_chunk,
@@ -69,7 +70,7 @@ static int yaffs_tags_marshall_write(struct yaffs_dev *dev,
 		yaffs_pack_tags2(dev, &pt, tags, !dev->param.no_tags_ecc);
 
 		/* The encryption step places data into the transfer buffer. */
-		retval = dev->enc.enc_encrypt_fn(dev,
+		retval = yaffs_encryption_encrypt(dev,
 					data, dev->payload_bytes_per_chunk);
 		retval = dev->drv.drv_write_chunk_fn(dev, nand_chunk,
 			transfer_buffer, dev->param.total_bytes_per_chunk,
@@ -123,7 +124,7 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 	else
 		BUG();
 
-	transfer_buffer = dev->enc.enc_get_read_buffer_fn(dev, data);
+	transfer_buffer = yaffs_encryption_get_read_buffer(dev, data);
 
 	retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 					transfer_buffer,
@@ -133,8 +134,8 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 					&ecc_result);
 
 	/* Note encryption functions should return 0. */
-	ret_enc = dev->enc.enc_decrypt_fn(dev,
-					data, dev->payload_bytes_per_chunk);
+	ret_enc = yaffs_encryption_decrypt(dev,
+					   data, dev->payload_bytes_per_chunk);
 	if (ret_enc != 0)
 		retval = YAFFS_FAIL;
 

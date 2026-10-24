@@ -16,8 +16,26 @@
 #define __YAFFS_ENCRYPTION_H__
 #include "yaffs_guts.h"
 
+/*
+ *  Functions to initialise and deinitialise the encryption layer if one
+ *  is installed. If not, installs a null encryptor.
+ */
 int yaffs_has_encryption_layer(struct yaffs_dev *dev);
 int yaffs_encryption_init(struct yaffs_dev *dev);
 int yaffs_encryption_deinit(struct yaffs_dev *dev);
 
+/*
+ * Wrapper functions to access encryptor functionality.
+ */
+int yaffs_encryption_get_reserved_bytes(struct yaffs_dev *dev);
+const char * yaffs_encryption_get_name(struct yaffs_dev *dev);
+
+int yaffs_encryption_encrypt(struct yaffs_dev *dev,
+			     const u8 *data, int data_len);
+int yaffs_encryption_decrypt(struct yaffs_dev *dev,
+			     u8 *data, int data_len);
+u8 *yaffs_encryption_get_read_buffer(struct yaffs_dev *dev,
+				     u8 *buffer);
+const u8 *yaffs_encryption_get_write_buffer(struct yaffs_dev *dev,
+					    const u8 *buffer);
 #endif

@@ -12,10 +12,14 @@
 
 #include "yaffs_encryption.h"
 
+/*
+ * Encryption is now supported for all modes, so just return true (1).
+ */
 int yaffs_has_encryption_layer(struct yaffs_dev *dev)
 {
-	return 1 ||dev->param.is_yaffs2;
-	//(dev->param.inband_tags && dev->param.is_yaffs2);
+	(void) dev;
+
+	return 1;
 }
 
 
@@ -81,6 +85,42 @@ static int yaffs_encryption_initialise_null(struct yaffs_dev *dev)
 	dev->enc.enc_reserved_bytes = 0;
 	dev->enc.enc_name = "null_encryption";
 	return 0;
+}
+
+
+/*
+ * Wrapper functions.
+ */
+
+int yaffs_encryption_encrypt(struct yaffs_dev *dev, const u8 *data, int data_len)
+{
+	return dev->enc.enc_encrypt_fn(dev, data, data_len);
+}
+
+int yaffs_encryption_decrypt(struct yaffs_dev *dev, u8 *data, int data_len)
+{
+	return dev->enc.enc_decrypt_fn(dev, data, data_len);
+}
+
+u8 *yaffs_encryption_get_read_buffer(struct yaffs_dev *dev, u8 *buffer)
+{
+	return dev->enc.enc_get_read_buffer_fn(dev, buffer);
+}
+
+const u8 *yaffs_encryption_get_write_buffer(struct yaffs_dev *dev,
+					    const u8 *buffer)
+{
+	return dev->enc.enc_get_write_buffer_fn(dev, buffer);
+}
+
+int yaffs_encryption_get_reserved_bytes(struct yaffs_dev *dev)
+{
+	return dev->enc.enc_reserved_bytes;
+}
+
+const char * yaffs_encryption_get_name(struct yaffs_dev *dev)
+{
+	return dev->enc.enc_name;
 }
 
 /*

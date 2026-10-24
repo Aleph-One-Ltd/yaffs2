@@ -4538,12 +4538,11 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 	dev->data_bytes_per_chunk =
 		dev->param.total_bytes_per_chunk -
 		dev->tagger.tagger_reserved_bytes -
-		dev->enc.enc_reserved_bytes;
+		yaffs_encryption_get_reserved_bytes(dev);
 
 	dev->payload_bytes_per_chunk =
 		dev->data_bytes_per_chunk +
 		dev->tagger.tagger_reserved_bytes;
-
 
 	/* Got the right mix of functions? */
 	if (!yaffs_check_dev_fns(dev)) {

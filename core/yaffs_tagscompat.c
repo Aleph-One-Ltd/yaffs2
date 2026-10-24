@@ -20,6 +20,7 @@
 #include "yaffs_getblockinfo.h"
 #include "yaffs_trace.h"
 #include "yaffs_endian.h"
+#include "yaffs_encryption.h"
 
 static void yaffs_handle_rd_data_error(struct yaffs_dev *dev, int nand_chunk);
 
@@ -263,13 +264,13 @@ static int yaffs_tags_compat_wr(struct yaffs_dev *dev,
 	yaffs_spare_init(&spare);
 
 	if (data)
-		transfer_buffer = dev->enc.enc_get_write_buffer_fn(dev, data);
+		transfer_buffer = yaffs_encryption_get_write_buffer(dev, data);
 	else
 		transfer_buffer = NULL;
 
 	if (data)
-		dev->enc.enc_encrypt_fn(dev,
-					data, dev->payload_bytes_per_chunk);
+		yaffs_encryption_encrypt(dev,
+					 data, dev->payload_bytes_per_chunk);
 
 	/*
 	 * The encryption step has placed the data into the transfer_buffer, if
@@ -314,7 +315,7 @@ static int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 	u8 *transfer_buffer;
 
 	if (data)
-		transfer_buffer = dev->enc.enc_get_read_buffer_fn(dev, data);
+		transfer_buffer = yaffs_encryption_get_read_buffer(dev, data);
 	else
 		transfer_buffer = NULL;
 
@@ -355,7 +356,8 @@ static int yaffs_tags_compat_rd(struct yaffs_dev *dev,
 	}
 
 	if (data)
-		dev->enc.enc_decrypt_fn(dev, data, dev->payload_bytes_per_chunk);
+		yaffs_encryption_decrypt(dev,
+					 data, dev->payload_bytes_per_chunk);
 
 	return YAFFS_OK;
 }
