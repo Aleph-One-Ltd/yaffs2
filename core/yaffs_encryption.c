@@ -13,17 +13,6 @@
 #include "yaffs_encryption.h"
 
 /*
- * Encryption is now supported for all modes, so just return true (1).
- */
-int yaffs_has_encryption_layer(struct yaffs_dev *dev)
-{
-	(void) dev;
-
-	return 1;
-}
-
-
-/*
  * Null encryption functions.
  * None of these functions do anything.
  * The transfer buffer is set up to be the data buffer, meaning
@@ -130,12 +119,6 @@ const char * yaffs_encryption_get_name(struct yaffs_dev *dev)
 
 int yaffs_encryption_init(struct yaffs_dev *dev)
 {
-	if (!yaffs_has_encryption_layer (dev)) {
-		dev->enc.enc_reserved_bytes = 0;
-		dev->enc.enc_name = "encryption_disabled";
-		return 0;
-	}
-
 	if(dev->enc.enc_initialise_fn)
 		return dev->enc.enc_initialise_fn(dev);
 
@@ -144,8 +127,7 @@ int yaffs_encryption_init(struct yaffs_dev *dev)
 
 int yaffs_encryption_deinit(struct yaffs_dev *dev)
 {
-	if (yaffs_has_encryption_layer (dev) &&
-	   dev->enc.enc_deinitialise_fn)
+	if (dev->enc.enc_deinitialise_fn)
 		return dev->enc.enc_deinitialise_fn(dev);
 
 	return 0;

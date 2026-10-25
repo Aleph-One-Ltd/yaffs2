@@ -20,7 +20,6 @@
  *  Functions to initialise and deinitialise the encryption layer if one
  *  is installed. If not, installs a null encryptor.
  */
-int yaffs_has_encryption_layer(struct yaffs_dev *dev);
 int yaffs_encryption_init(struct yaffs_dev *dev);
 int yaffs_encryption_deinit(struct yaffs_dev *dev);
 
