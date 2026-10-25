@@ -16,7 +16,24 @@
  * encryptor for Yaffs.
  *
  * This layer only exposes one function which is used to install the encryptor
- * onto an existing device BEFORE the device is mounted.
+ * onto an existing device BEFORE the device is mounted. This is the INSTALL
+ * function.
+ *
+ * States:
+ * * Once a device has been created, but before it is mounted, the encryptor is
+ * installed.
+ * * During the mounting (yaffs_guts_initialise), the encryptor in initialised
+ * by calling the _init_fn.
+ * * After that, during use the 4 main functions are used:
+ * - get_read_buffer_fn() gets the address of the read buffer that the driver
+ *   must read the encrypted flash data into.
+ * - get_write_buffer_fn() gets the address of the write buffer that the driver
+ *   must write the encrypted flash data from.
+ * - encrypt_fn(): The encryption function used to encrypt data into the write
+ *   buffer.
+ * - decrypt_fn(): The decryption function used to decrypt data from the read
+ *   buffer.
+ *
  */
 
 #include "yaffs_encrypt_mbedtls.h"
@@ -46,8 +63,8 @@
  * Inband tags:
  * +-------------------------------------------------------+-------------------+
  * |   NAND Data Page area (2048 bytes)                    | Spare (64 bytes)  |
- * |   File system info                                    | Bad block, ECC etc|
- * +-----------+-------------------------------+-----------+-------------------+
+ * |   File system info    (inc tags)                      | Bad block, ECC etc|
+ * +-----------+-------------------------------------------+-------------------+
  * | Encryption|   Encryped payload     (2032 bytes)       |
  * | IV (16 b) |  File system info                         |
  * +-----------+----------------+-----------+--------------+
@@ -68,14 +85,10 @@
  *             +-------------------------------------+
  *
  * Thus, for inband tags:
- * - data buffer is always present (because we need that to store the tags -
- *   even during scanning)
- * - oob is always NULL since that is not used by Yaffs internals.
  * - Both data and tags are in the encrypted payload.
  *
  * And, for oob tags:
- * - data buffer might be NULL (eg. reading tags during scanning).
- * - data is encrypted, tags are not.
+ * - Data is encrypted, tags are not.
  */
 
  /*
@@ -93,6 +106,8 @@
 #define KEY_SIZE_BYTES	(16)
 #define KEY_SIZE_BITS	(KEY_SIZE_BYTES * 8)
 
+/* To run a dummy check without actually encrypting, set JUST_COPY */
+//#define JUST_COPY 1
 
 /*
  * Note the name should NOT have any spaces or such.
@@ -114,12 +129,26 @@ struct yaffs_enc_context {
 #define dev_to_context(dev) \
 	(struct yaffs_enc_context *)((dev)->encryption_context)
 
+/*
+ * The get_write_buffer function returns the address of the buffer that will
+ * hold the encrypted data after encryption.
+ *
+ * Similarly the get_read_buffer function returns the address of the  buffer
+ * that will hold the encrypted data before encryption.
+ *
+ * These addresses are passed to the driver during flash write/read.
+ *
+ * Here we only have one encrypted buffer (ie only one read or write happening
+ * at a time) so the context only uses one buffer for both.
+ *
+ * NB: We assume this address is known BEFORE the encryption occurs.
+ */
 static const u8 *yaffs_encrypt_mbedtls_get_write_buffer(struct yaffs_dev *dev,
 							const u8 *data_buffer)
 {
 	struct yaffs_enc_context *context = dev_to_context(dev);
 
-	(void) data_buffer;
+	(void) data_buffer; /* Not used here. */
 
 	return context->encrypted_buffer;
 }
@@ -134,16 +163,24 @@ static u8 *yaffs_encrypt_mbedtls_get_read_buffer(struct yaffs_dev *dev,
 	return context->encrypted_buffer;
 }
 
-
+/*
+ * _encrypt() performs the encryption from the specified data buffer into the
+ * context->encrypted_buffer.
+ * This function is expected to return 0 for a success.
+ */
 static int yaffs_encrypt_mbedtls_encrypt(struct yaffs_dev *dev,
 					 const u8 *data, int data_len)
 {
 	struct yaffs_enc_context *context = dev_to_context(dev);
 	int eret = 0;
+	u8 *encrypt_payload;
+
+	encrypt_payload = &context->encrypted_buffer[IV_SIZE_BYTES];
 
 	/*
-	 * We use the first byte of the stored IV to determine if the chunk is empty.
-	 * Force it to a non-FF value.
+	 * Copy the IV inot into the encrypted buffer.
+	 * We use the first byte of the stored IV to determine if the chunk
+	 * is empty. Force it to a non-FF value.
 	 */
 	context->iv[0] = 'Y';
 
@@ -151,12 +188,21 @@ static int yaffs_encrypt_mbedtls_encrypt(struct yaffs_dev *dev,
 
 #if JUST_COPY
 	(void) eret;
-	memcpy(&context->encrypted_buffer[IV_SIZE_BYTES], data, data_len);
+	memcpy(encrypt_payload, data, data_len);
 #else
+	/*
+	 * mbedtls AES encryption operations. Set the key on each use.
+	 * mbedtls updates the IV on each use.
+	 */
 	mbedtls_aes_setkey_enc(&context->aes, context->key, 128);
 	eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_ENCRYPT,
-				    data_len, context->iv,
-				    data, &context->encrypted_buffer[IV_SIZE_BYTES]);
+			data_len, context->iv,
+			data, encrypt_payload);
+
+	/*
+	 * encrypted_buffer now holds the 16-byte IV followed by the encrypted
+	 * payload.
+	 */
 	if (eret)
 		printf("encryption eret = %d\n", eret);
 #endif
@@ -164,40 +210,54 @@ static int yaffs_encrypt_mbedtls_encrypt(struct yaffs_dev *dev,
 	return eret;
 }
 
+/*
+ * decryption is mostly the mirror of encryption except for special handling of
+ * erased chunks. Erased chunks are NOT decrypted, but are passed through as is.
+ * We use the first byte of the IV to determine if a chunk is erased or not.
+ * Before this function is called, the encrypted_buffer has been filled by the
+ * driver reading flash.
+ * This function is expected to return 0.
+ */
 static int yaffs_encrypt_mbedtls_decrypt(struct yaffs_dev *dev,
 					 u8 *data, int data_len)
 {
 	struct yaffs_enc_context *context = dev_to_context(dev);
 	int eret = 0;
 	u8 *decrypt_iv;
+	u8 *decrypt_payload;
 
 	/*
-	 * Now we need to check if the chunk was empty. We can do that by
+	 * Now we need to check if the chunk was erased. We can do that by
 	 * checking the read-back IV is not 0xff.
 	 */
 	decrypt_iv = context->encrypted_buffer;
+	decrypt_payload = &context->encrypted_buffer[IV_SIZE_BYTES];
 
 	if (decrypt_iv[0] == 0xff) {
 		/*
-		 * The first byte of the IV area is FF, so the page is unwritten.
-		 * Write FF to the output buffer.
+		 * The first byte of the IV area is FF, so the chunk is erased.
+		 * Write all FF to the output buffer.
 		 */
 
 		memset(data, 0xff, data_len);
 
 	} else {
 		/*
-		 * Decrypt into the data buffer.
+		 * Not erased, so decrypt into the data buffer.
 		 */
 
 #if JUST_COPY
 		(void) eret;
-		memcpy(data, &context->encrypted_buffer[IV_SIZE_BYTES], data_len);
+		memcpy(data, decrypt_payload, data_len);
 #else
+		/*
+		 * Call the mbedtls AES functions, first setting the key.
+		 * mbedtls seems to need the key set.
+		 */
 		mbedtls_aes_setkey_dec(&context->aes, context->key, 128);
 		eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_DECRYPT,
 				    data_len, decrypt_iv,
-				    &context->encrypted_buffer[IV_SIZE_BYTES],
+				    decrypt_payload,
 				    data);
 		if (eret)
 			printf("decryption eret = %d\n", eret);
@@ -209,6 +269,10 @@ static int yaffs_encrypt_mbedtls_decrypt(struct yaffs_dev *dev,
 /*
  *
  * Just use mbedtls to randomise the IV. Could use other functions too.
+ * This is only used once at start up. After that the AES undates the IV
+ * after each use.
+ *
+ * NOTE: This is just a place holder that is not particularly secure.
  */
 static void randomise_iv(u8 *iv, int iv_size)
 {
@@ -235,6 +299,8 @@ static void randomise_iv(u8 *iv, int iv_size)
 
 /*
  * Initialise the context and randomise the IV.
+ * This is called during mount.
+ * This function is expected to return 0.
  */
 static int yaffs_encrypt_mbedtls_init(struct yaffs_dev *dev)
 {
@@ -255,7 +321,9 @@ static int yaffs_encrypt_mbedtls_init(struct yaffs_dev *dev)
 }
 
 /*
- *  Free the context.
+ * Free the context etc.
+ * Called during unmout.
+ * This function is expected to return 0.
  */
 static int yaffs_encrypt_mbedtls_deinit(struct yaffs_dev *dev)
 {
@@ -276,6 +344,8 @@ static int yaffs_encrypt_mbedtls_deinit(struct yaffs_dev *dev)
  * The installer function just installs the various field: handler functions and
  * some values the rest of Yaffs needs to know about and a name (just for
  * debugging purposes).
+ * Note that this should do the bare minimum context initialisation.
+ * This function is expected to return 0.
  */
 int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev, const u8 *key,
 				  int key_size_bytes)
@@ -297,6 +367,9 @@ int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev, const u8 *key,
 
 	memcpy(new_context->key, key, key_size_bytes);
 
+	/*
+	 * Hook up the context to the device so we can find it later.
+	 */
 	dev->encryption_context = new_context;
 
 	/*

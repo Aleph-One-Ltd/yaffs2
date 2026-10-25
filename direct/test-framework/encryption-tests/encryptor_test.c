@@ -238,7 +238,7 @@ static int test_erased_chunk_read(struct yaffs_tester *tester)
 	ret = yaffs_encryption_decrypt(dev, result_buffer,
 				       dev->payload_bytes_per_chunk);
 	if (ret != 0) {
-		printf("Expecting decryption function to return 0.");
+		printf("Expecting decryption function to return 0.\n");
 		return -1;
 	}
 
@@ -284,7 +284,7 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 	ret = yaffs_encryption_encrypt(dev, start_buffer,
 				       dev->payload_bytes_per_chunk);
 	if (ret != 0) {
-		printf("Expecting encryption function to return 0.");
+		printf("Expecting encryption function to return 0.\n");
 		return -1;
 	}
 
@@ -305,7 +305,7 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 	ret = yaffs_encryption_decrypt(dev, output_buffer,
 				       dev->payload_bytes_per_chunk);
 	if (ret != 0) {
-		printf("Expecting decryption function to return 0.");
+		printf("Expecting decryption function to return 0.\n");
 		return -1;
 	}
 
