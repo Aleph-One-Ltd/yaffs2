@@ -31,6 +31,8 @@
 
 extern int verbose;
 
+int is_null_encryptor;
+
 #define dprintf(format, ...) \
 	do{ if(verbose) printf(format, ##__VA_ARGS__); } while (0)
 
@@ -54,6 +56,7 @@ static void do_install_null_encryptor(struct yaffs_dev *dev)
 	 * yaffs_enc_init(dev) will sort it out.
 	 */
 	memset(&dev->enc, 0, sizeof(struct yaffs_encryptor));
+	is_null_encryptor = 1;
 }
 
 static void show_dev_info(struct yaffs_dev *dev)
@@ -178,11 +181,10 @@ buffer_alloc_failed:
 	return NULL;
 }
 
-/*
- *  Tests return negative number if there is a problem.
- *  Return 0 for success.
- */
 
+/*
+ * Helper functions.
+ */
 
 static int test_is_all_ff(const u8 *buffer, int n)
 {
@@ -199,6 +201,37 @@ static int test_is_all_ff(const u8 *buffer, int n)
 	dprintf("Check OK\n");
 	return 1;
 }
+
+static void fill_buffer(u8 *buffer, int n)
+{
+	int i;
+
+	for(i = 0; i < n; i++) {
+		buffer[i] = i;
+	}
+}
+
+static void dprintf_buffer(const char *str, const u8 *buffer, int n)
+{
+	int i;
+
+	dprintf("%s:\n", str);
+
+	for(i = 0; i < n; i++) {
+		dprintf("%02X ", buffer[i]);
+		if ((i & 15) == 15)
+			dprintf("\n");
+	}
+
+	if ((i & 15) != 0)
+		dprintf("\n");
+}
+
+
+/*
+ *  Tests return negative number if there is a problem.
+ *  Return 0 for success.
+ */
 
 /*
  * Testing that the read of an unwritten buffer (all 0xff) results
@@ -243,6 +276,7 @@ static int test_erased_chunk_read(struct yaffs_tester *tester)
 	}
 
 	if (!test_is_all_ff(read_buffer, dev->payload_bytes_per_chunk)) {
+		dprintf_buffer("result buffer",read_buffer, 64);
 		printf("test_empty_chunk_read() failed\n");
 		return -1;
 	}
@@ -260,7 +294,6 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 	u8 *output_buffer;
 	const u8 *write_buffer;
 	u8 *read_buffer;
-	u32 i;
 	int ret;
 
 	dprintf("test_basic_encrypt_decrypt()\n"
@@ -272,9 +305,7 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 	start_buffer = tester->plaintext_buffer[0];
 	output_buffer = tester->plaintext_buffer[1];
 
-	for(i = 0; i < dev->payload_bytes_per_chunk; i++) {
-		start_buffer[i] = i;
-	}
+	fill_buffer(start_buffer, dev->payload_bytes_per_chunk);
 
 	memset(output_buffer, 0x55, dev->payload_bytes_per_chunk);
 
@@ -288,16 +319,19 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 		return -1;
 	}
 
-	dprintf("Copy write data to flash buffer (simulate flash write\n");
+	dprintf("Copy write data to flash buffer (simulate flash write)\n");
 	memcpy(tester->flash_buffer[0], write_buffer,
 				dev->param.total_bytes_per_chunk);
+
+	dprintf_buffer("start buffer",start_buffer, 64);
+	dprintf_buffer("flash buffer",tester->flash_buffer[0], 64);
 
 	/*
 	 * Start read simulation and decrypt.
 	 */
 	read_buffer = yaffs_encryption_get_read_buffer(dev, output_buffer);
 
-	dprintf("Copy flash data to read data (simulate flash read\n");
+	dprintf("Copy flash data to read data (simulate flash read)\n");
 	memcpy(read_buffer, tester->flash_buffer[0],
 			    dev->param.total_bytes_per_chunk);
 
@@ -315,6 +349,151 @@ static int test_basic_encrypt_decrypt(struct yaffs_tester *tester)
 		printf("Plaintext buffer compare failed\n");
 		return -1;
 	}
+	return 0;
+}
+
+/*
+ * Repeat Encrypt: encrypt the same plaintext twice, checking if the result is
+ * the same. Generally that's not a good idea because we want deterministic
+ * output.
+ *
+ * It is pointless doing some of this test on the null_encryptor because that
+ * will always be deterministic.
+ */
+static int test_repeat_encrypt_decrypt(struct yaffs_tester *tester)
+{
+	struct yaffs_dev *dev;
+	u8 *start_buffer;
+	u8 *output_buffer;
+
+	const u8 *write_buffer;
+	u8 *read_buffer;
+	int ret;
+
+	dprintf("test_double_encrypt_decrypt()\n"
+		"\tEncrypt the same plaintext twice, checking that the\n"
+		"\tencrypted data differs. This is done to ensure the IV\n"
+		"\tis being changed to make non-deterministic output.\n"
+		"\tAfter that, decrypt both buffers to check them.\n"
+		"\tNB The determinism test is ignored if unencrypted.\n"
+		);
+
+	dev = tester->dev;
+	start_buffer = tester->plaintext_buffer[0];
+	output_buffer = tester->plaintext_buffer[1];
+
+
+	fill_buffer(start_buffer, dev->payload_bytes_per_chunk);
+
+	memset(output_buffer, 0x55, dev->payload_bytes_per_chunk);
+
+
+	/*
+	 * Do the first encryption to flash_buffer[0].
+	 */
+
+	write_buffer = yaffs_encryption_get_write_buffer(dev, start_buffer);
+
+	dprintf("Encrypting start plaintext buffer first time\n");
+	ret = yaffs_encryption_encrypt(dev, start_buffer,
+				       dev->payload_bytes_per_chunk);
+	if (ret != 0) {
+		printf("Expecting encryption function to return 0.\n");
+		return -1;
+	}
+
+	dprintf("Copy write data to flash buffer[0] (simulate flash write)\n");
+	memcpy(tester->flash_buffer[0], write_buffer,
+				dev->param.total_bytes_per_chunk);
+
+
+	/*
+	 * Do the second encryption to flash_buffer[1].
+	 */
+
+	write_buffer = yaffs_encryption_get_write_buffer(dev, start_buffer);
+
+	dprintf("Encrypting start plaintext buffer second time\n");
+	ret = yaffs_encryption_encrypt(dev, start_buffer,
+				       dev->payload_bytes_per_chunk);
+	if (ret != 0) {
+		printf("Expecting encryption function to return 0.\n");
+		return -1;
+	}
+
+	dprintf("Copy write data to flash buffer[1] (simulate flash write)\n");
+	memcpy(tester->flash_buffer[1], write_buffer,
+				dev->param.total_bytes_per_chunk);
+
+
+	/*
+	 * Compare flash_buffer[0] and flash_buffer[1]. Check they differ.
+	 * Not done on NULL encryptor.
+	 */
+
+	if (!is_null_encryptor &&
+	    memcmp(tester->flash_buffer[0],
+	           tester->flash_buffer[1],
+		   dev->param.total_bytes_per_chunk) == 0) {
+		printf("Warning Encrypting the same data twice resulted in the\n"
+		       "\tsame encrypted data. This means the encryption is\n"
+		       "\tdeterministic and potentially weak. Consider using a\n"
+		       "\tdifferent IV for each encryption.\n");
+
+		return -1;
+	}
+
+	dprintf_buffer("start buffer",start_buffer, 64);
+	dprintf_buffer("flash buffer[0]",tester->flash_buffer[0], 64);
+	dprintf_buffer("flash buffer[1]",tester->flash_buffer[1], 64);
+	/*
+	 * Start read simulation and decrypt flash_buffer[0].
+	 */
+	read_buffer = yaffs_encryption_get_read_buffer(dev, output_buffer);
+
+	dprintf("Copy flash data to read data (simulate flash read)\n");
+	memcpy(read_buffer, tester->flash_buffer[0],
+			    dev->param.total_bytes_per_chunk);
+
+	dprintf("Decrypt into output plaintext buffer\n");
+	ret = yaffs_encryption_decrypt(dev, output_buffer,
+				       dev->payload_bytes_per_chunk);
+	if (ret != 0) {
+		printf("Expecting decryption function to return 0.\n");
+		return -1;
+	}
+
+	dprintf("Compare plaintext buffers\n");
+	if (memcmp(start_buffer, output_buffer,
+		   dev->payload_bytes_per_chunk) != 0) {
+		printf("Plaintext buffer compare failed\n");
+		return -1;
+	}
+
+	/*
+	 * Start read simulation and decrypt flash_buffer[1].
+	 */
+	read_buffer = yaffs_encryption_get_read_buffer(dev, output_buffer);
+
+	dprintf("Copy flash data to read data (simulate flash read)\n");
+	memcpy(read_buffer, tester->flash_buffer[1],
+			    dev->param.total_bytes_per_chunk);
+
+	dprintf("Decrypt into output plaintext buffer\n");
+	ret = yaffs_encryption_decrypt(dev, output_buffer,
+				       dev->payload_bytes_per_chunk);
+	if (ret != 0) {
+		printf("Expecting decryption function to return 0.\n");
+		return -1;
+	}
+
+	dprintf("Compare plaintext buffers\n");
+	if (memcmp(start_buffer, output_buffer,
+		   dev->payload_bytes_per_chunk) != 0) {
+		printf("Plaintext buffer compare failed\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -339,6 +518,15 @@ static int do_tests(struct yaffs_tester *tester)
 	}  else {
 		dprintf("test_basic_encrypt_decrypt() passed.\n\n");
 	}
+
+	ret = test_repeat_encrypt_decrypt(tester);
+	if(ret < 0) {
+		printf("Repeat encrypt/decrypt failed\n");
+		fail_count++;
+	}  else {
+		dprintf("test_repeat_encrypt_decrypt() passed.\n\n");
+	}
+
 	return -fail_count;
 }
 
