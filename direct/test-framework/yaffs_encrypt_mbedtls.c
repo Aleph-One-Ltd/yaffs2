@@ -178,12 +178,11 @@ static int yaffs_encrypt_mbedtls_encrypt(struct yaffs_dev *dev,
 	encrypt_payload = &context->encrypted_buffer[IV_SIZE_BYTES];
 
 	/*
-	 * Copy the IV inot into the encrypted buffer.
+	 * Copy the IV into the encrypted buffer.
 	 * We use the first byte of the stored IV to determine if the chunk
 	 * is empty. Force it to a non-FF value.
 	 */
 	context->iv[0] = 'Y';
-
 	memcpy(context->encrypted_buffer, context->iv, IV_SIZE_BYTES);
 
 #if JUST_COPY
