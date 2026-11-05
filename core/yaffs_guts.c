@@ -4499,7 +4499,15 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 
 	dev->gc_block = 0;
 
-	if (dev->param.start_block == 0) {
+	if (dev->param.relative_block_numbers) {
+		/* Block 0 and chunk 0 are reserved, so start at block 1 */
+		dev->internal_start_block = 1;
+		dev->internal_end_block =
+			dev->param.end_block - dev->param.start_block + 1;
+		dev->block_offset = 1 - (int)dev->param.start_block;
+		dev->chunk_offset =
+			dev->block_offset * (int)dev->param.chunks_per_block;
+	} else if (dev->param.start_block == 0) {
 		dev->internal_start_block = dev->param.start_block + 1;
 		dev->internal_end_block = dev->param.end_block + 1;
 		dev->block_offset = 1;
