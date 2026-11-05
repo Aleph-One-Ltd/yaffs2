@@ -21,15 +21,16 @@
 YDI_DIR = ../../
 YDI_FRAMEWORK_DIR = ../
 
-TARGETS = directtest2k reldevtest unlinkfilltest
+TARGETS = directtest2k reldevtest unlinkfilltest relblocktest
 
 all: $(TARGETS)
 
 DIRECTTESTOBJS = $(COMMONTESTOBJS) dtest.o
 RELDEVOBJS =  $(COMMONTESTOBJS) reldevtest.o
 UNLINKFILLOBJS =  $(COMMONTESTOBJS) unlinkfilltest.o
+RELBLOCKOBJS =  $(COMMONTESTOBJS) relblocktest.o
 
-ALL_UNSORTED_OBJS += $(DIRECTTESTOBJS) $(RELDEVOBJS) $(UNLINKFILLOBJS)
+ALL_UNSORTED_OBJS += $(DIRECTTESTOBJS) $(RELDEVOBJS) $(UNLINKFILLOBJS) $(RELBLOCKOBJS)
 
 include ../FrameworkRules.mk
 
@@ -42,3 +43,5 @@ reldevtest: $(FRAMEWORK_SOURCES) $(RELDEVOBJS) Makefile
 unlinkfilltest: $(FRAMEWORK_SOURCES) $(UNLINKFILLOBJS) Makefile
 	gcc -o $@ $(UNLINKFILLOBJS) -lpthread
 
+relblocktest: $(FRAMEWORK_SOURCES) $(RELBLOCKOBJS) Makefile
+	gcc -o $@ $(RELBLOCKOBJS) -lpthread

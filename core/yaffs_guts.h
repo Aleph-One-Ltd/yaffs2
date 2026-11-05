@@ -546,6 +546,11 @@ struct yaffs_param {
 	u32 spare_bytes_per_chunk;	/* spare area size */
 	u32 start_block;	/* Start block we're allowed to use */
 	u32 end_block;		/* End block we're allowed to use */
+	int relative_block_numbers; /* If set, blocks are numbered internally
+				     * from 1 whatever start_block is, so the
+				     * internal chunk numbers (and the checkpoint)
+				     * do not depend on where the partition lies.
+				     * Drivers still see flash block numbers. */
 	u32 n_reserved_blocks;	/* Tuneable so that we can reduce
 				 * reserved blocks on NOR and RAM. */
 
