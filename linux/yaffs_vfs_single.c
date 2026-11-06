@@ -1486,7 +1486,7 @@ static int yaffs_statfs(struct dentry *dentry, struct kstatfs *buf)
 
 static void yaffs_flush_inodes(struct super_block *sb)
 {
-	struct inode *iptr;
+	struct inode *iptr, *old_inode = NULL;
 	struct yaffs_obj *obj;
 	struct yaffs_dev *dev = yaffs_super_to_dev(sb);
 
@@ -1509,13 +1509,23 @@ static void yaffs_flush_inodes(struct super_block *sb)
 			yaffs_flush_file(obj, 1, 0, 0);
 		}
 
+		/*
+		 * Keep iptr pinned until the iterator has advanced. iput() can
+		 * evict it and remove its i_sb_list entry.
+		 */
 		yaffs_gross_unlock(dev);
-		iput(iptr);
+		iput(old_inode);
+		old_inode = iptr;
 		yaffs_gross_lock(dev);
 
 		spin_lock(&sb->s_inode_list_lock);
 	}
 	spin_unlock(&sb->s_inode_list_lock);
+	if (old_inode) {
+		yaffs_gross_unlock(dev);
+		iput(old_inode);
+		yaffs_gross_lock(dev);
+	}
 }
 
 static void yaffs_flush_super(struct super_block *sb, int do_checkpoint)
