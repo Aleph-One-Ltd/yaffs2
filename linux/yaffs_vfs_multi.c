@@ -2352,22 +2352,49 @@ static void yaffs_bg_stop(struct yaffs_dev *dev)
 }
 #endif
 
-
 static void yaffs_flush_inodes(struct super_block *sb)
 {
-	struct inode *iptr;
+	struct inode *iptr, *old_inode = NULL;
 	struct yaffs_obj *obj;
-
+	struct yaffs_dev *dev = yaffs_super_to_dev(sb);
+	
+	spin_lock(&sb->s_inode_list_lock);
 	list_for_each_entry(iptr, &sb->s_inodes, i_sb_list) {
+		spin_lock(&iptr->i_lock);
+		if (iptr->i_state & (I_FREEING|I_WILL_FREE|I_NEW)) {
+			spin_unlock(&iptr->i_lock);
+			continue;
+		}
+		
+		__iget(iptr);
+		spin_unlock(&iptr->i_lock);
+		spin_unlock(&sb->s_inode_list_lock);
+		
 		obj = yaffs_inode_to_obj(iptr);
 		if (obj) {
 			yaffs_trace(YAFFS_TRACE_OS,
-				"flushing obj %d",
-				obj->obj_id);
+			    "flushing obj %d", obj->obj_id);
 			yaffs_flush_file(obj, 1, 0, 0);
 		}
+		/*
+		 * Keep iptr pinned until the iterator has advanced. iput() can
+		 * evict it and remove its i_sb_list entry.
+		 */
+		yaffs_gross_unlock(dev);
+		iput(old_inode);
+		old_inode = iptr;
+		yaffs_gross_lock(dev);
+		
+		spin_lock(&sb->s_inode_list_lock);
+	}
+	spin_unlock(&sb->s_inode_list_lock);
+	if (old_inode) {
+		yaffs_gross_unlock(dev);
+		iput(old_inode);
+		yaffs_gross_lock(dev);
 	}
 }
+
 
 static void yaffs_flush_super(struct super_block *sb, int do_checkpoint)
 {
