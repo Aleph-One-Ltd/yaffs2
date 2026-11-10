@@ -124,7 +124,9 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 	else
 		BUG();
 
-	transfer_buffer = yaffs_encryption_get_read_buffer(dev, data);
+	transfer_buffer = data ?
+			yaffs_encryption_get_read_buffer(dev, data) :
+			NULL;
 
 	retval = dev->drv.drv_read_chunk_fn(dev, nand_chunk,
 					transfer_buffer,
@@ -134,7 +136,8 @@ static int yaffs_tags_marshall_read(struct yaffs_dev *dev,
 					&ecc_result);
 
 	/* Note encryption functions should return 0. */
-	ret_enc = yaffs_encryption_decrypt(dev,
+	if (data)
+		ret_enc = yaffs_encryption_decrypt(dev,
 					   data, dev->payload_bytes_per_chunk);
 	if (ret_enc != 0)
 		retval = YAFFS_FAIL;
