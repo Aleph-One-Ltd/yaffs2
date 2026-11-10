@@ -375,7 +375,6 @@ struct yaffs_obj_hdr {
 
 	/* is_shrink applies to object headers written when wemake a hole. */
 	u32 is_shrink;
-
 };
 
 /*--------------------------- Tnode -------------------------- */
