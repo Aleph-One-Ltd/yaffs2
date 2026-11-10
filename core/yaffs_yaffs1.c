@@ -211,6 +211,17 @@ int yaffs1_scan(struct yaffs_dev *dev)
 				if (!in)
 					alloc_failed = 1;
 
+				/* If the oh structure is small (due to
+				 * encryption) then copy recover the hammered
+				 * fields from the inband stadowed position.
+				 */
+				if (dev->data_bytes_per_chunk <
+				    sizeof(struct yaffs_obj_hdr)) {
+					oh->shadows_obj =
+						oh->inband_shadowed_obj_id;
+					oh->is_shrink = oh->inband_is_shrink;
+				}
+
 				if (in && oh->shadows_obj > 0) {
 
 					struct yaffs_shadow_fixer *fixer;

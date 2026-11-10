@@ -3107,7 +3107,8 @@ int yaffs_update_oh(struct yaffs_obj *in, const YCHAR *name, int force,
 
 	oh->type = in->variant_type;
 	oh->yst_mode = in->yst_mode;
-	oh->shadows_obj = oh->inband_shadowed_obj_id = shadows;
+	oh->shadows_obj = shadows;
+	oh->inband_shadowed_obj_id = shadows;
 
 	yaffs_load_attribs_oh(oh, in);
 
