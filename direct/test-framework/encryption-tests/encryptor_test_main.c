@@ -31,7 +31,6 @@ int verbose;
 int sleep_exit = 0;
 int sleep_time = 0;
 
-
 void *yaffsfs_malloc(size_t size)
 {
 	return malloc(size);
