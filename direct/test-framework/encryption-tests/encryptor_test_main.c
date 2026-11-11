@@ -77,8 +77,8 @@ static void bad_usage(const char * str)
 int main(int argc, char **argv)
 {
 	int ch;
-	int total_data_bytes;
-	int inband_tags;
+	int total_data_bytes = 0;
+	int inband_tags = 0;
 	char *tag_type = "";
 	char *selected_encryptor = "";
 	int ret;
