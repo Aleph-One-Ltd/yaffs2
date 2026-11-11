@@ -4841,7 +4841,7 @@ void yaffs_deinitialise(struct yaffs_dev *dev)
 
 		dev->ll_init = 0;
 		dev->is_mounted = 0;
-
+		yaffs_encryption_deinit(dev);
 		yaffs_deinit_nand(dev);
 	}
 }
