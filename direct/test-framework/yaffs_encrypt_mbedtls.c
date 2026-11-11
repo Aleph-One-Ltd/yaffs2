@@ -102,6 +102,13 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/aes.h"
 
+/*
+ * For AES128, use KEY_SIZE_BYTES = 16
+ * For AES256, use KEY_SIZE_BYTES = 32
+ *
+ * Note the IV size does not change for AES256. It is still 16 bytes - matching
+ * the AES block size.
+ */
 #define IV_SIZE_BYTES	(16)
 #define KEY_SIZE_BYTES	(16)
 #define KEY_SIZE_BITS	(KEY_SIZE_BYTES * 8)
@@ -193,7 +200,7 @@ static int yaffs_encrypt_mbedtls_encrypt(struct yaffs_dev *dev,
 	 * mbedtls AES encryption operations. Set the key on each use.
 	 * mbedtls updates the IV on each use.
 	 */
-	mbedtls_aes_setkey_enc(&context->aes, context->key, 128);
+	mbedtls_aes_setkey_enc(&context->aes, context->key, KEY_SIZE_BITS);
 	eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_ENCRYPT,
 			data_len, context->iv,
 			data, encrypt_payload);
@@ -253,7 +260,8 @@ static int yaffs_encrypt_mbedtls_decrypt(struct yaffs_dev *dev,
 		 * Call the mbedtls AES functions, first setting the key.
 		 * mbedtls seems to need the key set.
 		 */
-		mbedtls_aes_setkey_dec(&context->aes, context->key, 128);
+		mbedtls_aes_setkey_dec(&context->aes, context->key,
+					KEY_SIZE_BITS);
 		eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_DECRYPT,
 				    data_len, decrypt_iv,
 				    decrypt_payload,
@@ -321,7 +329,10 @@ static int yaffs_encrypt_mbedtls_init(struct yaffs_dev *dev)
 
 /*
  * Free the context etc.
- * Called during unmout.
+ * Called during unmount.
+ * Note we are not destroying the context because deinit just undoes
+ * initialisation and the context is created during the installation.
+ *
  * This function is expected to return 0.
  */
 static int yaffs_encrypt_mbedtls_deinit(struct yaffs_dev *dev)
@@ -352,6 +363,10 @@ int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev, const u8 *key,
 	struct yaffs_enc_context *new_context;
 	struct yaffs_encryptor *enc;
 
+	if (key_size_bytes != KEY_SIZE_BYTES)
+		return -1;
+
+
 	/*
 	 * Set up the encryption context.
 	 * At this stage we will set up an empty context and just load the key.
@@ -360,9 +375,6 @@ int yaffs_encrypt_mbedtls_install(struct yaffs_dev *dev, const u8 *key,
 
 	new_context = malloc(sizeof(struct yaffs_enc_context));
 	memset(new_context, 0, sizeof(struct yaffs_enc_context));
-
-	if (key_size_bytes > KEY_SIZE_BYTES)
-		key_size_bytes = KEY_SIZE_BYTES;
 
 	memcpy(new_context->key, key, key_size_bytes);
 
