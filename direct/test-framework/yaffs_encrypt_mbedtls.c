@@ -122,10 +122,22 @@
  */
 #define ENCRYPTOR_NAME  "yaffs_mbedtls_encryptor"
 
+/*
+ * mbedTLS cannot reuse one aes_context for both encoding and decoding,
+ * so we have a choice, Either:
+ * * Use a single context and reinitialise it for encoding or decoding on every
+ *   use. Slightly slower, saves a small amount of memory.
+ * * Set up an encoding and a decoding context and initialise once at start up.
+ *   Slightly faster, uses  a small amount of extra memory.
+ *
+ * We will do the latter here, but the previous version does the former
+ * (look back in the git history).
+ */
 struct yaffs_enc_context {
 	u8 iv[IV_SIZE_BYTES];
 	u8 key[KEY_SIZE_BYTES];
-	mbedtls_aes_context aes;
+	mbedtls_aes_context aes_encrypt;
+	mbedtls_aes_context aes_decrypt;
 	u8 *encrypted_buffer;
 	int initialised;
 };
@@ -197,11 +209,10 @@ static int yaffs_encrypt_mbedtls_encrypt(struct yaffs_dev *dev,
 	memcpy(encrypt_payload, data, data_len);
 #else
 	/*
-	 * mbedtls AES encryption operations. Set the key on each use.
+	 * mbedtls AES encryption operations.
 	 * mbedtls updates the IV on each use.
 	 */
-	mbedtls_aes_setkey_enc(&context->aes, context->key, KEY_SIZE_BITS);
-	eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_ENCRYPT,
+	eret = mbedtls_aes_crypt_cbc(&context->aes_encrypt, MBEDTLS_AES_ENCRYPT,
 			data_len, context->iv,
 			data, encrypt_payload);
 
@@ -256,13 +267,8 @@ static int yaffs_encrypt_mbedtls_decrypt(struct yaffs_dev *dev,
 		(void) eret;
 		memcpy(data, decrypt_payload, data_len);
 #else
-		/*
-		 * Call the mbedtls AES functions, first setting the key.
-		 * mbedtls seems to need the key set.
-		 */
-		mbedtls_aes_setkey_dec(&context->aes, context->key,
-					KEY_SIZE_BITS);
-		eret = mbedtls_aes_crypt_cbc(&context->aes, MBEDTLS_AES_DECRYPT,
+		eret = mbedtls_aes_crypt_cbc(&context->aes_decrypt,
+				    MBEDTLS_AES_DECRYPT,
 				    data_len, decrypt_iv,
 				    decrypt_payload,
 				    data);
@@ -320,7 +326,10 @@ static int yaffs_encrypt_mbedtls_init(struct yaffs_dev *dev)
 		return 0;
 
 	context->encrypted_buffer = buffer;
-	mbedtls_aes_init(&context->aes);
+	mbedtls_aes_init(&context->aes_encrypt);
+	mbedtls_aes_setkey_enc(&context->aes_encrypt, context->key, KEY_SIZE_BITS);
+	mbedtls_aes_init(&context->aes_decrypt);
+	mbedtls_aes_setkey_dec(&context->aes_decrypt, context->key, KEY_SIZE_BITS);
 	randomise_iv(context->iv, IV_SIZE_BYTES);
 	context->initialised = 1;
 
@@ -342,7 +351,8 @@ static int yaffs_encrypt_mbedtls_deinit(struct yaffs_dev *dev)
 	if (!context->initialised)
 		return -1;
 
-	mbedtls_aes_free(&context->aes);
+	mbedtls_aes_free(&context->aes_encrypt);
+	mbedtls_aes_free(&context->aes_decrypt);
 	kfree(context->encrypted_buffer);
 	context->encrypted_buffer = NULL;
 	context->initialised = 0;
