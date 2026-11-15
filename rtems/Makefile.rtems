@@ -26,6 +26,7 @@ YCORE_SYMLINKS = \
 	yaffs_ecc.c \
 	yaffs_cache.c \
 	yaffs_endian.c \
+	yaffs_encryption.c \
 	yaffs_guts.c \
 	yaffs_packedtags1.c \
 	yaffs_tagscompat.c \
@@ -58,10 +59,11 @@ YCORE_SYMLINKS = \
 	yaffs_summary.h \
 	yaffs_trace.h \
 	yaffs_endian.h \
+	yaffs_encryption.h \
 	yaffs_getblockinfo.h \
 	yaffs_tagsmarshall.h
 
-
+#  Files needed from Yaffs Direct.
 DIRECT_SYMLINKS = \
 	yaffs_attribs.c \
 	yaffs_hweight.c \
@@ -85,6 +87,7 @@ INCLUDES = rtems_yaffs.h \
 	yaffs_osglue.h \
 	yaffs_hweight.h \
 	yaffscfg.h \
+	yaffs_encryption.h \
 	yaffs_list.h \
 	yaffsfs.h \
 	yaffs_guts.h \
@@ -94,6 +97,7 @@ INCLUDES = rtems_yaffs.h \
 LIB = $(BUILDDIR)/libyaffs2.a
 LIB_PIECES = yaffs_ecc \
 	yaffs_endian \
+	yaffs_encryption \
 	yaffs_guts \
 	yaffs_cache \
 	yaffs_packedtags1 \
