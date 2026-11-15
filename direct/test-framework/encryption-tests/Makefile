@@ -31,7 +31,7 @@ ALL_UNSORTED_OBJS += $(ENCRYPTOR_TEST_OBJS)
 
 include ../FrameworkRules.mk
 
-C_FLAGS += -DCONFIG_YAFFS_USE_PTHREADS
+CFLAGS += -DCONFIG_YAFFS_USE_PTHREADS
 
 encryptor_test: $(FRAMEWORK_SOURCES) $(ENCRYPTOR_TEST_OBJS)
-	gcc $(CFLLAG) -o $@ $(ENCRYPTOR_TEST_OBJS) -lpthread -lmbedtls -lmbedcrypto
+	gcc $(CFLAGS) -o $@ $(ENCRYPTOR_TEST_OBJS) -lpthread -lmbedtls -lmbedcrypto
