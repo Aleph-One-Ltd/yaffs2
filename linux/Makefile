@@ -37,6 +37,7 @@ ifneq ($(KERNELRELEASE),)
 	yaffs2-objs += ../core/yaffs_packedtags2.o
 	yaffs2-objs += ../core/yaffs_tagscompat.o
 	yaffs2-objs += ../core/yaffs_tagsmarshall.o
+	yaffs2-objs += ../core/yaffs_encryption.o
 	yaffs2-objs += ../core/yaffs_checkptrw.o ../core/yaffs_nand.o
 	yaffs2-objs += ../core/yaffs_checkptrw.o ../core/yaffs_nand.o ../core/yaffs_nameval.o
 	yaffs2-objs += ../core/yaffs_allocator.o ../core/yaffs_bitmap.o ../yaffs_linux_attribs.o
@@ -54,6 +55,7 @@ ifneq ($(KERNELRELEASE),)
 	yaffs2multi-objs += ../core/yaffs_packedtags2.o
 	yaffs2multi-objs += ../core/yaffs_tagscompat.o
 	yaffs2multi-objs += ../core/yaffs_tagsmarshall.o
+	yaffs2multi-objs += ../core/yaffs_encryption.o
 	yaffs2multi-objs += ../core/yaffs_checkptrw.o ../core/yaffs_nand.o
 	yaffs2multi-objs += ../core/yaffs_checkptrw.o ../core/yaffs_nand.o ../core/yaffs_nameval.o
 	yaffs2multi-objs += ../core/yaffs_allocator.o ../core/yaffs_bitmap.o ../yaffs_linux_attribs.o
