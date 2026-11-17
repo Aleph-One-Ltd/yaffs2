@@ -11,6 +11,8 @@
  */
 
 #include "yaffs_encryption.h"
+#include "yportenv.h"
+#include "yaffs_trace.h"
 
 /*
  * Null encryption functions.
@@ -73,6 +75,7 @@ static int yaffs_encryption_initialise_null(struct yaffs_dev *dev)
 	dev->enc.enc_deinitialise_fn = yaffs_enc_null_deinitialise;
 	dev->enc.enc_reserved_bytes = 0;
 	dev->enc.enc_name = "null_encryption";
+
 	return 0;
 }
 
@@ -119,10 +122,30 @@ const char * yaffs_encryption_get_name(struct yaffs_dev *dev)
 
 int yaffs_encryption_init(struct yaffs_dev *dev)
 {
+	int ret;
 	if(dev->enc.enc_initialise_fn)
-		return dev->enc.enc_initialise_fn(dev);
+		ret = dev->enc.enc_initialise_fn(dev);
+	else
+		ret = yaffs_encryption_initialise_null(dev);
 
-	return yaffs_encryption_initialise_null(dev);
+	if (ret != 0)
+		return ret;
+
+	/*
+	 * Check all the encryption functions etc are not null.
+	 */
+	if (!dev->enc.enc_encrypt_fn ||
+	    !dev->enc.enc_decrypt_fn ||
+	    !dev->enc.enc_get_write_buffer_fn ||
+	    !dev->enc.enc_get_read_buffer_fn ||
+	    !dev->enc.enc_name) {
+                yaffs_trace(YAFFS_TRACE_ALWAYS,
+                        "yaffs encryption pointers missing");
+		yaffs_encryption_deinit(dev);
+		return -1;
+	    }
+
+	return 0;
 }
 
 int yaffs_encryption_deinit(struct yaffs_dev *dev)

@@ -4531,8 +4531,13 @@ int yaffs_guts_ll_init(struct yaffs_dev *dev)
 	yaffs_tags_compat_install(dev);
 	yaffs_tags_marshall_install(dev);
 
-	/* Sort out encryption layer, if need be. */
-	yaffs_encryption_init(dev);
+	/* Sort out encryption layer. */
+	if (yaffs_encryption_init(dev) != 0) {
+                yaffs_trace(YAFFS_TRACE_ALWAYS,
+                        "yaffs encryption init failed");
+
+                return YAFFS_FAIL;
+	}
 
 	/* Sort out space for inband tags and encryption, if required */
 
